@@ -10,7 +10,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "node"],
+    "paths": { "@workers-comp/ui": ["../../packages/ui/src/index.ts"] }
   },
   "include": ["src", "*.ts"]
 }

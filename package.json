@@ -6,8 +6,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "storybook": "pnpm --filter @workers-comp/ui storybook",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "playground": "pnpm --filter @workers-comp/playground dev"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3"

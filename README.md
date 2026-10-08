@@ -7,6 +7,7 @@ Every Figma variable is a Tailwind v4 default token, and every Figma component p
 ## Packages
 
 - [`packages/ui`](packages/ui) — `@workers-comp/ui`, the React components.
+- [`apps/playground`](apps/playground) — a small Vite app for trying components out. One file per component in `apps/playground/src/entries/`.
 
 ## Use it in an app
 
@@ -26,7 +27,7 @@ import { Button } from "@workers-comp/ui";
 
 ```sh
 pnpm install
-pnpm storybook   # playground at http://localhost:6006
+pnpm playground  # http://localhost:5173
 pnpm test        # Vitest + Testing Library
 pnpm typecheck
 pnpm build       # tsdown → packages/ui/dist

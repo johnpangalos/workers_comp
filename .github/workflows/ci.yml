@@ -19,4 +19,3 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-      - run: pnpm --filter @workers-comp/ui build-storybook --quiet

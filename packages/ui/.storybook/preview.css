@@ -1,5 +1,0 @@
-@import "tailwindcss";
-@import "../src/theme.css";
-
-/* In the playground, scan the source instead of dist so edits show up live. */
-@source "../src";

@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "../../../packages/ui/src/theme.css";
+
+/* The playground renders the ui package's source, so scan it directly. */
+@source "../../../packages/ui/src";

@@ -27,7 +27,7 @@ import { Button } from "@workers-comp/ui";
 
 ```sh
 pnpm install
-pnpm playground  # http://localhost:5173
+pnpm playground  # http://localhost:5173 (every PR also gets a Cloudflare preview link)
 pnpm test        # Vitest + Testing Library
 pnpm typecheck
 pnpm build       # tsdown → packages/ui/dist

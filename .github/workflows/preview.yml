@@ -1,0 +1,107 @@
+name: Playground preview
+
+# Each pull request gets its own Cloudflare Worker Preview of the playground,
+# with the link posted as a PR comment. Merging to main deploys production.
+#
+# Needs two repository secrets: CLOUDFLARE_API_TOKEN (template "Edit Cloudflare
+# Workers") and CLOUDFLARE_ACCOUNT_ID. Without them the jobs skip instead of failing.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  preview:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Cloudflare secrets
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::notice::CLOUDFLARE_API_TOKEN is not set, skipping the preview."
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/checkout@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: pnpm/action-setup@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm install --frozen-lockfile
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm --filter @workers-comp/playground build
+      - id: preview
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        name: Create or update the Preview
+        working-directory: apps/playground
+        run: |
+          set -o pipefail
+          output="$(pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}" --json)"
+          printf '%s\n' "$output"
+          echo "url=$(printf '%s' "$output" | jq -er '.preview.urls[0]')" >> "$GITHUB_OUTPUT"
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        name: Comment the Preview link
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --edit-last --create-if-none --body "**Playground preview:** ${{ steps.preview.outputs.url }}
+
+          Updated for ${{ github.event.pull_request.head.sha }}."
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+
+  cleanup:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/checkout@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: pnpm/action-setup@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm install --frozen-lockfile
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        name: Delete the Preview
+        working-directory: apps/playground
+        run: pnpm exec wrangler preview delete --name "pr-${{ github.event.pull_request.number }}" --skip-confirmation
+
+  deploy:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/checkout@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: pnpm/action-setup@v4
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm install --frozen-lockfile
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm --filter @workers-comp/playground build
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        name: Deploy production
+        working-directory: apps/playground
+        run: pnpm exec wrangler deploy

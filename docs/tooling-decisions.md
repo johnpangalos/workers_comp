@@ -115,9 +115,7 @@ What Storybook would have added that this doesn't have yet: an embedded Figma pa
 
 **CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
 
-**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp-playground`). `.github/workflows/preview.yml` runs `wrangler preview --name pr-<number>` on every pull request and comments the link on the PR, deletes that Preview when the PR closes, and runs `wrangler deploy` on merges to main. So every PR has a live playground a designer can open, and main has a stable one. It needs two repository secrets, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; without them the jobs skip rather than fail.
-
-The alternative is Cloudflare's Workers Builds (connect the repo in the Cloudflare dashboard, and it posts preview links itself). The GitHub Action was chosen because the whole setup lives in the repo, where you can read and change it.
+**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp-playground`). The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. Build settings live in Cloudflare (set with the `cf workers-builds` CLI): root directory `apps/playground`, build command `pnpm install --frozen-lockfile && pnpm build`, watch paths `apps/playground/**` and `packages/ui/**`. Nothing in the repo needs secrets for this.
 
 ## Note on the Figma MCP
 

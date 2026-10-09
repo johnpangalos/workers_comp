@@ -1,6 +1,6 @@
 import type { ElementType } from "react";
 import { bindClassNames } from "../class-names";
-import styles from "./button.module.css";
+import { tw } from "../tw";
 import { Button as Comp0Button, type ButtonProps as Comp0ButtonProps } from "@comp0/react";
 
 /**
@@ -11,13 +11,33 @@ import { Button as Comp0Button, type ButtonProps as Comp0ButtonProps } from "@co
  * Behaviour comes from comp0's headless Button. It reports Figma's `state` property as
  * presence attributes (`data-hovered`, `data-pressed`, `data-focus-visible`,
  * `data-disabled`), and `variant` / `size` render as `data-variant` / `data-size`.
- * The styles in button.module.css select on those attributes, so the element only ever
- * carries one scoped class.
+ * The classes below select on those attributes. The build compiles them into a CSS module
+ * (see build/tailwind-modules.ts), so the element carries one scoped class and the package
+ * ships plain CSS.
  */
 export type ButtonVariant = "default" | "outline" | "ghost";
 export type ButtonSize = "default" | "sm";
 
-// Names that are in the CSS module resolve to their scoped class; anything else
+const styles = tw({
+  button: `
+    m-0 appearance-none border-0 border-solid
+    inline-flex items-center justify-center rounded-md font-sans font-semibold transition-colors outline-none
+    data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+    data-[variant=default]:bg-fuchsia-700 data-[variant=default]:text-white
+    data-[variant=default]:data-hovered:bg-fuchsia-800 data-[variant=default]:data-pressed:bg-fuchsia-900
+    data-[variant=outline]:border data-[variant=outline]:border-gray-400
+    data-[variant=outline]:bg-white data-[variant=outline]:text-gray-900
+    data-[variant=outline]:data-hovered:bg-gray-50 data-[variant=outline]:data-pressed:bg-gray-100
+    data-[variant=ghost]:text-fuchsia-700
+    data-[variant=ghost]:data-hovered:bg-fuchsia-50 data-[variant=ghost]:data-pressed:bg-fuchsia-100
+    data-[size=default]:px-4 data-[size=default]:py-2 data-[size=default]:text-sm
+    data-[size=sm]:px-3 data-[size=sm]:py-1 data-[size=sm]:text-xs
+    data-disabled:pointer-events-none
+    data-[variant]:data-disabled:bg-gray-100 data-[variant]:data-disabled:text-gray-400
+  `,
+});
+
+// Names in the module resolve to their scoped class; anything else
 // (a consumer's Tailwind utilities or own classes) passes through unchanged.
 const cx = bindClassNames(styles);
 

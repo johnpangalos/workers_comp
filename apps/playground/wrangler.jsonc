@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // A static-assets-only Worker: no server code, Cloudflare serves the built playground.
+  "name": "workers-comp",
+  "compatibility_date": "2026-10-08",
+  "assets": {
+    "directory": "./build/client",
+    "not_found_handling": "single-page-application"
+  },
+  // Pull request Previews use the same settings as production.
+  "previews": {}
+}

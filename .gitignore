@@ -111,3 +111,10 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Wrangler
+.wrangler/
+
+# React Router
+.react-router/
+build/

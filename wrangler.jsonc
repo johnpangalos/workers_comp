@@ -1,0 +1,17 @@
+{
+  "$schema": "./apps/playground/node_modules/wrangler/config-schema.json",
+  // The playground as a static-assets-only Worker: no server code, Cloudflare serves the built files.
+  // It lives at the repo root so `wrangler deploy` works whether Workers Builds runs from the root
+  // or from apps/playground, and the build below runs either way, even with no build command set.
+  "name": "workers-comp",
+  "compatibility_date": "2026-10-08",
+  "build": {
+    "command": "pnpm install --frozen-lockfile && pnpm --filter @workers-comp/playground build"
+  },
+  "assets": {
+    "directory": "./apps/playground/build/client",
+    "not_found_handling": "single-page-application"
+  },
+  // Pull request Previews use the same settings as production.
+  "previews": {}
+}

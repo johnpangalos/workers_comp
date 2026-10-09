@@ -96,7 +96,7 @@ The next thing worth adding is **Playwright screenshot tests against these pages
 
 **CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
 
-**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp`). The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. Build settings live in the Cloudflare dashboard: root directory `apps/playground`, build command `pnpm install --frozen-lockfile && pnpm build` (outputs `build/client`), build variable `SKIP_DEPENDENCY_INSTALL=1` (Cloudflare would otherwise try npm, which can't install the pnpm workspace), deploy `npx wrangler deploy`, preview `npx wrangler preview`. Nothing in the repo needs secrets for this.
+**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker named `workers-comp`, configured in the root `wrangler.jsonc`. The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. The build lives in the config's `build.command` (install the workspace with pnpm, then build the playground to `apps/playground/build/client`), and wrangler finds the config from the repo root or from `apps/playground`, so the dashboard only needs deploy `npx wrangler deploy` and preview `npx wrangler preview`; the root directory and build command can be left empty. Nothing in the repo needs secrets for this.
 
 ## Note on the Figma MCP
 

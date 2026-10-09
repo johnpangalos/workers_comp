@@ -114,3 +114,7 @@ dist
 
 # Wrangler
 .wrangler/
+
+# React Router
+.react-router/
+build/

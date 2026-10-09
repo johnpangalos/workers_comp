@@ -4,7 +4,7 @@
   "name": "workers-comp",
   "compatibility_date": "2026-10-08",
   "assets": {
-    "directory": "./dist",
+    "directory": "./build/client",
     "not_found_handling": "single-page-application"
   },
   // Pull request Previews use the same settings as production.

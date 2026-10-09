@@ -7,7 +7,7 @@ Every Figma variable is a Tailwind v4 default token, and every Figma component p
 ## Packages
 
 - [`packages/ui`](packages/ui) — `@workers-comp/ui`, the React components.
-- [`apps/playground`](apps/playground) — a small Vite app for trying components out. One file per component in `apps/playground/src/entries/`.
+- [`apps/playground`](apps/playground) — a React Router 8 app of example pages. Every file in `apps/playground/app/examples/` is a page.
 
 ## Use it in an app
 

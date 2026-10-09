@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
@@ -11,7 +11,8 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "types": ["vite/client", "node"],
+    "rootDirs": [".", "./.react-router/types"],
     "paths": { "@workers-comp/ui": ["../../packages/ui/src/index.ts"] }
   },
-  "include": ["src", "*.ts"]
+  "include": ["app", ".react-router/types/**/*", "*.ts"]
 }

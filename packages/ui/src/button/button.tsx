@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { cx } from "../cx";
+import classNames from "classnames/bind";
 import styles from "./button.module.css";
 import { Button as Comp0Button, type ButtonProps as Comp0ButtonProps } from "@comp0/react";
 
@@ -17,8 +17,12 @@ import { Button as Comp0Button, type ButtonProps as Comp0ButtonProps } from "@co
 export type ButtonVariant = "default" | "outline" | "ghost";
 export type ButtonSize = "default" | "sm";
 
+// Names that are in the CSS module resolve to their scoped class; anything else
+// (a consumer's Tailwind utilities or own classes) passes through unchanged.
+const cx = classNames.bind(styles);
+
 /** The Button's scoped class, for styling another element the same way. */
-export const buttonClassName = styles.button as string;
+export const buttonClassName = cx("button");
 
 export type ButtonProps<TElement extends ElementType = "button"> = Comp0ButtonProps<TElement> & {
   variant?: ButtonVariant;
@@ -40,7 +44,7 @@ export function Button<TElement extends ElementType = "button">({
       {...(props as Comp0ButtonProps<TElement>)}
       data-variant={variant}
       data-size={size}
-      className={cx(buttonClassName, className)}
+      className={cx("button", className)}
     />
   );
 }

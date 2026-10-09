@@ -13,7 +13,7 @@ How the Button got from Figma to code, and the three choices that shape every co
 | `state` = hover, active, focus, disabled | `hover:`, `active:`, `focus-visible:`, `disabled:` modifiers (no prop) |
 | `Label` | `children` |
 
-- **`cva` (class-variance-authority)** holds the variant → class table. It reads like the Figma variant grid, which makes it easy for a person or an AI to diff the two.
+- **`match(value, { ...every case })`** (`src/lib/match.ts`, five lines) holds the variant → class table. It reads like the Figma variant grid, and TypeScript fails the build if a variant is added to the type but missing from the table. It replaces `cva`, which did the same job with an extra dependency and its own API to learn.
 - **`cn` = `clsx` + `tailwind-merge`**, so `<Button className="px-8">` replaces `px-4` rather than both classes fighting in the cascade.
 - **`type="button"` by default.** A bare `<button>` inside a `<form>` submits it, which surprises people.
 - **`data-variant` / `data-size`** attributes make the rendered DOM say which Figma variant it is. Handy in devtools, tests and screenshots.

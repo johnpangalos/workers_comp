@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import classNames from "classnames/bind";
+import { bindClassNames } from "../class-names";
 import styles from "./button.module.css";
 import { Button as Comp0Button, type ButtonProps as Comp0ButtonProps } from "@comp0/react";
 
@@ -19,7 +19,7 @@ export type ButtonSize = "default" | "sm";
 
 // Names that are in the CSS module resolve to their scoped class; anything else
 // (a consumer's Tailwind utilities or own classes) passes through unchanged.
-const cx = classNames.bind(styles);
+const cx = bindClassNames(styles);
 
 /** The Button's scoped class, for styling another element the same way. */
 export const buttonClassName = cx("button");

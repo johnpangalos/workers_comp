@@ -63,9 +63,6 @@ importers:
       '@comp0/react':
         specifier: 0.1.0-next.25
         version: 0.1.0-next.25(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      classnames:
-        specifier: ^2.5.1
-        version: 2.5.1
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.3
@@ -1092,9 +1089,6 @@ packages:
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
     engines: {node: '>= 20.19.0'}
-
-  classnames@2.5.1:
-    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
 
   confbox@0.3.1:
     resolution: {integrity: sha512-cKUSoKa8YxFZZSmraVi7onONx3amu77ngK3kGpsYHDH7drPwCRkQE1RYMPlLRrMtnciRj274XNRxcHxnKmDSnA==}
@@ -2660,8 +2654,6 @@ snapshots:
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.1.1
-
-  classnames@2.5.1: {}
 
   confbox@0.3.1: {}
 

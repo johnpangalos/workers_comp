@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // A static-assets-only Worker: no server code, Cloudflare serves the built playground.
-  "name": "workers-comp-playground",
+  "name": "workers-comp",
   "compatibility_date": "2026-10-08",
   "assets": {
     "directory": "./dist",

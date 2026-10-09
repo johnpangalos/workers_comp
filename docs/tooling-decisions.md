@@ -115,7 +115,7 @@ What Storybook would have added that this doesn't have yet: an embedded Figma pa
 
 **CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
 
-**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp-playground`). The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. Build settings live in Cloudflare (set with the `cf workers-builds` CLI): root directory `apps/playground`, build command `pnpm install --frozen-lockfile && pnpm build`, watch paths `apps/playground/**` and `packages/ui/**`. Nothing in the repo needs secrets for this.
+**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp`). The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. Build settings live in the Cloudflare dashboard: root directory `apps/playground`, build command `pnpm install --frozen-lockfile && pnpm build`, build variable `SKIP_DEPENDENCY_INSTALL=1` (Cloudflare would otherwise try npm, which can't install the pnpm workspace), deploy `npx wrangler deploy`, preview `npx wrangler preview`. Nothing in the repo needs secrets for this.
 
 ## Note on the Figma MCP
 

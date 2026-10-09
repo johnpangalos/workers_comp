@@ -1,0 +1,51 @@
+/*
+ * Tailwind is a build tool here, not a runtime requirement: @apply compiles to plain CSS and
+ * the class names are scoped by CSS modules, so the package ships dist/styles.css and nothing
+ * else. Everything sits in @layer components, so a consumer's Tailwind utilities (a later
+ * layer) or any unlayered CSS beats it without !important.
+ *
+ * Variants and comp0's interaction state are data attributes on the element.
+ */
+@reference "../theme.css";
+
+/* Tailwind's own layer order, declared up front so it holds whichever stylesheet loads first:
+   a Tailwind app's preflight (base) stays under these styles and its utilities stay over them. */
+@layer theme, base, components, utilities;
+
+@layer components {
+  .button {
+    /* Undo the browser's button styles, so it looks the same with or without a reset. */
+    @apply m-0 appearance-none border-0 border-solid;
+    @apply inline-flex items-center justify-center rounded-md font-sans font-semibold transition-colors outline-none;
+
+    &[data-focus-visible] {
+      @apply ring-2 ring-fuchsia-600 ring-offset-2;
+    }
+
+    &[data-variant="default"] {
+      @apply bg-fuchsia-700 text-white;
+      &[data-hovered] { @apply bg-fuchsia-800; }
+      &[data-pressed] { @apply bg-fuchsia-900; }
+    }
+
+    &[data-variant="outline"] {
+      @apply border border-gray-400 bg-white text-gray-900;
+      &[data-hovered] { @apply bg-gray-50; }
+      &[data-pressed] { @apply bg-gray-100; }
+    }
+
+    &[data-variant="ghost"] {
+      @apply text-fuchsia-700;
+      &[data-hovered] { @apply bg-fuchsia-50; }
+      &[data-pressed] { @apply bg-fuchsia-100; }
+    }
+
+    &[data-size="default"] { @apply px-4 py-2 text-sm; }
+    &[data-size="sm"] { @apply px-3 py-1 text-xs; }
+
+    /* Last, and as specific as a variant + state, so it wins over hover and press. */
+    &[data-variant][data-disabled] {
+      @apply pointer-events-none bg-gray-100 text-gray-400;
+    }
+  }
+}

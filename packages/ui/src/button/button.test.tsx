@@ -32,24 +32,16 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveAttribute("data-size", "sm");
   });
 
-  it("has styles for every variant and size", () => {
-    for (const selector of [
-      "data-[variant=default]:bg-fuchsia-700",
-      "data-[variant=outline]:border-gray-400",
-      "data-[variant=ghost]:text-fuchsia-700",
-      "data-[size=default]:px-4",
-      "data-[size=sm]:px-3",
-      "data-focus-visible:ring-fuchsia-600",
-      "data-[variant]:data-disabled:bg-gray-100",
-    ]) {
-      expect(buttonClassName.split(" ")).toContain(selector);
-    }
+  it("uses one scoped class", () => {
+    render(<Button>Label</Button>);
+    expect(buttonClassName).toMatch(/\bbutton\b/);
+    expect(screen.getByRole("button")).toHaveAttribute("class", buttonClassName);
   });
 
-  it("appends className for layout", () => {
+  it("appends className after its own", () => {
     render(<Button className="w-full">Label</Button>);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("w-full", "data-[variant=default]:bg-fuchsia-700");
+    expect(button).toHaveClass(buttonClassName, "w-full");
   });
 
   it("calls onClick when clicked and is reachable with Tab", async () => {

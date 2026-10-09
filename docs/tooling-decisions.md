@@ -13,8 +13,9 @@ How the Button got from Figma to code, and the three choices that shape every co
 | `state` = hover, active, focus, disabled | `hover:`, `active:`, `focus-visible:`, `disabled:` modifiers (no prop) |
 | `Label` | `children` |
 
-- **`match(value, { ...every case })`** (`src/lib/match.ts`, five lines) holds the variant → class table. It reads like the Figma variant grid, and TypeScript fails the build if a variant is added to the type but missing from the table. It replaces `cva`, which did the same job with an extra dependency and its own API to learn.
-- **`cn` = `clsx` + `tailwind-merge`**, so `<Button className="px-8">` replaces `px-4` rather than both classes fighting in the cascade.
+- **Variants are data attributes.** `variant` and `size` render as `data-variant` / `data-size`, and the class list styles them with Tailwind's `data-[variant=outline]:…` variants. The class list is one constant string, so there's no variant table, no class-merging helper and no runtime dependency besides React. Reading the classes top to bottom reads like the Figma variant grid.
+- **`className` is for layout only** (`w-full`, `mt-4`). It's appended, and it can't restyle a variant because `data-[…]:` selectors are more specific than plain utilities. A new look means a new variant, in Figma first.
+- **Disabled uses `!`** (`disabled:bg-gray-100!`). `disabled:` and `data-[…]:` are equally specific and Tailwind emits `disabled:` first, so without it a disabled primary button stayed fuchsia. Checked in a browser: every variant, size, hover, press, focus ring and disabled state computes to the Figma values.
 - **`type="button"` by default.** A bare `<button>` inside a `<form>` submits it, which surprises people.
 - **`data-variant` / `data-size`** attributes make the rendered DOM say which Figma variant it is. Handy in devtools, tests and screenshots.
 - **Measured against Figma:** rendered in a browser, the buttons are 36px (default), 24px (sm), and 38/26px for outline. Those are exactly the Figma heights, including the outline's extra 2px from its border. If the outline should be 36px like the others, the fix is in Figma first (stroke *inside* instead of outside), then `border border-transparent` on the base classes in code.

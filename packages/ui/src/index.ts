@@ -1,9 +1,7 @@
 export {
   Button,
-  buttonClasses,
+  buttonClassName,
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,
 } from "./button/button";
-export { cn } from "./lib/cn";
-export { match } from "./lib/match";

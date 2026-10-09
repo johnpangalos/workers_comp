@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Button } from "./button";
+import { Button, buttonClassName } from "./button";
+
+// These tests cover behaviour and the data attributes the styles select on.
+// What those attributes look like is checked in a real browser (the playground).
 
 describe("Button", () => {
   it("renders a native button that defaults to type=button", () => {
@@ -15,41 +18,38 @@ describe("Button", () => {
   it("uses the Figma defaults: variant=default, size=default", () => {
     render(<Button>Save</Button>);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("bg-fuchsia-700", "text-white", "px-4", "py-2", "text-sm");
     expect(button).toHaveAttribute("data-variant", "default");
     expect(button).toHaveAttribute("data-size", "default");
   });
 
-  it.each([
-    ["default", ["bg-fuchsia-700", "hover:bg-fuchsia-800", "active:bg-fuchsia-900"]],
-    ["outline", ["border", "border-gray-400", "bg-white", "text-gray-900", "hover:bg-gray-50"]],
-    ["ghost", ["text-fuchsia-700", "hover:bg-fuchsia-50", "active:bg-fuchsia-100"]],
-  ] as const)("variant=%s applies the Figma classes", (variant, classes) => {
+  it.each(["default", "outline", "ghost"] as const)("variant=%s sets data-variant", (variant) => {
     render(<Button variant={variant}>Label</Button>);
-    expect(screen.getByRole("button")).toHaveClass(...classes);
+    expect(screen.getByRole("button")).toHaveAttribute("data-variant", variant);
   });
 
-  it("size=sm applies the small padding and type", () => {
+  it("size=sm sets data-size", () => {
     render(<Button size="sm">Label</Button>);
-    const button = screen.getByRole("button");
-    expect(button).toHaveClass("px-3", "py-1", "text-xs");
-    expect(button).not.toHaveClass("px-4", "text-sm");
+    expect(screen.getByRole("button")).toHaveAttribute("data-size", "sm");
   });
 
-  it("always has a visible focus ring for keyboard users", () => {
-    render(<Button variant="ghost">Label</Button>);
-    expect(screen.getByRole("button")).toHaveClass(
-      "focus-visible:ring-2",
+  it("has styles for every variant and size", () => {
+    for (const selector of [
+      "data-[variant=default]:bg-fuchsia-700",
+      "data-[variant=outline]:border-gray-400",
+      "data-[variant=ghost]:text-fuchsia-700",
+      "data-[size=default]:px-4",
+      "data-[size=sm]:px-3",
       "focus-visible:ring-fuchsia-600",
-      "focus-visible:ring-offset-2",
-    );
+      "disabled:bg-gray-100!",
+    ]) {
+      expect(buttonClassName.split(" ")).toContain(selector);
+    }
   });
 
-  it("lets className override a conflicting utility instead of stacking it", () => {
-    render(<Button className="px-8">Label</Button>);
+  it("appends className for layout", () => {
+    render(<Button className="w-full">Label</Button>);
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("px-8");
-    expect(button).not.toHaveClass("px-4");
+    expect(button).toHaveClass("w-full", "data-[variant=default]:bg-fuchsia-700");
   });
 
   it("calls onClick when clicked and is reachable with Tab", async () => {
@@ -73,7 +73,6 @@ describe("Button", () => {
     );
     const button = screen.getByRole("button");
     expect(button).toBeDisabled();
-    expect(button).toHaveClass("disabled:bg-gray-100", "disabled:text-gray-400");
     await user.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });

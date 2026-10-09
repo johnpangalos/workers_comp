@@ -39,8 +39,8 @@ describe("Button", () => {
       "data-[variant=ghost]:text-fuchsia-700",
       "data-[size=default]:px-4",
       "data-[size=sm]:px-3",
-      "focus-visible:ring-fuchsia-600",
-      "disabled:bg-gray-100!",
+      "data-focus-visible:ring-fuchsia-600",
+      "data-[variant]:data-disabled:bg-gray-100",
     ]) {
       expect(buttonClassName.split(" ")).toContain(selector);
     }
@@ -73,7 +73,25 @@ describe("Button", () => {
     );
     const button = screen.getByRole("button");
     expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("data-disabled");
     await user.click(button);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("reports hover as data-hovered, the attribute the hover styles select on", async () => {
+    const user = userEvent.setup();
+    render(<Button>Label</Button>);
+    const button = screen.getByRole("button");
+    expect(button).not.toHaveAttribute("data-hovered");
+    await user.hover(button);
+    expect(button).toHaveAttribute("data-hovered");
+  });
+
+  it("pending disables the button and sets aria-busy", () => {
+    render(<Button pending>Saving</Button>);
+    const button = screen.getByRole("button");
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toHaveAttribute("data-pending");
   });
 });

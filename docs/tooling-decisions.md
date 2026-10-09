@@ -10,13 +10,15 @@ How the Button got from Figma to code, and the three choices that shape every co
 |---|---|
 | `variant` = default, outline, ghost | `variant` prop, same values |
 | `size` = default, sm | `size` prop, same values |
-| `state` = hover, active, focus, disabled | `hover:`, `active:`, `focus-visible:`, `disabled:` modifiers (no prop) |
+| `state` = hover, active, focus, disabled | comp0's `data-hovered`, `data-pressed`, `data-focus-visible`, `data-disabled` (no prop) |
 | `Label` | `children` |
 
-- **Variants are data attributes.** `variant` and `size` render as `data-variant` / `data-size`, and the class list styles them with Tailwind's `data-[variant=outline]:…` variants. The class list is one constant string, so there's no variant table, no class-merging helper and no runtime dependency besides React. Reading the classes top to bottom reads like the Figma variant grid.
+- **Variants are data attributes.** `variant` and `size` render as `data-variant` / `data-size`, and the class list styles them with Tailwind's `data-[variant=outline]:…` variants. The class list is one constant string, so there's no variant table and no class-merging helper. Reading the classes top to bottom reads like the Figma variant grid.
 - **`className` is for layout only** (`w-full`, `mt-4`). It's appended, and it can't restyle a variant because `data-[…]:` selectors are more specific than plain utilities. A new look means a new variant, in Figma first.
-- **Disabled uses `!`** (`disabled:bg-gray-100!`). `disabled:` and `data-[…]:` are equally specific and Tailwind emits `disabled:` first, so without it a disabled primary button stayed fuchsia. Checked in a browser: every variant, size, hover, press, focus ring and disabled state computes to the Figma values.
-- **`type="button"` by default.** A bare `<button>` inside a `<form>` submits it, which surprises people.
+- **Disabled is stacked: `data-[variant]:data-disabled:bg-gray-100`.** A bare `data-disabled:` is exactly as specific as `data-[variant=default]:` and Tailwind emits it first, so a disabled primary button stayed fuchsia. Requiring both attributes makes it more specific, so it wins without `!`. Checked in Chromium: every variant, size, hover, press, keyboard focus ring (and no ring on mouse focus) and disabled state computes to the Figma values.
+- **`pending`** comes free from comp0: it disables the button and sets `aria-busy` and `data-pending`, which is the start of the loading state in #4.
+- **`type="button"` by default** (comp0 does this). A bare `<button>` inside a `<form>` submits it, which surprises people.
+- **`as`** renders the button as another element, e.g. a router link, with the same styles and keyboard behaviour.
 - **`data-variant` / `data-size`** attributes make the rendered DOM say which Figma variant it is. Handy in devtools, tests and screenshots.
 - **Measured against Figma:** rendered in a browser, the buttons are 36px (default), 24px (sm), and 38/26px for outline. Those are exactly the Figma heights, including the outline's extra 2px from its border. If the outline should be 36px like the others, the fix is in Figma first (stroke *inside* instead of outside), then `border border-transparent` on the base classes in code.
 
@@ -24,22 +26,16 @@ How the Button got from Figma to code, and the three choices that shape every co
 
 A headless library gives you behaviour and accessibility (keyboard, focus management, ARIA) with no styles, so your Tailwind classes stay in charge of how things look.
 
-**Button doesn't need one.** A native `<button>` already does keyboard, focus and disabled correctly, so it has zero runtime dependencies beyond the class helpers.
+**This design system is built on [comp0](https://github.com/mewhhaha/comp0)** (`@comp0/react`), a headless React 19 library. It fits the Figma → code rule unusually well:
 
-**Recommendation: React Aria Components, adopted when the first complex component arrives** (Select, Combobox, Dialog, Menu, Tabs, DatePicker).
+- **State is presence attributes.** Every interactive part sets `data-hovered`, `data-pressed`, `data-focused`, `data-focus-visible` and `data-disabled` (plus `data-open`, `data-selected` and so on for composites). Those map one-to-one onto Figma's `state` variant, so *a Figma state is a `data-*` modifier* and the whole class list is static.
+- **No CSS and no class names** of its own, and `className` is always a string (no render props), so styles stay readable Tailwind.
+- **Native first.** Buttons are real `<button>`s, form controls submit through native form data, and `as` swaps the element (router links included).
+- **Breadth.** Select, Combobox, Dialog, Menu, Tabs, DatePicker, charts and more, so every later component uses the same state vocabulary.
 
-| | React Aria Components | Base UI | Radix Primitives |
-|---|---|---|---|
-| Accessibility depth | Best in class (Adobe; tested across screen readers, touch, i18n) | Very good | Good |
-| State styling | `data-hovered`, `data-pressed`, `data-focus-visible`, `data-disabled` on every component | `data-*` attributes | `data-state` attributes |
-| Breadth | Largest (date/time pickers, grids, drag & drop) | Growing | Mature, but development has slowed |
-| Tailwind fit | Official plugin: `data-pressed:` etc. | Good | Good |
+It's pre-1.0 (`0.1.0-next.*`), so the package pins an exact version and upgrades are deliberate.
 
-Why React Aria for this project: its state attributes map one-to-one onto Figma's `state` variant (hover, pressed, focus-visible, disabled), and it normalises "pressed" across mouse, touch and keyboard, which plain CSS `:active` doesn't. That keeps the Figma → code rule simple: *a Figma state is a `data-*` modifier.*
-
-Runner-up: **Base UI** (from the Radix and MUI teams). Pick it instead if you'd rather have shadcn-style APIs, since a lot of AI training data follows shadcn/Radix conventions. Avoid mixing two headless libraries.
-
-When it lands, Button can move onto React Aria's `<Button>` with the same props and classes (`active:` becomes `pressed:`), so nothing here is wasted.
+Alternatives considered: React Aria Components (the same `data-*` state model, larger and more mature) and Base UI (shadcn-style APIs). Avoid mixing two headless libraries.
 
 ## Publishing
 

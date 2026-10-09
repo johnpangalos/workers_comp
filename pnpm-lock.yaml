@@ -56,6 +56,10 @@ importers:
         version: 4.149.0(@types/node@22.20.5)
 
   packages/ui:
+    dependencies:
+      '@comp0/react':
+        specifier: 0.1.0-next.25
+        version: 0.1.0-next.25(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^7.0.1
@@ -240,6 +244,17 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
+
+  '@comp0/core@0.1.0-next.25':
+    resolution: {integrity: sha512-n1ZiltxP2W9OUUq5EFK9tUtfabqNLlxR/WzuIQwQGFtJbw/7SiYVrAHZGPiNDFv3RrA0pM4dV/oTpr+ej7ynRg==}
+    peerDependencies:
+      react: ^19.0.0
+
+  '@comp0/react@0.1.0-next.25':
+    resolution: {integrity: sha512-6Xn3IsfOfd9ymj7Xta5pIr/RhdcUwd9+/Ev6cmGEoRCPssu7RiFPxpshdlXWJcSaQ8yya65H2RhMZCA9OxGFcA==}
+    peerDependencies:
+      react: ^19.0.0
+      react-dom: ^19.0.0
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2121,6 +2136,16 @@ snapshots:
 
   '@cloudflare/workerd-windows-64@1.20261006.1':
     optional: true
+
+  '@comp0/core@0.1.0-next.25(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
+
+  '@comp0/react@0.1.0-next.25(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      '@comp0/core': 0.1.0-next.25(react@19.3.0)
+      react: 19.3.0
+      react-dom: 19.3.0(react@19.3.0)
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:

@@ -56,8 +56,8 @@ Rules:
   with no variable in Figma is a question for the designer, not a magic number.
 - A Figma variable that isn't a Tailwind default goes in `packages/ui/src/theme.css` under
   the same name. `pnpm test` fails until it does.
-- Component classes are inline Tailwind inside `tw({ … })`, selecting on `data-*` attributes.
-  Copy how `button.tsx` does it.
+- Component classes are inline Tailwind passed through `cx(…)` (bound to
+  `tailwind.module.css`), selecting on `data-*` attributes. Copy how `button.tsx` does it.
 - Behaviour comes from comp0 (`@comp0/react`). Don't add another headless library.
 - The font is Inter 3.19, the version Figma uses. Don't switch to Google Fonts' Inter.
 

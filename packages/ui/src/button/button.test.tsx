@@ -32,9 +32,9 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveAttribute("data-size", "sm");
   });
 
-  it("uses one scoped class", () => {
+  it("carries only its own classes by default", () => {
     render(<Button>Label</Button>);
-    expect(buttonClassName).toMatch(/\bbutton\b/);
+    expect(buttonClassName).toMatch(/\binline-flex\b/);
     expect(screen.getByRole("button")).toHaveAttribute("class", buttonClassName);
   });
 

@@ -46,7 +46,7 @@ export type ButtonProps<TElement extends ElementType = "button"> = Comp0ButtonPr
 
 /**
  * `className` is appended as is. The Button's own styles sit in `@layer components`, so a
- * consumer's Tailwind utilities or plain CSS override them (`className="rounded-full"`).
+ * consumer's Tailwind utilities or plain CSS override them.
  */
 export function Button<TElement extends ElementType = "button">({
   className,

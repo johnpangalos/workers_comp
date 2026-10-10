@@ -92,7 +92,18 @@ Like Headless UI's, it shows the keys you press in the corner, so keyboard behav
 
 It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`, which is what the Cloudflare Worker serves. The app renders the ui package's *source* through a Vite alias, so editing `button.tsx` updates the page instantly with no rebuild.
 
-The next thing worth adding is **Playwright screenshot tests against these pages** (`toHaveScreenshot()`), which catch the "the button got 2px taller" kind of regression, plus an axe check per page.
+**Pixel tests against Figma: Playwright** (`pnpm test:figma`). `apps/playground/figma/` holds 1x exports from Figma and the position of each node in them; `apps/playground/tests/figma.ts` renders a playground page in Chromium, checks the element is within a pixel of the Figma node's size, and diffs the pixels. For the Button, all 30 Figma variants are compared (`/button/figma` is the page it drives, with real hover, press and keyboard focus). Two things it found on its first run:
+
+- **Figma's Inter is 3.19; Google Fonts serves Inter 4**, whose letters are about 2% narrower, so the button was 1.5px narrower than in Figma. The playground now serves Inter 3.19 itself (the `inter-ui` package). An app that wants to match the designs has to do the same.
+- **The disabled outline button kept its `gray-400` border**; Figma's is `gray-200`.
+
+Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size and 4% of pixels (glyph edges); the wrong border colour above was 4.6%.
+
+These don't run in CI yet (it needs a Chromium install step and a check that Linux text rendering stays inside the allowance). An axe check per page is still worth adding.
+
+**Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.js`).
+
+It fails today for 23 of the 46 colours, and that is a real difference, not a rounding one: Figma holds Tailwind v3's hex values, and Tailwind v4's palette is more vivid. `fuchsia/700` is `#a21caf` in Figma and renders as `#a800b7`. Either the Figma variables take v4's values or `theme.css` pins the palette to Figma's; until one of those happens the check stays red.
 
 **Behaviour tests: Vitest + Testing Library** (`pnpm test`). 10 tests cover the defaults, each variant's Figma classes, the focus ring, `className` overrides, keyboard activation and disabled behaviour. They run in jsdom, so they test behaviour, not pixels.
 

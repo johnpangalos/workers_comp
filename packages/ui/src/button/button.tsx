@@ -34,6 +34,7 @@ const styles = tw({
     data-[size=sm]:px-3 data-[size=sm]:py-1 data-[size=sm]:text-xs
     data-disabled:pointer-events-none
     data-[variant]:data-disabled:bg-gray-100 data-[variant]:data-disabled:text-gray-400
+    data-[variant=outline]:data-disabled:border-gray-200
   `,
 });
 

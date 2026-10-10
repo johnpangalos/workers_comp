@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Inter 3.19, the version Figma's "Inter" is. Google Fonts serves Inter 4, whose letters are
+   about 2% narrower, so text (and anything that hugs it) would not match the designs. */
+@font-face {
+  font-family: "Inter";
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("inter-ui/Inter (web)/Inter-roman.var.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  src: url("inter-ui/Inter (web)/Inter-italic.var.woff2") format("woff2");
+}
+
 /* Tailwind here is only for the playground's own layout. The ui components bring their
    own CSS (CSS modules, compiled from the ui package's source through the Vite alias). */
 @theme {

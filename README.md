@@ -26,6 +26,7 @@ The components' styles live in `@layer components`, so anything you pass in `cla
 pnpm install
 pnpm playground  # http://localhost:5173 (Cloudflare also posts a preview link on every PR)
 pnpm test        # Vitest + Testing Library
+pnpm test:figma  # Playwright: rendered pages against Figma exports
 pnpm typecheck
 pnpm build       # Vite + tsc → packages/ui/dist (index.js, styles.css, types)
 pnpm changeset   # describe a change for the next release

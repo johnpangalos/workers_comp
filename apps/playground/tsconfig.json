@@ -15,5 +15,5 @@
     "rootDirs": [".", "./.react-router/types"],
     "paths": { "@workers-comp/ui": ["../../packages/ui/src/index.ts"] }
   },
-  "include": ["app", ".react-router/types/**/*", "*.ts"]
+  "include": ["app", "tests", ".react-router/types/**/*", "*.ts"]
 }

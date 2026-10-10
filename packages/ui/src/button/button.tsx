@@ -35,8 +35,9 @@ export const buttonClassName = cx(`
   data-[size=default]:px-4 data-[size=default]:py-2 data-[size=default]:text-sm
   data-[size=sm]:px-3 data-[size=sm]:py-1 data-[size=sm]:text-xs
   data-disabled:pointer-events-none
-  data-[variant]:data-disabled:bg-gray-100 data-[variant]:data-disabled:text-gray-400
-  data-[variant=outline]:data-disabled:border-gray-200
+  data-[variant]:data-disabled:text-gray-400
+  data-[variant=default]:data-disabled:bg-gray-100
+  data-[variant=outline]:data-disabled:bg-gray-100 data-[variant=outline]:data-disabled:border-gray-200
 `);
 
 export type ButtonProps<TElement extends ElementType = "button"> = Comp0ButtonProps<TElement> & {

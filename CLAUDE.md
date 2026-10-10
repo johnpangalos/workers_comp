@@ -65,11 +65,15 @@ Rules:
 
 A component or page isn't done until a pixel test passes for it:
 
-1. Export the Figma node with the MCP's `get_screenshot` (`contentsOnly: true`, and
-   `maxDimension` set to the node's longer side, so it is 1x) into `apps/playground/figma/`,
-   with a JSON file of the node positions next to it, like `button.json`.
+1. Export the Figma node, fresh, every time you implement or change a design; the tests
+   compare against these files, not live Figma. Two files go in `apps/playground/figma/`:
+   - `<name>.png`: the MCP's `get_screenshot` (`contentsOnly: true`, and `maxDimension` set to
+     the node's longer side, so it is 1x).
+   - `<name>.json`: the output of `figma/export-node.js` (set `NODE_ID`, run it with
+     `use_figma`), saved exactly as returned. It ends in a hash the tests check.
 2. Add a playground page that renders it, and a spec in `apps/playground/tests/` that calls
-   `expectToMatchFigma` (see `button.figma.spec.ts`).
+   `expectToMatchFigmaValues` (exact colours, sizes and type) and `expectToMatchFigma`
+   (pixels); see `button.figma.spec.ts`.
 3. Run `pnpm test:figma`. On a failure, open `apps/playground/playwright-report` and look at
    the Figma, rendered and diff images, then fix the code. Raise the allowed difference only
    for a reason you can name.

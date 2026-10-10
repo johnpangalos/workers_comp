@@ -17,7 +17,7 @@ How the Button got from Figma to code, and the three choices that shape every co
 - **Tailwind is build-time only.** The utilities compile to plain CSS with the token values inlined (`theme(inline)` in `src/theme.css`), and the package ships `dist/styles.css`. Apps import that file once and don't need Tailwind. CSS modules scope the class names, so they can't clash with the app's own Tailwind.
 - **`className` overrides anything.** The module puts the utilities in `@layer components` and declares Tailwind's layer order up front. So in a Tailwind app, utilities in `className` beat the component and preflight stays under it, whichever stylesheet loads first; in any other app, plain (unlayered) CSS beats it. A consumer's `className` is appended as is, never looked up in the module. The playground's `/button/overrides` page shows a pill, a recoloured outline and a disabled pill, and `tests/button.overrides.spec.ts` checks them in Chromium. The flip side: an app's unlayered global `button { … }` reset also beats the component, so resets belong in a layer.
 - **The Button resets the browser's button styles** (margin, border, appearance), so it looks the same with or without a CSS reset.
-- **Disabled is stacked: `data-[variant]:data-disabled:bg-gray-100`.** That compiles to `[data-variant][data-disabled]`, which beats the plain variant colours on specificity, and `pointer-events: none` keeps hover and press from ever applying to a disabled button.
+- **Disabled is stacked per variant: `data-[variant=default]:data-disabled:bg-gray-100`.** That compiles to `[data-variant=default][data-disabled]`, which beats the plain variant colours on specificity, and `pointer-events: none` keeps hover and press from ever applying to a disabled button. The ghost variant has no disabled fill, as in Figma.
 - **`pending`** comes free from comp0: it disables the button and sets `aria-busy` and `data-pending`, which is the start of the loading state in #4.
 - **`type="button"` by default** (comp0 does this). A bare `<button>` inside a `<form>` submits it, which surprises people.
 - **`as`** renders the button as another element, e.g. a router link, with the same styles and keyboard behaviour.
@@ -98,6 +98,10 @@ It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`,
 - **The disabled outline button kept its `gray-400` border**; Figma's is `gray-200`.
 
 Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size and 4% of pixels (glyph edges); the wrong border colour above was 4.6%.
+
+**Exact values, next to the pixels.** The pixel comparison has to forgive text rendering, so a slightly wrong colour can pass it. `expectToMatchFigmaValues` compares what Figma says a node is drawn with (fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles, with no allowance beyond rounding. Its first run found the disabled ghost button had a `gray-100` fill where Figma has none, which the pixels had let through. The Figma side comes from `figma/export-node.js`, run through the Figma MCP; the file it writes ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+
+**The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
 These don't run in CI yet (it needs a Chromium install step and a check that Linux text rendering stays inside the allowance). An axe check per page is still worth adding.
 

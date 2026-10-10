@@ -1,14 +1,12 @@
-import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { expectToMatchFigma, loadFigmaExport, type Region } from "./figma";
+import { expectToMatchFigma, expectToMatchFigmaValues, loadFigmaExport, loadFigmaNodes } from "./figma";
 
-// Every variant of the Figma "Button" component set against the rendered Button.
-const set: { image: string; variants: Record<string, Region> } = JSON.parse(
-  readFileSync(new URL("../figma/button.json", import.meta.url), "utf8"),
-);
-const image = loadFigmaExport(new URL(`../figma/${set.image}`, import.meta.url));
+// Every variant of the Figma "Button" component set against the rendered Button: the values
+// it is drawn with, exactly, and then the pixels.
+const variants = loadFigmaNodes(new URL("../figma/button.json", import.meta.url));
+const image = loadFigmaExport(new URL("../figma/button.png", import.meta.url));
 
-for (const [name, node] of Object.entries(set.variants)) {
+for (const [name, node] of Object.entries(variants)) {
   // "variant=outline, size=sm, state=hover" → { variant: "outline", size: "sm", state: "hover" }
   const { variant, size, state } = Object.fromEntries(name.split(", ").map((pair) => pair.split("=")));
 
@@ -31,6 +29,7 @@ for (const [name, node] of Object.entries(set.variants)) {
       await button.focus();
     }
 
+    await expectToMatchFigmaValues(button, node);
     await expectToMatchFigma(button, { image, node }, testInfo);
   });
 }

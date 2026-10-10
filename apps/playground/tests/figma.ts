@@ -5,6 +5,40 @@ import { PNG } from "pngjs";
 
 export type Region = { x: number; y: number; width: number; height: number };
 
+/** A node as figma/export-node.js describes it: where it is and the values it is drawn with. */
+export type FigmaNode = Region & {
+  fill: string | null;
+  stroke: string | null;
+  strokeWeight: number;
+  radius: number;
+  rings: [color: string, spread: number][];
+  label: {
+    x: number;
+    y: number;
+    height: number;
+    color: string;
+    fontSize: number;
+    fontWeight: number;
+    lineHeight: number;
+  } | null;
+};
+
+/**
+ * Reads a file written by figma/export-node.js. Its last line is a hash of the rest, so a
+ * copy that lost or changed a character throws here instead of testing against wrong numbers.
+ */
+export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
+  const text = readFileSync(url, "utf8");
+  const body = text.slice(0, text.lastIndexOf('  "hash"'));
+  let hash = 5381;
+  for (let i = 0; i < body.length; i++) hash = ((hash * 33) ^ body.charCodeAt(i)) >>> 0;
+  const { variants, hash: expected } = JSON.parse(text);
+  if (hash.toString(16) !== expected) {
+    throw new Error(`${url.pathname} doesn't match its hash: export it from Figma again`);
+  }
+  return variants;
+}
+
 /** A 1x PNG exported from Figma (the Figma MCP's `get_screenshot`, contents only). */
 export function loadFigmaExport(url: URL): PNG {
   return PNG.sync.read(readFileSync(url));
@@ -80,4 +114,71 @@ export async function expectToMatchFigma(
   expect(ratio, `${differing} of ${width * height} pixels differ from Figma`).toBeLessThanOrEqual(
     maxDiffRatio,
   );
+}
+
+/**
+ * Compares the values an element is drawn with against its Figma node, exactly: fill,
+ * border, radius, focus rings, and the label's colour, type and position. The pixel
+ * comparison has to forgive text rendering, so a slightly wrong colour can slip through it;
+ * this can't be fuzzy about one. Colours may differ by 1 of 255 per channel (rounding).
+ */
+export async function expectToMatchFigmaValues(element: Locator, figma: FigmaNode) {
+  const rendered = await element.evaluate((el) => {
+    // Any CSS colour (oklch included) → "#rrggbb", or null when fully transparent.
+    const context = document.createElement("canvas").getContext("2d", { willReadFrequently: true })!;
+    const hex = (color: string) => {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+      return a === 0 ? null : "#" + [r!, g!, b!].map((c) => c.toString(16).padStart(2, "0")).join("");
+    };
+    const style = getComputedStyle(el);
+    const border = parseFloat(style.borderTopWidth);
+    // box-shadow layers that only spread are rings: [colour, spread], outermost first.
+    const rings = style.boxShadow
+      .split(/,(?![^(]*\))/)
+      .map((layer) => layer.trim().match(/^(.+?) 0px 0px 0px (\d+)px$/))
+      .flatMap((match) => (match && Number(match[2]) > 0 && hex(match[1]!) ? [[hex(match[1]!), Number(match[2])]] : []))
+      .sort((a, b) => (b[1] as number) - (a[1] as number));
+    return {
+      fill: hex(style.backgroundColor),
+      stroke: border > 0 ? hex(style.borderTopColor) : null,
+      strokeWeight: border,
+      radius: parseFloat(style.borderTopLeftRadius),
+      rings,
+      label: {
+        x: parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth),
+        y: parseFloat(style.paddingTop) + border,
+        height: parseFloat(style.lineHeight),
+        color: hex(style.color),
+        fontSize: parseFloat(style.fontSize),
+        fontWeight: Number(style.fontWeight),
+        lineHeight: parseFloat(style.lineHeight),
+      },
+    };
+  });
+
+  const sameColor = (actual: unknown, expected: string | null, what: string) => {
+    if (actual === null || expected === null) return expect(actual, what).toBe(expected);
+    const channels = (color: string) => [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+    const drift = channels(actual as string).map((c, i) => Math.abs(c - channels(expected)[i]!));
+    expect(Math.max(...drift), `${what} is ${actual}, Figma's is ${expected}`).toBeLessThanOrEqual(1);
+  };
+
+  sameColor(rendered.fill, figma.fill, "fill");
+  sameColor(rendered.stroke, figma.stroke, "border");
+  expect(rendered.strokeWeight, "border width").toBe(figma.strokeWeight);
+  expect(rendered.radius, "radius").toBe(figma.radius);
+  // Figma can draw a ring another way (the ghost Button uses a rectangle); the pixels cover that.
+  if (figma.rings.length > 0) {
+    expect(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
+    figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]![0], color, `ring ${i + 1}`));
+  }
+  if (figma.label) {
+    const { color, ...label } = figma.label;
+    const { color: renderedColor, ...renderedLabel } = rendered.label;
+    sameColor(renderedColor, color, "text colour");
+    expect(renderedLabel, "label position and type").toEqual(label);
+  }
 }

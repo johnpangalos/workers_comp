@@ -103,7 +103,7 @@ These don't run in CI yet (it needs a Chromium install step and a check that Lin
 
 **Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.js`).
 
-It fails today for 23 of the 46 colours, and that is a real difference, not a rounding one: Figma holds Tailwind v3's hex values, and Tailwind v4's palette is more vivid. `fuchsia/700` is `#a21caf` in Figma and renders as `#a800b7`. Either the Figma variables take v4's values or `theme.css` pins the palette to Figma's; until one of those happens the check stays red.
+Its first run failed for 23 of the 46 colours, and that was a real difference, not a rounding one: Figma held Tailwind v3's hex values, and Tailwind v4's palette is more vivid (`fuchsia/700` was `#a21caf` in Figma and rendered as `#a800b7`). The Figma variables now hold v4's values, converted from OKLCH to sRGB.
 
 **Behaviour tests: Vitest + Testing Library** (`pnpm test`). 10 tests cover the defaults, each variant's Figma classes, the focus ring, `className` overrides, keyboard activation and disabled behaviour. They run in jsdom, so they test behaviour, not pixels.
 

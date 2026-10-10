@@ -117,4 +117,8 @@ dist
 
 # React Router
 .react-router/
-build/
+apps/playground/build/
+
+# Playwright
+playwright-report/
+test-results/

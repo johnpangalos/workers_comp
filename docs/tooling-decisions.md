@@ -71,20 +71,33 @@ Like Headless UI's, it shows the keys you press in the corner, so keyboard behav
 
 It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`, which is what the Cloudflare Worker serves. The app renders the ui package's *source* through a Vite alias, so editing `button.tsx` updates the page instantly with no rebuild.
 
-**Pixel tests against Figma: Playwright** (`pnpm test:figma`). `apps/playground/figma/` holds 1x exports from Figma and the position of each node in them; `apps/playground/tests/figma.ts` renders a playground page in Chromium, checks the element is within a pixel of the Figma node's size, and diffs the pixels. For the Button, all 30 Figma variants are compared (`/button/figma` is the page it drives, with real hover, press and keyboard focus). Two things it found on its first run:
+**Checking against Figma: a model looks, then the values are measured** (`pnpm test:figma`).
+
+- **Looking** is the skill's job, not the repo's: screenshot the Figma node and the rendered page, compare them, fix what differs.
+- **Measuring** is `expectToMatchFigma` in `apps/playground/tests/figma.ts`. It compares what Figma says a node is drawn with (size, fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles in Chromium. For the Button, all 30 Figma variants are checked, in real hover, press and keyboard-focus states (`/button/figma` is the page it drives). The Figma side is `apps/playground/figma/button.json`, written by `figma/export-node.ts`; it ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+
+Why this shape: an earlier version diffed screenshots pixel by pixel (pngjs and pixelmatch). To compare the approaches, the Button was broken in eight specific ways (Inter 4 for 3.19, a disabled border two shades dark, a fill on the disabled ghost, 8px radius for 6, 14px padding for 16, weight 500 for 600, text one shade light, a 1px ring gap for 2) and each method was run on each, plus an unbroken control:
+
+| | Pixel diff | Exact values | Model looking at screenshots |
+|---|---|---|---|
+| Bugs caught, of 8 | 6 (missed the ghost fill and the text shade; caught the radius on only 4 of 30 variants) | 8 | 7, plus the text shade at low confidence |
+| Unbroken control | passed | passed | reported differences anyway |
+
+The pixel diff was the weakest and the most machinery, so it is gone. The model did far better than expected at finding bugs, with enlarged, identically laid out images, but it never says "match": every report, the control's included, listed the sub-pixel width difference below and a few uncertain items. So it finds things, and the values decide.
+
+Things the checks found in the real Button along the way:
 
 - **Figma's Inter is 3.19; Google Fonts serves Inter 4**, whose letters are about 2% narrower, so the button was 1.5px narrower than in Figma. The playground now serves Inter 3.19 itself (the `inter-ui` package). An app that wants to match the designs has to do the same.
 - **The disabled outline button kept its `gray-400` border**; Figma's is `gray-200`.
+- **The disabled ghost button had a `gray-100` fill**; Figma has none.
 
-Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size and 4% of pixels (glyph edges); the wrong border colour above was 4.6%.
-
-**Exact values, next to the pixels.** The pixel comparison has to forgive text rendering, so a slightly wrong colour can pass it. `expectToMatchFigmaValues` compares what Figma says a node is drawn with (fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles, with no allowance beyond rounding. Its first run found the disabled ghost button had a `gray-100` fill where Figma has none, which the pixels had let through. The Figma side comes from `figma/export-node.ts`, run through the Figma MCP; the file it writes ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size, and 1 of 255 per colour channel for rounding. Figma draws the ghost button's focus ring as a separate rectangle, which the export can't read as a ring, so that ring is only covered by looking.
 
 **The export scripts are TypeScript that runs in Figma.** `figma/` is a small workspace package typed against `@figma/plugin-typings`, so `pnpm typecheck` catches a wrong property name. The scripts execute inside Figma's plugin sandbox, which takes plain JavaScript, so `node figma/print.ts <script> [arguments]` prints one with its types stripped (Node's built-in type stripping) for the MCP's `use_figma`.
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
-These don't run in CI yet (it needs a Chromium install step and a check that Linux text rendering stays inside the allowance). An axe check per page is still worth adding.
+This doesn't run in CI yet (it needs a Chromium install step). An axe check per page is still worth adding.
 
 **Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.ts`).
 

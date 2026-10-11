@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Pixel tests: render playground pages in Chromium and compare them with Figma exports
-// (see figma/ and tests/figma.ts). 1x device scale, because the exports are 1x.
+// Renders playground pages in Chromium and compares the values they are drawn with against
+// Figma's (see figma/ and tests/figma.ts).
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,

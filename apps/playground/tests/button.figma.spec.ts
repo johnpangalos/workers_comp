@@ -1,16 +1,15 @@
 import { expect, test } from "@playwright/test";
-import { expectToMatchFigma, expectToMatchFigmaValues, loadFigmaExport, loadFigmaNodes } from "./figma";
+import { expectToMatchFigma, loadFigmaNodes } from "./figma";
 
 // Every variant of the Figma "Button" component set against the rendered Button: the values
-// it is drawn with, exactly, and then the pixels.
+// each is drawn with, exactly.
 const variants = loadFigmaNodes(new URL("../figma/button.json", import.meta.url));
-const image = loadFigmaExport(new URL("../figma/button.png", import.meta.url));
 
 for (const [name, node] of Object.entries(variants)) {
   // "variant=outline, size=sm, state=hover" → { variant: "outline", size: "sm", state: "hover" }
   const { variant, size, state } = Object.fromEntries(name.split(", ").map((pair) => pair.split("=")));
 
-  test(name, async ({ page }, testInfo) => {
+  test(name, async ({ page }) => {
     await page.goto("/button/figma");
     await page.addStyleTag({ content: "* { transition: none !important; }" });
     // Wait for the label's font; before it loads the button has the fallback font's width.
@@ -29,7 +28,6 @@ for (const [name, node] of Object.entries(variants)) {
       await button.focus();
     }
 
-    await expectToMatchFigmaValues(button, node);
-    await expectToMatchFigma(button, { image, node }, testInfo);
+    await expectToMatchFigma(button, node);
   });
 }

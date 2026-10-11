@@ -12,7 +12,7 @@ Use pnpm.
 ```sh
 pnpm typecheck
 pnpm test         # Vitest: component behaviour, and Figma tokens against the theme
-pnpm test:figma   # Playwright: rendered pages against Figma exports, pixel by pixel
+pnpm test:figma   # Playwright: rendered values (colours, sizes, type) against Figma's, exactly
 pnpm build
 pnpm playground   # http://localhost:5173
 ```
@@ -38,8 +38,8 @@ or the version by hand.
   `/<component>/<page>`.
 - `figma/tokens.json` — a snapshot of the Figma file's variables, text styles and effect
   styles. Refresh it with `figma/export-tokens.ts` (see below for how the scripts run).
-- `apps/playground/figma/` — Figma exports (PNG at 1x, plus node positions) that the pixel
-  tests in `apps/playground/tests/` compare against.
+- `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
+  which the tests in `apps/playground/tests/` compare the rendered page against.
 
 ## Turning Figma into code
 
@@ -76,21 +76,22 @@ Rules:
 
 ## Checking the result against Figma
 
-A component or page isn't done until a pixel test passes for it:
+Two checks, and a component or page isn't done until both are clean. Look first, then measure:
+looking finds what is wrong and where; measuring is the only one that can say "nothing is".
 
-1. Export the Figma node, fresh, every time you implement or change a design; the tests
-   compare against these files, not live Figma. Two files go in `apps/playground/figma/`:
-   - `<name>.png`: the MCP's `get_screenshot` (`contentsOnly: true`, and `maxDimension` set to
-     the node's longer side, so it is 1x).
-   - `<name>.json`: the output of `figma/export-node.ts`, saved exactly as returned. It ends
-     in a hash the tests check.
+1. **Look.** Take a screenshot of the Figma node (the MCP's `get_screenshot`) and one of the
+   rendered page in the same states, enlarge both, and compare them side by side: layout,
+   anything missing, radius, weight, spacing, rings. Fix what you find. Don't treat "I see
+   no difference" as a pass: in a trial a model looking at screenshots found 7 of 8 planted
+   bugs but also reported differences on a correct Button, and it hedged on a text colour
+   one shade off.
+2. **Measure.** Export the node's values, fresh, every time you implement or change a design:
+   run `figma/export-node.ts` and save its output exactly as returned to
+   `apps/playground/figma/<name>.json` (it ends in a hash the tests check). Add a playground
+   page that renders the design and a spec in `apps/playground/tests/` that calls
+   `expectToMatchFigma` for each node; see `button.figma.spec.ts`. Then run `pnpm test:figma`
+   and fix the code until it passes. Never loosen the comparison to make it pass.
 
-   The scripts in `figma/` are TypeScript, typed against Figma's plugin API, but they run
-   inside Figma, not in Node. `node figma/print.ts export-node 1:91` prints the plain
-   JavaScript to pass to the MCP's `use_figma`.
-2. Add a playground page that renders it, and a spec in `apps/playground/tests/` that calls
-   `expectToMatchFigmaValues` (exact colours, sizes and type) and `expectToMatchFigma`
-   (pixels); see `button.figma.spec.ts`.
-3. Run `pnpm test:figma`. On a failure, open `apps/playground/playwright-report` and look at
-   the Figma, rendered and diff images, then fix the code. Raise the allowed difference only
-   for a reason you can name.
+The scripts in `figma/` are TypeScript, typed against Figma's plugin API, but they run inside
+Figma, not in Node. `node figma/print.ts export-node 1:91` prints the plain JavaScript to pass
+to the MCP's `use_figma`.

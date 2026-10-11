@@ -8,6 +8,7 @@ Every Figma variable is a Tailwind v4 default token, and every Figma component p
 
 - [`packages/ui`](packages/ui) — `@workers-comp/ui`, the React components.
 - [`apps/playground`](apps/playground) — a React Router 8 app of example pages. Every file in `apps/playground/app/examples/` is a page.
+- [`plugins/figma-flow`](plugins/figma-flow) — a Claude Code plugin: the skill that turns a Figma frame into React and checks it, and a mod that saves Figma exports and holds commits until the check passes.
 
 ## Use it in an app
 

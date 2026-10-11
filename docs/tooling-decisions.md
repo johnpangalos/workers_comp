@@ -85,6 +85,17 @@ Why this shape: an earlier version diffed screenshots pixel by pixel (pngjs and 
 
 The pixel diff was the weakest and the most machinery, so it is gone. The model did far better than expected at finding bugs, with enlarged, identically laid out images, but it never says "match": every report, the control's included, listed the sub-pixel width difference below and a few uncertain items. So it finds things, and the values decide.
 
+**The skill and the mod: `plugins/figma-flow`.** A Claude Code plugin that packages this flow. The skill reads the design, stops on gaps, exports Figma's values, builds, has a fresh agent (`figma-flow:looker`) compare screenshots, then measures. The mod does what instructions can't: it writes a marked `use_figma` result straight to a file, so the model no longer retypes an export, and it holds `git commit` and `git push` after design edits until a command containing `test:figma` passes (`/figma-flow release` lifts it). `claude --plugin-dir plugins/figma-flow` loads it.
+
+The looker was tried again as the plugin defines it, twice per case, on a smaller model (Sonnet):
+
+| | Rated `likely` in both runs | Only `unsure`, or in one run |
+|---|---|---|
+| Planted bugs | disabled border, ghost fill, padding, ring gap, font version | radius and weight (only `unsure`), text shade (`likely` once) |
+| Unbroken control | reported the sub-pixel width as `likely` both times | |
+
+So the looker runs on the most capable model, every `unsure` finding becomes a measurement, and the sub-pixel width is never a reason to stop: the control is never "clean" to a model, which is why the measurement, enforced by the mod, is what ends the work.
+
 Things the checks found in the real Button along the way:
 
 - **Figma's Inter is 3.19; Google Fonts serves Inter 4**, whose letters are about 2% narrower, so the button was 1.5px narrower than in Figma. The playground now serves Inter 3.19 itself (the `inter-ui` package). An app that wants to match the designs has to do the same.

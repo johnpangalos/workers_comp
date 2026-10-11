@@ -76,6 +76,10 @@ Rules:
 
 ## Checking the result against Figma
 
+The [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill runs this
+flow when it is installed; what follows is what it expects of this repo, and what to do by
+hand without it.
+
 Two checks, and a component or page isn't done until both are clean. Look first, then measure:
 looking finds what is wrong and where; measuring is the only one that can say "nothing is".
 

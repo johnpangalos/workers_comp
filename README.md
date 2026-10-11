@@ -8,7 +8,6 @@ Every Figma variable is a Tailwind v4 default token, and every Figma component p
 
 - [`packages/ui`](packages/ui) — `@workers-comp/ui`, the React components.
 - [`apps/playground`](apps/playground) — a React Router 8 app of example pages. Every file in `apps/playground/app/examples/` is a page.
-- [`plugins/figma-flow`](plugins/figma-flow) — a Claude Code plugin: the skill that turns a Figma frame into React and checks it, and a mod that saves Figma exports and holds commits until the check passes.
 
 ## Use it in an app
 
@@ -34,5 +33,7 @@ pnpm changeset   # describe a change for the next release
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): add the Input component`); PR titles too, since PRs are squash-merged. A PR that changes `@workers-comp/ui` also adds a changeset (`pnpm changeset`), which becomes the next version and CHANGELOG entry.
+
+New components and pages are built from Figma with the [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill, which uses the scripts in `figma/` and `pnpm test:figma`.
 
 Why things are set up this way (headless libraries, publishing, playgrounds): [docs/tooling-decisions.md](docs/tooling-decisions.md).

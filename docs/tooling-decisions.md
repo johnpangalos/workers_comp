@@ -78,13 +78,15 @@ It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`,
 
 Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size and 4% of pixels (glyph edges); the wrong border colour above was 4.6%.
 
-**Exact values, next to the pixels.** The pixel comparison has to forgive text rendering, so a slightly wrong colour can pass it. `expectToMatchFigmaValues` compares what Figma says a node is drawn with (fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles, with no allowance beyond rounding. Its first run found the disabled ghost button had a `gray-100` fill where Figma has none, which the pixels had let through. The Figma side comes from `figma/export-node.js`, run through the Figma MCP; the file it writes ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+**Exact values, next to the pixels.** The pixel comparison has to forgive text rendering, so a slightly wrong colour can pass it. `expectToMatchFigmaValues` compares what Figma says a node is drawn with (fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles, with no allowance beyond rounding. Its first run found the disabled ghost button had a `gray-100` fill where Figma has none, which the pixels had let through. The Figma side comes from `figma/export-node.ts`, run through the Figma MCP; the file it writes ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+
+**The export scripts are TypeScript that runs in Figma.** `figma/` is a small workspace package typed against `@figma/plugin-typings`, so `pnpm typecheck` catches a wrong property name. The scripts execute inside Figma's plugin sandbox, which takes plain JavaScript, so `node figma/print.ts <script> [arguments]` prints one with its types stripped (Node's built-in type stripping) for the MCP's `use_figma`.
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
 These don't run in CI yet (it needs a Chromium install step and a check that Linux text rendering stays inside the allowance). An axe check per page is still worth adding.
 
-**Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.js`).
+**Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.ts`).
 
 Its first run failed for 23 of the 46 colours, and that was a real difference, not a rounding one: Figma held Tailwind v3's hex values, and Tailwind v4's palette is more vivid (`fuchsia/700` was `#a21caf` in Figma and rendered as `#a800b7`). The Figma variables now hold v4's values, converted from OKLCH to sRGB.
 

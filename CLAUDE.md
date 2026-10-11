@@ -37,7 +37,7 @@ or the version by hand.
 - `apps/playground/app/examples/<component>/<page>.tsx` — every file is a page at
   `/<component>/<page>`.
 - `figma/tokens.json` — a snapshot of the Figma file's variables, text styles and effect
-  styles. Refresh it by running `figma/export-tokens.js` through the Figma MCP's `use_figma`.
+  styles. Refresh it with `figma/export-tokens.ts` (see below for how the scripts run).
 - `apps/playground/figma/` — Figma exports (PNG at 1x, plus node positions) that the pixel
   tests in `apps/playground/tests/` compare against.
 
@@ -82,8 +82,12 @@ A component or page isn't done until a pixel test passes for it:
    compare against these files, not live Figma. Two files go in `apps/playground/figma/`:
    - `<name>.png`: the MCP's `get_screenshot` (`contentsOnly: true`, and `maxDimension` set to
      the node's longer side, so it is 1x).
-   - `<name>.json`: the output of `figma/export-node.js` (set `NODE_ID`, run it with
-     `use_figma`), saved exactly as returned. It ends in a hash the tests check.
+   - `<name>.json`: the output of `figma/export-node.ts`, saved exactly as returned. It ends
+     in a hash the tests check.
+
+   The scripts in `figma/` are TypeScript, typed against Figma's plugin API, but they run
+   inside Figma, not in Node. `node figma/print.ts export-node 1:91` prints the plain
+   JavaScript to pass to the MCP's `use_figma`.
 2. Add a playground page that renders it, and a spec in `apps/playground/tests/` that calls
    `expectToMatchFigmaValues` (exact colours, sizes and type) and `expectToMatchFigma`
    (pixels); see `button.figma.spec.ts`.

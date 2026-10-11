@@ -4,7 +4,7 @@ import ourTheme from "./theme.css?raw";
 
 /**
  * Figma must not drift from the Tailwind theme. figma/tokens.json is a snapshot of the
- * Figma file's variables and styles (refresh it with figma/export-tokens.js); every one
+ * Figma file's variables and styles (refresh it with figma/export-tokens.ts); every one
  * has to resolve to a token in the theme the components are compiled against, with the
  * same value. A Figma variable that isn't a Tailwind default fails here until it is added
  * to src/theme.css under the same name.

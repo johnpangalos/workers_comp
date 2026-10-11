@@ -77,8 +77,9 @@ Rules:
 ## Checking the result against Figma
 
 The [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill runs this
-flow when it is installed; what follows is what it expects of this repo, and what to do by
-hand without it.
+flow when it is installed, handing the build to feature-flow-lite. Both read
+[FEATURE_FLOW.md](FEATURE_FLOW.md) for this repo's checks, conventions and where the Figma
+pieces live. What follows is what to do by hand without them.
 
 Two checks, and a component or page isn't done until both are clean. Look first, then measure:
 looking finds what is wrong and where; measuring is the only one that can say "nothing is".

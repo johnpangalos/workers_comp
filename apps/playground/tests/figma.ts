@@ -48,15 +48,17 @@ export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
  * and a browser doesn't, so anything that hugs text differs by a fraction. Colours may
  * differ by 1 of 255 per channel (rounding).
  *
+ * Every comparison is soft: one run reports each value that differs, not only the first.
+ *
  * Pass `width: false` where the width can't be compared: the element's text differs from the
  * Figma node's (a state variant labelled "Tab"), or it holds several text-hugging children,
  * whose fractions add up past a pixel.
  */
 export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { width = true } = {}) {
   const box = await element.boundingBox();
-  expect(box, "element is not rendered").not.toBeNull();
+  expect(box, "element is not rendered").not.toBeNull(); // hard: nothing else can be measured
   for (const side of width ? (["width", "height"] as const) : (["height"] as const)) {
-    expect(
+    expect.soft(
       Math.abs(box![side] - figma[side]),
       `${side} is ${box![side]}px, Figma's is ${figma[side]}px`,
     ).toBeLessThan(1);
@@ -108,26 +110,26 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
   });
 
   const sameColor = (actual: unknown, expected: string | null, what: string) => {
-    if (actual === null || expected === null) return expect(actual, what).toBe(expected);
+    if (actual === null || expected === null) return expect.soft(actual, what).toBe(expected);
     const channels = (color: string) => [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
     const drift = channels(actual as string).map((c, i) => Math.abs(c - channels(expected)[i]!));
-    expect(Math.max(...drift), `${what} is ${actual}, Figma's is ${expected}`).toBeLessThanOrEqual(1);
+    expect.soft(Math.max(...drift), `${what} is ${actual}, Figma's is ${expected}`).toBeLessThanOrEqual(1);
   };
 
   sameColor(rendered.fill, figma.fill, "fill");
   sameColor(rendered.stroke, figma.stroke, "border");
-  expect(rendered.strokeWeight, "border width").toBe(figma.strokeWeight);
-  expect(rendered.radius, "radius").toBe(figma.radius);
+  expect.soft(rendered.strokeWeight, "border width").toBe(figma.strokeWeight);
+  expect.soft(rendered.radius, "radius").toBe(figma.radius);
   // Figma can draw a ring another way (the ghost Button uses a rectangle), which this can't read.
   if (figma.rings.length > 0) {
-    expect(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
+    expect.soft(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
     figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]![0], color, `ring ${i + 1}`));
   }
-  if (figma.layout) expect(rendered.layout, "direction, gap and padding").toEqual(figma.layout);
+  if (figma.layout) expect.soft(rendered.layout, "direction, gap and padding").toEqual(figma.layout);
   if (figma.label) {
     const { color, ...label } = figma.label;
     const { color: renderedColor, ...renderedLabel } = rendered.label;
     sameColor(renderedColor, color, "text colour");
-    expect(renderedLabel, "label position and type").toEqual(label);
+    expect.soft(renderedLabel, "label position and type").toEqual(label);
   }
 }

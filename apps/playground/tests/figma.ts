@@ -19,6 +19,8 @@ export type FigmaNode = Region & {
     fontWeight: number;
     lineHeight: number;
   } | null;
+  /** Present when the node lays out two or more children. Padding is top, right, bottom, left. */
+  layout?: { direction: "row" | "column"; gap: number; padding: [number, number, number, number] };
 };
 
 /**
@@ -45,11 +47,15 @@ export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
  * Two allowances. The box may be under a pixel off: Figma snaps a text box to whole pixels
  * and a browser doesn't, so anything that hugs text differs by a fraction. Colours may
  * differ by 1 of 255 per channel (rounding).
+ *
+ * Pass `width: false` where the width can't be compared: the element's text differs from the
+ * Figma node's (a state variant labelled "Tab"), or it holds several text-hugging children,
+ * whose fractions add up past a pixel.
  */
-export async function expectToMatchFigma(element: Locator, figma: FigmaNode) {
+export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { width = true } = {}) {
   const box = await element.boundingBox();
   expect(box, "element is not rendered").not.toBeNull();
-  for (const side of ["width", "height"] as const) {
+  for (const side of width ? (["width", "height"] as const) : (["height"] as const)) {
     expect(
       Math.abs(box![side] - figma[side]),
       `${side} is ${box![side]}px, Figma's is ${figma[side]}px`,
@@ -74,7 +80,16 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode) {
       .map((layer) => layer.trim().match(/^(.+?) 0px 0px 0px (\d+)px$/))
       .flatMap((match) => (match && Number(match[2]) > 0 && hex(match[1]!) ? [[hex(match[1]!), Number(match[2])]] : []))
       .sort((a, b) => (b[1] as number) - (a[1] as number));
+    const px = (value: string) => parseFloat(value) || 0;
     return {
+      layout: {
+        direction: style.flexDirection.startsWith("column") ? "column" : "row",
+        gap: px(style.flexDirection.startsWith("column") ? style.rowGap : style.columnGap),
+        // Figma's padding is measured from the node's edge, so a border counts towards it.
+        padding: (["Top", "Right", "Bottom", "Left"] as const).map(
+          (side) => px(style[`padding${side}`]) + px(style[`border${side}Width`]),
+        ),
+      },
       fill: hex(style.backgroundColor),
       stroke: border > 0 ? hex(style.borderTopColor) : null,
       strokeWeight: border,
@@ -108,6 +123,7 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode) {
     expect(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
     figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]![0], color, `ring ${i + 1}`));
   }
+  if (figma.layout) expect(rendered.layout, "direction, gap and padding").toEqual(figma.layout);
   if (figma.label) {
     const { color, ...label } = figma.label;
     const { color: renderedColor, ...renderedLabel } = rendered.label;

@@ -58,12 +58,14 @@ none
   file key `5OcRRw5a7qZGsgC43FjCp9`. One page per component.
 - Mapping: CLAUDE.md, "Turning Figma into code". Tokens are checked against the theme by
   `packages/ui/src/theme.test.ts` from the snapshot in `figma/tokens.json`.
-- Export: `node figma/print.ts export-node <node id>` prints the script for `use_figma`; save
-  the result to `apps/playground/figma/<name>.json`. `export-tokens` refreshes
+- Export: `node figma/print.ts export-node <node id> [<node id>…]` prints the script for
+  `use_figma`; save the result to `apps/playground/figma/<name>.json`. Several ids go in one
+  file; a node that lays out children also gets its gap, padding and an entry per child. `export-tokens` refreshes
   `figma/tokens.json` the same way.
 - Measure: `pnpm test:figma`, specs in `apps/playground/tests/` calling `expectToMatchFigma`.
 - Page: `apps/playground/app/examples/<component>/figma.tsx`, served at
   `/<component>/figma` by `pnpm playground`.
 - Can't be measured: a focus ring Figma draws as a separate rectangle (the ghost Button's),
-  and anything about layout between elements, since the export describes each node alone.
+  and positions across text-hugging siblings, whose fractions of a pixel add up, so a
+  container's width is compared only when it holds one of them.
   Widths that hug text are allowed under 1px of difference.

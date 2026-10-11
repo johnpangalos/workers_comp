@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  # PRs are squash-merged, so the PR title becomes the commit release-please reads.
+  # PRs are squash-merged, so the PR title becomes the commit on main.
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest

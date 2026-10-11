@@ -22,9 +22,13 @@ pnpm playground   # http://localhost:5173
 Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org):
 `type(scope): summary`, e.g. `feat(ui): add the Input component`, `fix(ui): …`,
 `docs: …`, `test(playground): …`, `chore: …`; `feat!:` for a breaking change. PRs are
-squash-merged, so the PR title is the commit release-please reads, and CI checks it. Only
-`feat` and `fix` commits that touch `packages/ui` produce a release of `@workers-comp/ui`.
-Never edit `CHANGELOG.md` or the version by hand: release-please owns them.
+squash-merged, so the PR title is the commit on `main`, and CI checks it.
+
+Versions come from Changesets, not from commit titles. A PR that changes what
+`@workers-comp/ui` ships adds a file in `.changeset/` (`pnpm changeset`, or write it by hand
+like the existing ones): `patch` for a fix, `minor` for something new, `major` for a breaking
+change, and one or two sentences for the people using the package. Never edit `CHANGELOG.md`
+or the version by hand.
 
 ## Where things live
 

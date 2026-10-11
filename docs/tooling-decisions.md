@@ -41,19 +41,20 @@ Alternatives considered: React Aria Components (the same `data-*` state model, l
 
 ## Publishing
 
-**npm, scoped as `@workers-comp/ui`, versioned by release-please from conventional commits and published from GitHub Actions.**
+**npm, scoped as `@workers-comp/ui`, versioned with Changesets and published from GitHub Actions.**
 
 - **Build: tsdown.** One step writes `dist/index.js`, the `.d.ts` files and `dist/styles.css`. Its CSS support (`@tsdown/css`) runs `src/tailwind.module.css` through PostCSS with `@tailwindcss/postcss`, then scopes the class names as CSS modules. React is a peer dependency, so the app's copy is used; Tailwind is not a dependency of consumers at all. The tests and the playground read the package's source through Vite (`@tailwindcss/vite` in the playground), so the same module is compiled by two toolchains; the pixel tests cover the playground's, and the built stylesheet was checked separately on a page with no Tailwind.
 - **CSS: ship compiled CSS.** `@workers-comp/ui/styles.css` is plain CSS (about 7 kB) with scoped class names and the Figma token values inlined. Verified in Chromium with a scratch app that has no Tailwind: every variant, hover, disabled state and a plain-CSS `border-radius` override render as in Figma, and in the Tailwind playground `rounded-full` and `border-fuchsia-700` in `className` override the component.
-- **Versioning: release-please.** Commits on `main` follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): …`, `fix(ui): …`, `feat!: …` for a breaking change). PRs are squash-merged, so the PR title is that commit, and CI checks it. `.github/workflows/release.yml` runs release-please on every push to `main`: it keeps a "release" PR open with the next version of `@workers-comp/ui` and its CHANGELOG, worked out from the commits that touched `packages/ui`. Merging that PR tags the release and the same workflow publishes it. Before 1.0, a `feat` bumps the minor version and a `fix` the patch.
+- **Versioning: Changesets.** Each PR that changes the package adds a small markdown file saying what changed, for the people using it, and whether it's a patch, minor or major (`pnpm changeset`). `.github/workflows/release.yml` runs on every push to `main`: while there are changeset files, it keeps a "Version Packages" PR open that bumps the version and writes the CHANGELOG; merging *that* publishes. release-please was tried and dropped: it works the version out from commit titles, and here the release note is written on purpose instead.
+- **Commits: Conventional Commits.** Commit messages and PR titles are `type(scope): summary` (`feat(ui): …`, `fix(ui): …`). PRs are squash-merged, so the PR title is the commit on `main`, and CI checks it. This is for a readable history; it doesn't drive versions.
 - **Where:** public npm if this can be open source (free, works everywhere). If it must be private, GitHub Packages works with the same setup plus an `.npmrc` in consuming apps.
 
 Two things only the repo owner can do before the first release works:
 
-- **Let Actions open PRs.** In the repo's Settings → Actions → General, turn on "Allow GitHub Actions to create and approve pull requests", or release-please can't open its release PR.
-- **npm.** Claim the `@workers-comp` scope, publish the package once by hand (`pnpm build`, then `npm publish --access public` in `packages/ui`), then add this repo and `release.yml` as a trusted publisher in the package's settings on npmjs.com. After that the workflow publishes with no token secret.
+- **Let Actions open PRs.** In the repo's Settings → Actions → General, turn on "Allow GitHub Actions to create and approve pull requests", or the workflow can't open its "Version Packages" PR.
+- **npm.** Claim the `@workers-comp` scope and add an npm access token that can publish to it as the `NPM_TOKEN` repository secret.
 
-A PR opened by the workflow's own token doesn't trigger CI, so the release PR shows no checks; it only changes the version and the CHANGELOG.
+A PR opened by the workflow's own token doesn't trigger CI, so the "Version Packages" PR shows no checks; it only changes the version and the CHANGELOG.
 
 ## Testing and playgrounds
 

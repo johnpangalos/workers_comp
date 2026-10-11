@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "description": "Workers Comp design system components (React, plain CSS; no Tailwind needed)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnpangalos/workers_comp.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "sideEffects": [
     "**/*.css"

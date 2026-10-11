@@ -29,7 +29,8 @@ pnpm test        # Vitest + Testing Library
 pnpm test:figma  # Playwright: rendered pages against Figma exports
 pnpm typecheck
 pnpm build       # tsdown → packages/ui/dist (index.js, styles.css, types)
-pnpm changeset   # describe a change for the next release
 ```
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): add the Input component`); PR titles too, since PRs are squash-merged. release-please turns them into the next version and CHANGELOG.
 
 Why things are set up this way (headless libraries, publishing, playgrounds): [docs/tooling-decisions.md](docs/tooling-decisions.md).

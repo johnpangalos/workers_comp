@@ -7,10 +7,6 @@
     "test": "pnpm -r test",
     "test:figma": "pnpm --filter @workers-comp/playground test:figma",
     "typecheck": "pnpm -r typecheck",
-    "changeset": "changeset",
     "playground": "pnpm --filter @workers-comp/playground dev"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^3.0.3"
   }
 }

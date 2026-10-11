@@ -17,6 +17,15 @@ pnpm build
 pnpm playground   # http://localhost:5173
 ```
 
+## Commits and releases
+
+Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org):
+`type(scope): summary`, e.g. `feat(ui): add the Input component`, `fix(ui): …`,
+`docs: …`, `test(playground): …`, `chore: …`; `feat!:` for a breaking change. PRs are
+squash-merged, so the PR title is the commit release-please reads, and CI checks it. Only
+`feat` and `fix` commits that touch `packages/ui` produce a release of `@workers-comp/ui`.
+Never edit `CHANGELOG.md` or the version by hand: release-please owns them.
+
 ## Where things live
 
 - `packages/ui/src/<component>/` — the React components (`@workers-comp/ui`), one folder each.

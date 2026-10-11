@@ -41,41 +41,19 @@ Alternatives considered: React Aria Components (the same `data-*` state model, l
 
 ## Publishing
 
-**Recommendation: npm, scoped as `@workers-comp/ui`, versioned with Changesets and published from GitHub Actions.**
+**npm, scoped as `@workers-comp/ui`, versioned by release-please from conventional commits and published from GitHub Actions.**
 
 - **Build: tsdown.** One step writes `dist/index.js`, the `.d.ts` files and `dist/styles.css`. Its CSS support (`@tsdown/css`) runs `src/tailwind.module.css` through PostCSS with `@tailwindcss/postcss`, then scopes the class names as CSS modules. React is a peer dependency, so the app's copy is used; Tailwind is not a dependency of consumers at all. The tests and the playground read the package's source through Vite (`@tailwindcss/vite` in the playground), so the same module is compiled by two toolchains; the pixel tests cover the playground's, and the built stylesheet was checked separately on a page with no Tailwind.
 - **CSS: ship compiled CSS.** `@workers-comp/ui/styles.css` is plain CSS (about 7 kB) with scoped class names and the Figma token values inlined. Verified in Chromium with a scratch app that has no Tailwind: every variant, hover, disabled state and a plain-CSS `border-radius` override render as in Figma, and in the Tailwind playground `rounded-full` and `border-fuchsia-700` in `className` override the component.
-- **Versioning: Changesets.** Each PR adds a small markdown file saying what changed and whether it's a patch, minor or major (`pnpm changeset`). This PR includes one. On merge, a bot opens a "Version packages" PR that bumps the version and writes the CHANGELOG; merging *that* publishes.
+- **Versioning: release-please.** Commits on `main` follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): …`, `fix(ui): …`, `feat!: …` for a breaking change). PRs are squash-merged, so the PR title is that commit, and CI checks it. `.github/workflows/release.yml` runs release-please on every push to `main`: it keeps a "release" PR open with the next version of `@workers-comp/ui` and its CHANGELOG, worked out from the commits that touched `packages/ui`. Merging that PR tags the release and the same workflow publishes it. Before 1.0, a `feat` bumps the minor version and a `fix` the patch.
 - **Where:** public npm if this can be open source (free, works everywhere). If it must be private, GitHub Packages works with the same setup plus an `.npmrc` in consuming apps.
 
-Not set up yet, deliberately: the release workflow. It needs an `NPM_TOKEN` secret (or npm trusted publishing) and the `@workers-comp` scope claimed on npm, both of which only you can do. When ready, add `.github/workflows/release.yml`:
+Two things only the repo owner can do before the first release works:
 
-```yaml
-name: Release
-on:
-  push:
-    branches: [main]
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm, registry-url: "https://registry.npmjs.org" }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - uses: changesets/action@v1
-        with:
-          publish: pnpm changeset publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
+- **Let Actions open PRs.** In the repo's Settings → Actions → General, turn on "Allow GitHub Actions to create and approve pull requests", or release-please can't open its release PR.
+- **npm.** Claim the `@workers-comp` scope, publish the package once by hand (`pnpm build`, then `npm publish --access public` in `packages/ui`), then add this repo and `release.yml` as a trusted publisher in the package's settings on npmjs.com. After that the workflow publishes with no token secret.
+
+A PR opened by the workflow's own token doesn't trigger CI, so the release PR shows no checks; it only changes the version and the CHANGELOG.
 
 ## Testing and playgrounds
 

@@ -2,10 +2,26 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, edited, synchronize, reopened]
   push:
     branches: [main]
 
 jobs:
+  # PRs are squash-merged, so the PR title becomes the commit release-please reads.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title is a conventional commit
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?!?: .+'
+          if ! printf '%s' "$TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title must be a conventional commit, e.g. \"feat(ui): add the Input component\". Got: $TITLE"
+            exit 1
+          fi
+
   check:
     runs-on: ubuntu-latest
     steps:

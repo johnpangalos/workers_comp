@@ -117,4 +117,4 @@ dist
 
 # React Router
 .react-router/
-build/
+apps/playground/build/

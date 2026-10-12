@@ -57,11 +57,11 @@ none
 - Source: [Workers Comp Design System](https://www.figma.com/design/5OcRRw5a7qZGsgC43FjCp9),
   file key `5OcRRw5a7qZGsgC43FjCp9`. One page per component.
 - Mapping: CLAUDE.md, "Turning Figma into code". Tokens are checked against the theme by
-  `packages/ui/src/theme.test.ts` from the snapshot in `figma/tokens.json`.
-- Export: `node figma/print.ts export-node <node id> [<node id>…]` prints the script for
-  `use_figma`; save the result to `apps/playground/figma/<name>.json`. Several ids go in one
-  file; a node that lays out children also gets its gap, padding and an entry per child. `export-tokens` refreshes
-  `figma/tokens.json` the same way.
+  `packages/ui/src/theme.test.ts` from the snapshot in `packages/ui/src/figma-tokens.json`.
+- Export: the figma-flow skill carries the scripts. Its `export-node <node id> [<node id>…]`
+  result is saved to `apps/playground/figma/<name>.json`; several ids go in one file, and a
+  node that lays out children also gets its gap, padding and an entry per child. Its
+  `export-tokens` refreshes `packages/ui/src/figma-tokens.json`.
 - Measure: `pnpm test:figma`, specs in `apps/playground/tests/` calling `expectToMatchFigma`.
 - Page: `apps/playground/app/examples/<component>/figma.tsx`, served at
   `/<component>/figma` by `pnpm playground`.

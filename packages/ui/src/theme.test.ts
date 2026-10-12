@@ -1,10 +1,10 @@
-import tokens from "../../../figma/tokens.json?raw";
+import tokens from "./figma-tokens.json?raw";
 import tailwindTheme from "tailwindcss/theme.css?raw";
 import ourTheme from "./theme.css?raw";
 
 /**
- * Figma must not drift from the Tailwind theme. figma/tokens.json is a snapshot of the
- * Figma file's variables and styles (refresh it with figma/export-tokens.ts); every one
+ * Figma must not drift from the Tailwind theme. figma-tokens.json is a snapshot of the
+ * Figma file's variables and styles (refresh it with the figma-flow skill's export-tokens); every one
  * has to resolve to a token in the theme the components are compiled against, with the
  * same value. A Figma variable that isn't a Tailwind default fails here until it is added
  * to src/theme.css under the same name.

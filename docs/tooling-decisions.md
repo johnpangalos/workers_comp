@@ -74,7 +74,7 @@ It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`,
 **Checking against Figma: a model looks, then the values are measured** (`pnpm test:figma`).
 
 - **Looking** is the skill's job, not the repo's: screenshot the Figma node and the rendered page, compare them, fix what differs.
-- **Measuring** is `expectToMatchFigma` in `apps/playground/tests/figma.ts`. It compares what Figma says a node is drawn with (size, fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles in Chromium. For the Button, all 30 Figma variants are checked, in real hover, press and keyboard-focus states (`/button/figma` is the page it drives). The Figma side is `apps/playground/figma/button.json`, written by `figma/export-node.ts`; it ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+- **Measuring** is `expectToMatchFigma` in `apps/playground/tests/figma.ts`. It compares what Figma says a node is drawn with (size, fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles in Chromium. For the Button, all 30 Figma variants are checked, in real hover, press and keyboard-focus states (`/button/figma` is the page it drives). The Figma side is `apps/playground/figma/button.json`, written by the figma-flow skill's `export-node`; it ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
 
 Why this shape: an earlier version diffed screenshots pixel by pixel (pngjs and pixelmatch). To compare the approaches, the Button was broken in eight specific ways (Inter 4 for 3.19, a disabled border two shades dark, a fill on the disabled ghost, 8px radius for 6, 14px padding for 16, weight 500 for 600, text one shade light, a 1px ring gap for 2) and each method was run on each, plus an unbroken control:
 
@@ -85,7 +85,7 @@ Why this shape: an earlier version diffed screenshots pixel by pixel (pngjs and 
 
 The pixel diff was the weakest and the most machinery, so it is gone. The model did far better than expected at finding bugs, with enlarged, identically laid out images, but it never says "match": every report, the control's included, listed the sub-pixel width difference below and a few uncertain items. So it finds things, and the values decide.
 
-**The skill and the mod: figma-flow**, in [johnpangalos/skills](https://github.com/johnpangalos/skills/tree/main/figma-flow). A Claude Code plugin that packages this flow; this repo supplies what it needs from a project (the mapping in `CLAUDE.md`, the export scripts in `figma/`, and `pnpm test:figma`). The skill reads the design, stops on gaps, exports Figma's values, builds, has a fresh agent (`figma-flow:looker`) compare screenshots, then measures. The mod does what instructions can't: it writes a marked `use_figma` result straight to a file, so the model no longer retypes an export, and it holds `git commit` and `git push` after design edits until a command containing `test:figma` passes (`/figma-flow release` lifts it). Install it with `npx skills add johnpangalos/skills@figma-flow -g`.
+**The skill and the mod: figma-flow**, in [johnpangalos/skills](https://github.com/johnpangalos/skills/tree/main/figma-flow). A Claude Code plugin that packages this flow: export Figma's values with the scripts it carries, build, measure, then have a fresh agent (`figma-flow:looker`) compare screenshots. Its mod writes a marked `use_figma` result straight to a file, so the model no longer retypes an export, and holds `git commit` and `git push` after design edits until a command containing `test:figma` passes (`/figma-flow release` lifts it). It once handed builds to feature-flow-lite's implementor and reviewer; that was removed after evals showed plain Sonnet and Opus passing every check alone, at a fraction of the cost. Install it with `npx skills add johnpangalos/skills@figma-flow -g`.
 
 The looker was tried again as the plugin defines it, twice per case, on a smaller model (Sonnet):
 
@@ -104,13 +104,13 @@ Things the checks found in the real Button along the way:
 
 Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size, and 1 of 255 per colour channel for rounding. Figma draws the ghost button's focus ring as a separate rectangle, which the export can't read as a ring, so that ring is only covered by looking.
 
-**The export scripts are TypeScript that runs in Figma.** `figma/` is a small workspace package typed against `@figma/plugin-typings`, so `pnpm typecheck` catches a wrong property name. The scripts execute inside Figma's plugin sandbox, which takes plain JavaScript, so `node figma/print.ts <script> [arguments]` prints one with its types stripped (Node's built-in type stripping) for the MCP's `use_figma`.
+**The export scripts live in the figma-flow skill**, in [johnpangalos/skills](https://github.com/johnpangalos/skills/tree/main/figma-flow). They were written here first, but they are the same for every repo and only run inside Figma through the MCP's `use_figma`, so only an agent ever runs them. This repo keeps its own data: the exported values and the specs that measure against them.
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
 This doesn't run in CI yet (it needs a Chromium install step). An axe check per page is still worth adding.
 
-**Token check: Vitest.** `figma/tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (`figma/export-tokens.ts`).
+**Token check: Vitest.** `packages/ui/src/figma-tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (the skill's `export-tokens`).
 
 Its first run failed for 23 of the 46 colours, and that was a real difference, not a rounding one: Figma held Tailwind v3's hex values, and Tailwind v4's palette is more vivid (`fuchsia/700` was `#a21caf` in Figma and rendered as `#a800b7`). The Figma variables now hold v4's values, converted from OKLCH to sRGB.
 

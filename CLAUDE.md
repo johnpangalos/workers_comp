@@ -36,8 +36,8 @@ or the version by hand.
 - `packages/ui/src/theme.css` — the Tailwind theme the components compile against.
 - `apps/playground/app/examples/<component>/<page>.tsx` — every file is a page at
   `/<component>/<page>`.
-- `figma/tokens.json` — a snapshot of the Figma file's variables, text styles and effect
-  styles. Refresh it with `figma/export-tokens.ts` (see below for how the scripts run).
+- `packages/ui/src/figma-tokens.json` — a snapshot of the Figma file's variables, text styles
+  and effect styles, which `theme.test.ts` checks against the theme.
 - `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
   which the tests in `apps/playground/tests/` compare the rendered page against.
 
@@ -84,7 +84,7 @@ A component or page isn't done until its measurement passes. Measure to finish; 
 what the measurement can't read.
 
 1. **Export.** Export the node's values, fresh, every time you implement or change a design:
-   run `figma/export-node.ts` and save its output exactly as returned to
+   use the figma-flow skill's `export-node` and save its output exactly as returned to
    `apps/playground/figma/<name>.json` (it ends in a hash the tests check).
 2. **Build**, following the mapping above.
 3. **Measure.** Add a playground page that renders the design and a spec in
@@ -97,6 +97,6 @@ what the measurement can't read.
    "I see no difference" is not a pass: in a trial a model looking at screenshots reported
    differences on a correct Button, so only the measurement can say something matches.
 
-The scripts in `figma/` are TypeScript, typed against Figma's plugin API, but they run inside
-Figma, not in Node. `node figma/print.ts export-node 1:91` prints the plain JavaScript to pass
-to the MCP's `use_figma`.
+The export scripts live in the figma-flow skill, not in this repo, because they only run
+inside Figma through the MCP's `use_figma`. The skill says how to run them; its `export-tokens`
+refreshes `packages/ui/src/figma-tokens.json`.

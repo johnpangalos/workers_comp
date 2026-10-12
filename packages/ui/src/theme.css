@@ -1,16 +1,12 @@
 /*
- * Import after Tailwind in the app's CSS:
+ * The Tailwind theme the components are compiled against. Figma variables are Tailwind's
+ * default tokens, so the only override is the font; any Figma variable that is not a
+ * Tailwind default gets added here under the same name.
  *
- *   @import "tailwindcss";
- *   @import "@workers-comp/ui/theme.css";
- *
- * Figma variables are Tailwind's default theme tokens, so the only override is the font.
- * Any Figma variable that is not a Tailwind default gets added here under the same name.
+ * Consumers don't import this: the built dist/styles.css carries every value it uses.
  */
-@theme {
+@import "tailwindcss/theme.css" theme(inline);
+
+@theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
-
-/* The components ship as compiled JS with Tailwind class strings in it.
-   Point Tailwind at it so those classes end up in the app's CSS. */
-@source "../dist";

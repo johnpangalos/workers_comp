@@ -77,25 +77,25 @@ Rules:
 ## Checking the result against Figma
 
 The [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill runs this
-flow when it is installed, handing the build to feature-flow-lite. Both read
-[FEATURE_FLOW.md](FEATURE_FLOW.md) for this repo's checks, conventions and where the Figma
-pieces live. What follows is what to do by hand without them.
+flow when it is installed. It reads [FEATURE_FLOW.md](FEATURE_FLOW.md) for this repo's checks,
+conventions and where the Figma pieces live. What follows is what to do by hand without it.
 
-Two checks, and a component or page isn't done until both are clean. Look first, then measure:
-looking finds what is wrong and where; measuring is the only one that can say "nothing is".
+A component or page isn't done until its measurement passes. Measure to finish; look to find
+what the measurement can't read.
 
-1. **Look.** Take a screenshot of the Figma node (the MCP's `get_screenshot`) and one of the
-   rendered page in the same states, enlarge both, and compare them side by side: layout,
-   anything missing, radius, weight, spacing, rings. Fix what you find. Don't treat "I see
-   no difference" as a pass: in a trial a model looking at screenshots found 7 of 8 planted
-   bugs but also reported differences on a correct Button, and it hedged on a text colour
-   one shade off.
-2. **Measure.** Export the node's values, fresh, every time you implement or change a design:
+1. **Export.** Export the node's values, fresh, every time you implement or change a design:
    run `figma/export-node.ts` and save its output exactly as returned to
-   `apps/playground/figma/<name>.json` (it ends in a hash the tests check). Add a playground
-   page that renders the design and a spec in `apps/playground/tests/` that calls
-   `expectToMatchFigma` for each node; see `button.figma.spec.ts`. Then run `pnpm test:figma`
-   and fix the code until it passes. Never loosen the comparison to make it pass.
+   `apps/playground/figma/<name>.json` (it ends in a hash the tests check).
+2. **Build**, following the mapping above.
+3. **Measure.** Add a playground page that renders the design and a spec in
+   `apps/playground/tests/` that calls `expectToMatchFigma` for each node; see
+   `button.figma.spec.ts`. The page doesn't have to look like the Figma file. Run
+   `pnpm test:figma` and fix the code until it passes. Never loosen the comparison.
+4. **Look**, for what the export can't describe: a ring Figma draws as a separate shape,
+   shadows with blur, spacing between text-hugging siblings. Compare a screenshot of the
+   Figma node (the MCP's `get_screenshot`) with one of the rendered page in the same states.
+   "I see no difference" is not a pass: in a trial a model looking at screenshots reported
+   differences on a correct Button, so only the measurement can say something matches.
 
 The scripts in `figma/` are TypeScript, typed against Figma's plugin API, but they run inside
 Figma, not in Node. `node figma/print.ts export-node 1:91` prints the plain JavaScript to pass

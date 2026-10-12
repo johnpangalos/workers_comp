@@ -34,6 +34,6 @@ pnpm changeset   # describe a change for the next release
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): add the Input component`); PR titles too, since PRs are squash-merged. A PR that changes `@workers-comp/ui` also adds a changeset (`pnpm changeset`), which becomes the next version and CHANGELOG entry.
 
-New components and pages are built from Figma with the [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill, which uses the scripts in `figma/` and `pnpm test:figma`.
+New components and pages are built from Figma with the [figma-flow](https://github.com/johnpangalos/skills/tree/main/figma-flow) skill, which exports Figma's values and checks the result with `pnpm test:figma`.
 
 Why things are set up this way (headless libraries, publishing, playgrounds): [docs/tooling-decisions.md](docs/tooling-decisions.md).

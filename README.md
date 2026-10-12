@@ -32,4 +32,6 @@ pnpm build       # tsdown → packages/ui/dist (index.js, styles.css, types)
 pnpm changeset   # describe a change for the next release
 ```
 
+Commits follow [Conventional Commits](https://www.conventionalcommits.org) (`feat(ui): add the Input component`); PR titles too, since PRs are squash-merged. A PR that changes `@workers-comp/ui` also adds a changeset (`pnpm changeset`), which becomes the next version and CHANGELOG entry.
+
 Why things are set up this way (headless libraries, publishing, playgrounds): [docs/tooling-decisions.md](docs/tooling-decisions.md).

@@ -13,9 +13,11 @@ How the Button got from Figma to code, and the three choices that shape every co
 | `state` = hover, active, focus, disabled | comp0's `data-hovered`, `data-pressed`, `data-focus-visible`, `data-disabled` (no prop) |
 | `Label` | `children` |
 
-- **Variants are data attributes.** `variant` and `size` render as `data-variant` / `data-size`, and the class list styles them with Tailwind's `data-[variant=outline]:…` variants. The class list is one constant string, so there's no variant table and no class-merging helper. Reading the classes top to bottom reads like the Figma variant grid.
-- **`className` is for layout only** (`w-full`, `mt-4`). It's appended, and it can't restyle a variant because `data-[…]:` selectors are more specific than plain utilities. A new look means a new variant, in Figma first.
-- **Disabled is stacked: `data-[variant]:data-disabled:bg-gray-100`.** A bare `data-disabled:` is exactly as specific as `data-[variant=default]:` and Tailwind emits it first, so a disabled primary button stayed fuchsia. Requiring both attributes makes it more specific, so it wins without `!`. Checked in Chromium: every variant, size, hover, press, keyboard focus ring (and no ring on mouse focus) and disabled state computes to the Figma values.
+- **Classes are inline Tailwind, looked up in one CSS module.** `variant` and `size` render as `data-variant` / `data-size`, and the Button's classes select on them with Tailwind data variants (`data-[variant=outline]:data-hovered:bg-gray-50`), written inline in `button.tsx`. `src/tailwind.module.css` imports Tailwind's utilities, so Tailwind generates a rule for every class the components use and CSS modules gives each its own scoped name (`wc-bg-fuchsia-700-…`). `bindClassNames(styles)` (`src/class-names.ts`, our own take on `classnames/bind`, no dependency) turns the class list into those names. Reading the classes top to bottom reads like the Figma variant grid, there's no hand-written CSS, and there's no custom build step: it is Tailwind and CSS modules, nothing else.
+- **Tailwind is build-time only.** The utilities compile to plain CSS with the token values inlined (`theme(inline)` in `src/theme.css`), and the package ships `dist/styles.css`. Apps import that file once and don't need Tailwind. CSS modules scope the class names, so they can't clash with the app's own Tailwind.
+- **`className` overrides anything.** The module puts the utilities in `@layer components` and declares Tailwind's layer order up front. So in a Tailwind app, utilities in `className` beat the component and preflight stays under it, whichever stylesheet loads first; in any other app, plain (unlayered) CSS beats it. A consumer's `className` is appended as is, never looked up in the module. The playground's `/button/overrides` page shows a pill, a recoloured outline and a disabled pill, and `tests/button.overrides.spec.ts` checks them in Chromium. The flip side: an app's unlayered global `button { … }` reset also beats the component, so resets belong in a layer.
+- **The Button resets the browser's button styles** (margin, border, appearance), so it looks the same with or without a CSS reset.
+- **Disabled is stacked per variant: `data-[variant=default]:data-disabled:bg-gray-100`.** That compiles to `[data-variant=default][data-disabled]`, which beats the plain variant colours on specificity, and `pointer-events: none` keeps hover and press from ever applying to a disabled button. The ghost variant has no disabled fill, as in Figma.
 - **`pending`** comes free from comp0: it disables the button and sets `aria-busy` and `data-pending`, which is the start of the loading state in #4.
 - **`type="button"` by default** (comp0 does this). A bare `<button>` inside a `<form>` submits it, which surprises people.
 - **`as`** renders the button as another element, e.g. a router link, with the same styles and keyboard behaviour.
@@ -39,41 +41,20 @@ Alternatives considered: React Aria Components (the same `data-*` state model, l
 
 ## Publishing
 
-**Recommendation: npm, scoped as `@workers-comp/ui`, versioned with Changesets and published from GitHub Actions.**
+**npm, scoped as `@workers-comp/ui`, versioned with Changesets and published from GitHub Actions.**
 
-- **Build: `tsdown`** (the successor to tsup, built on Rolldown). One ESM bundle plus `.d.ts` types. React and Tailwind are peer dependencies, so the app's copies are used.
-- **CSS: ship class strings, not compiled CSS.** The package exports `theme.css`, which sets the font and contains `@source "../dist"`. That line tells the app's Tailwind to scan the package, so only the classes actually used end up in the app's stylesheet, deduplicated with the app's own. Verified with a scratch app: importing `theme.css` produced `bg-fuchsia-700`, `focus-visible:ring-fuchsia-600` and the `Inter` font stack.
-- **Versioning: Changesets.** Each PR adds a small markdown file saying what changed and whether it's a patch, minor or major (`pnpm changeset`). This PR includes one. On merge, a bot opens a "Version packages" PR that bumps the version and writes the CHANGELOG; merging *that* publishes.
+- **Build: tsdown.** One step writes `dist/index.js`, the `.d.ts` files and `dist/styles.css`. Its CSS support (`@tsdown/css`) runs `src/tailwind.module.css` through PostCSS with `@tailwindcss/postcss`, then scopes the class names as CSS modules. React is a peer dependency, so the app's copy is used; Tailwind is not a dependency of consumers at all. The tests and the playground read the package's source through Vite (`@tailwindcss/vite` in the playground), so the same module is compiled by two toolchains; the pixel tests cover the playground's, and the built stylesheet was checked separately on a page with no Tailwind.
+- **CSS: ship compiled CSS.** `@workers-comp/ui/styles.css` is plain CSS (about 7 kB) with scoped class names and the Figma token values inlined. Verified in Chromium with a scratch app that has no Tailwind: every variant, hover, disabled state and a plain-CSS `border-radius` override render as in Figma, and in the Tailwind playground `rounded-full` and `border-fuchsia-700` in `className` override the component.
+- **Versioning: Changesets.** Each PR that changes the package adds a small markdown file saying what changed, for the people using it, and whether it's a patch, minor or major (`pnpm changeset`). `.github/workflows/release.yml` runs on every push to `main`: while there are changeset files, it keeps a "Version Packages" PR open that bumps the version and writes the CHANGELOG; merging *that* publishes. release-please was tried and dropped: it works the version out from commit titles, and here the release note is written on purpose instead.
+- **Commits: Conventional Commits.** Commit messages and PR titles are `type(scope): summary` (`feat(ui): …`, `fix(ui): …`). PRs are squash-merged, so the PR title is the commit on `main`, and CI checks it. This is for a readable history; it doesn't drive versions.
 - **Where:** public npm if this can be open source (free, works everywhere). If it must be private, GitHub Packages works with the same setup plus an `.npmrc` in consuming apps.
 
-Not set up yet, deliberately: the release workflow. It needs an `NPM_TOKEN` secret (or npm trusted publishing) and the `@workers-comp` scope claimed on npm, both of which only you can do. When ready, add `.github/workflows/release.yml`:
+Two things only the repo owner can do before the first release works:
 
-```yaml
-name: Release
-on:
-  push:
-    branches: [main]
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm, registry-url: "https://registry.npmjs.org" }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - uses: changesets/action@v1
-        with:
-          publish: pnpm changeset publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
+- **Let Actions open PRs.** In the repo's Settings → Actions → General, turn on "Allow GitHub Actions to create and approve pull requests", or the workflow can't open its "Version Packages" PR.
+- **npm.** Claim the `@workers-comp` scope and add an npm access token that can publish to it as the `NPM_TOKEN` repository secret.
+
+A PR opened by the workflow's own token doesn't trigger CI, so the "Version Packages" PR shows no checks; it only changes the version and the CHANGELOG.
 
 ## Testing and playgrounds
 
@@ -90,13 +71,54 @@ Like Headless UI's, it shows the keys you press in the corner, so keyboard behav
 
 It runs in SPA mode (`ssr: false`) and builds to static files in `build/client`, which is what the Cloudflare Worker serves. The app renders the ui package's *source* through a Vite alias, so editing `button.tsx` updates the page instantly with no rebuild.
 
-The next thing worth adding is **Playwright screenshot tests against these pages** (`toHaveScreenshot()`), which catch the "the button got 2px taller" kind of regression, plus an axe check per page.
+**Checking against Figma: a model looks, then the values are measured** (`pnpm test:figma`).
+
+- **Looking** is the skill's job, not the repo's: screenshot the Figma node and the rendered page, compare them, fix what differs.
+- **Measuring** is `expectToMatchFigma` in `apps/playground/tests/figma.ts`. It compares what Figma says a node is drawn with (size, fill, border, radius, focus rings, and the label's colour, size, weight, line height and position) against the browser's computed styles in Chromium. For the Button, all 30 Figma variants are checked, in real hover, press and keyboard-focus states (`/button/figma` is the page it drives). The Figma side is `apps/playground/figma/button.json`, written by the figma-flow skill's `export-node`; it ends in a hash of its contents, which the tests check, so a bad copy fails loudly.
+
+Why this shape: an earlier version diffed screenshots pixel by pixel (pngjs and pixelmatch). To compare the approaches, the Button was broken in eight specific ways (Inter 4 for 3.19, a disabled border two shades dark, a fill on the disabled ghost, 8px radius for 6, 14px padding for 16, weight 500 for 600, text one shade light, a 1px ring gap for 2) and each method was run on each, plus an unbroken control:
+
+| | Pixel diff | Exact values | Model looking at screenshots |
+|---|---|---|---|
+| Bugs caught, of 8 | 6 (missed the ghost fill and the text shade; caught the radius on only 4 of 30 variants) | 8 | 7, plus the text shade at low confidence |
+| Unbroken control | passed | passed | reported differences anyway |
+
+The pixel diff was the weakest and the most machinery, so it is gone. The model did far better than expected at finding bugs, with enlarged, identically laid out images, but it never says "match": every report, the control's included, listed the sub-pixel width difference below and a few uncertain items. So it finds things, and the values decide.
+
+**The skill and the mod: figma-flow**, in [johnpangalos/skills](https://github.com/johnpangalos/skills/tree/main/figma-flow). A Claude Code plugin that packages this flow: export Figma's values with the scripts it carries, build, measure, then have a fresh agent (`figma-flow:looker`) compare screenshots. Its mod writes a marked `use_figma` result straight to a file, so the model no longer retypes an export, and holds `git commit` and `git push` after design edits until a command containing `test:figma` passes (`/figma-flow release` lifts it). It once handed builds to feature-flow-lite's implementor and reviewer; that was removed after evals showed plain Sonnet and Opus passing every check alone, at a fraction of the cost. Install it with `npx skills add johnpangalos/skills@figma-flow -g`.
+
+The looker was tried again as the plugin defines it, twice per case, on a smaller model (Sonnet):
+
+| | Rated `likely` in both runs | Only `unsure`, or in one run |
+|---|---|---|
+| Planted bugs | disabled border, ghost fill, padding, ring gap, font version | radius and weight (only `unsure`), text shade (`likely` once) |
+| Unbroken control | reported the sub-pixel width as `likely` both times | |
+
+So the looker runs on the most capable model, every `unsure` finding becomes a measurement, and the sub-pixel width is never a reason to stop: the control is never "clean" to a model, which is why the measurement, enforced by the mod, is what ends the work.
+
+Things the checks found in the real Button along the way:
+
+- **Figma's Inter is 3.19; Google Fonts serves Inter 4**, whose letters are about 2% narrower, so the button was 1.5px narrower than in Figma. The playground now serves Inter 3.19 itself (the `inter-ui` package). An app that wants to match the designs has to do the same.
+- **The disabled outline button kept its `gray-400` border**; Figma's is `gray-200`.
+- **The disabled ghost button had a `gray-100` fill**; Figma has none.
+
+Sizes can't match to the last fraction: Figma snaps text to whole pixels and browsers don't, so a button that hugs its label is 77.3px wide against Figma's 78. The comparison allows under a pixel of size, and 1 of 255 per colour channel for rounding. Figma draws the ghost button's focus ring as a separate rectangle, which the export can't read as a ring, so that ring is only covered by looking.
+
+**The export scripts live in the figma-flow skill**, in [johnpangalos/skills](https://github.com/johnpangalos/skills/tree/main/figma-flow). They were written here first, but they are the same for every repo and only run inside Figma through the MCP's `use_figma`, so only an agent ever runs them. This repo keeps its own data: the exported values and the specs that measure against them.
+
+**The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
+
+This doesn't run in CI yet (it needs a Chromium install step). An axe check per page is still worth adding.
+
+**Token check: Vitest.** `packages/ui/src/figma-tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (the skill's `export-tokens`).
+
+Its first run failed for 23 of the 46 colours, and that was a real difference, not a rounding one: Figma held Tailwind v3's hex values, and Tailwind v4's palette is more vivid (`fuchsia/700` was `#a21caf` in Figma and rendered as `#a800b7`). The Figma variables now hold v4's values, converted from OKLCH to sRGB.
 
 **Behaviour tests: Vitest + Testing Library** (`pnpm test`). 10 tests cover the defaults, each variant's Figma classes, the focus ring, `className` overrides, keyboard activation and disabled behaviour. They run in jsdom, so they test behaviour, not pixels.
 
 **CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
 
-**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker (`apps/playground/wrangler.jsonc`, named `workers-comp`). The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. Build settings live in the Cloudflare dashboard: root directory `apps/playground`, build command `pnpm install --frozen-lockfile && pnpm build` (outputs `build/client`), build variable `SKIP_DEPENDENCY_INSTALL=1` (Cloudflare would otherwise try npm, which can't install the pnpm workspace), deploy `npx wrangler deploy`, preview `npx wrangler preview`. Nothing in the repo needs secrets for this.
+**Previews on Cloudflare Workers.** The playground is a static-assets-only Worker named `workers-comp`, configured in the root `wrangler.jsonc`. The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. The build lives in the config's `build.command` (install the workspace with pnpm, then build the playground to `apps/playground/build/client`), and wrangler finds the config from the repo root or from `apps/playground`, so the dashboard only needs deploy `npx wrangler deploy` and preview `npx wrangler preview`; the root directory and build command can be left empty. Nothing in the repo needs secrets for this.
 
 ## Note on the Figma MCP
 

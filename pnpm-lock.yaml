@@ -66,6 +66,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@comp0/core':
+        specifier: 0.1.0-next.25
+        version: 0.1.0-next.25(react@19.3.0)
       '@comp0/react':
         specifier: 0.1.0-next.25
         version: 0.1.0-next.25(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

@@ -147,6 +147,14 @@ describe("Chip", () => {
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
     ["the reset of native appearance", "appearance-none"],
     ["no wrapping of the label", "whitespace-nowrap"],
+    ["the 4px horizontal padding", "px-1"],
+    ["the box the fill is placed in", "relative"],
+    ["the stacking context for the fill", "isolate"],
+    ["the clip of the fill below the chip", "overflow-hidden"],
+    ["the white pressed label", "data-pressed:text-white"],
+    ["the white pressed label over the muted one", "data-pressed:data-muted:text-white"],
+    ["the fuchsia pressed underline", "data-pressed:*:data-[slot=underline]:bg-fuchsia-700"],
+    ["the pressed fill slides up into place", "data-pressed:*:data-[slot=fill]:translate-y-0"],
   ])("chipClassName has %s", (_, expected) => {
     expect(chipClassName.split(/\s+/)).toContain(expected);
   });
@@ -167,6 +175,98 @@ describe("Chip", () => {
     expect(underline.getAttribute("class")!.split(/\s+/)).toContain(colour);
     if (tone === null) expect(underline).not.toHaveAttribute("data-tone");
     else expect(underline).toHaveAttribute("data-tone", tone);
+  });
+
+  it("pressing with the pointer sets data-pressed until the button is released", async () => {
+    const user = userEvent.setup();
+    render(<Chip href="#mon">Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip).not.toHaveAttribute("data-pressed");
+    await user.pointer({ keys: "[MouseLeft>]", target: chip });
+    expect(chip).toHaveAttribute("data-pressed", "");
+    await user.pointer({ keys: "[/MouseLeft]", target: chip });
+    expect(chip).not.toHaveAttribute("data-pressed");
+  });
+
+  it("pressing with Enter held sets data-pressed until Enter is released", async () => {
+    const user = userEvent.setup();
+    render(<Chip href="#mon">Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    await user.tab();
+    await user.keyboard("[Enter>]");
+    expect(chip).toHaveAttribute("data-pressed", "");
+    await user.keyboard("[/Enter]");
+    expect(chip).not.toHaveAttribute("data-pressed");
+  });
+
+  it("holding Space on a link doesn't press it: links activate on Enter only", async () => {
+    const user = userEvent.setup();
+    render(<Chip href="#mon">Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    await user.tab();
+    await user.keyboard("[Space>]");
+    expect(chip).not.toHaveAttribute("data-pressed");
+    await user.keyboard("[/Space]");
+  });
+
+  it("the user's onKeyDown still fires alongside the press", async () => {
+    const user = userEvent.setup();
+    const onKeyDown = vi.fn();
+    render(<Chip href="#mon" onKeyDown={onKeyDown}>Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    await user.tab();
+    await user.keyboard("[Enter>]");
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+    expect(chip).toHaveAttribute("data-pressed", "");
+    await user.keyboard("[/Enter]");
+  });
+
+  it("a disabled chip never shows pressed", async () => {
+    const user = userEvent.setup();
+    render(
+      <Chip href="#mon" disabled>
+        Mon
+      </Chip>,
+    );
+    const chip = screen.getByText("Mon").closest("a")!;
+    await user.pointer({ keys: "[MouseLeft>]", target: chip });
+    expect(chip).not.toHaveAttribute("data-pressed");
+    await user.pointer({ keys: "[/MouseLeft]", target: chip });
+  });
+
+  it("the user's onPointerDown and onClick still fire, and the chip is pressed in between", async () => {
+    const user = userEvent.setup();
+    const onPointerDown = vi.fn();
+    const onClick = vi.fn();
+    render(
+      <Chip href="#mon" onPointerDown={onPointerDown} onClick={onClick}>
+        Mon
+      </Chip>,
+    );
+    const chip = screen.getByRole("link", { name: "Mon" });
+    await user.pointer({ keys: "[MouseLeft>]", target: chip });
+    expect(onPointerDown).toHaveBeenCalledTimes(1);
+    expect(chip).toHaveAttribute("data-pressed", "");
+    await user.pointer({ keys: "[/MouseLeft]", target: chip });
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(chip).not.toHaveAttribute("data-pressed");
+  });
+
+  it("has a fill span under the label, aria-hidden, that the pressed state slides up", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    const fill = container.querySelector('[data-slot="fill"]');
+    expect(fill).toBeInTheDocument();
+    expect(fill?.tagName).toBe("SPAN");
+    expect(fill).toHaveAttribute("aria-hidden", "true");
+    expect(fill?.getAttribute("class")!.split(/\s+/)).toEqual(
+      expect.arrayContaining(["absolute", "inset-0", "-z-10", "bg-fuchsia-700", "translate-y-full", "transition-transform"]),
+    );
+  });
+
+  it("the fill and the pressed classes never use arbitrary values", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    const fill = container.querySelector('[data-slot="fill"]')!;
+    expect(fill.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
   });
 
   // Hostile inputs

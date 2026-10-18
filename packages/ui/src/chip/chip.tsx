@@ -58,13 +58,14 @@ const underlineClassName = cx(`
 
 // Three dots, 4px apart (20px across), centred in the underline whatever the label's width.
 // Pressed (`data-pressed` on the row too), the gap closes and each dot widens to a square-ended
-// 8px, so they merge into one 24px dash; the transition animates both ways.
+// 8px, so they merge into one 24px dash. The transition, both ways, is Figma's Smart Animate from
+// default to pressed: 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve, Tailwind's ease-in-out.
 const dotsClassName = cx(`
-  flex gap-1 transition-all
+  flex gap-1 transition-all duration-150 ease-in-out
   data-pressed:gap-0 data-pressed:*:w-2 data-pressed:*:rounded-none
 `);
 
-const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current transition-all`);
+const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current transition-all duration-150 ease-in-out`);
 
 /**
  * `className` is appended as is, after the Chip's own classes, so a consumer's Tailwind

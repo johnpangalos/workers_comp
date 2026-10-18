@@ -64,6 +64,11 @@ none
   result is saved to `apps/playground/figma/<name>.json`; several ids go in one file, and a
   node that lays out children also gets its gap, padding and an entry per child. Its
   `export-tokens` refreshes `packages/ui/src/figma-tokens.json`.
+- Motion: export-node doesn't read prototype transitions. A component that animates gets a
+  Smart Animate reaction in Figma, exported with `apps/playground/figma/export-motion.js` (run
+  through `use_figma`) to `apps/playground/figma/<name>-motion.json`, and a spec that checks the
+  CSS transition's duration and curve against it (`chip.motion.spec.ts`). Pick a curve Tailwind
+  has (`ease-in-out` is cubic-bezier(0.4, 0, 0.2, 1)), so the code stays on theme utilities.
 - Measure: `pnpm test:figma`, specs in `apps/playground/tests/` calling `expectToMatchFigma`.
 - Page: `apps/playground/app/examples/<component>/figma.tsx`, served at
   `/<component>/figma` by `pnpm playground`.

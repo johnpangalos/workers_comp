@@ -33,7 +33,10 @@ export default function DayStrip() {
         {days.map(([id, label, out]) => (
           <section key={id} id={id} className="scroll-mt-20">
             <h2 className="text-lg font-semibold text-gray-900">{label}</h2>
-            <p className="mt-2 text-sm text-gray-700">{out ? "You're out this day." : "Dinner for the table."}</p>
+            <p className="mt-2 text-sm text-gray-700">
+              {out && "You're out this day."}
+              {!out && "Dinner for the table."}
+            </p>
           </section>
         ))}
       </main>

@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { mergeProps, usePress } from "@comp0/core";
+import { dataAttr, mergeProps, usePress } from "@comp0/core";
 import { Link, type LinkProps } from "@comp0/react";
 import { bindClassNames } from "../class-names";
 import styles from "../tailwind.module.css";
@@ -87,27 +87,31 @@ export function Chip<TElement extends ElementType = "a">({
     if (event.key === " ") return;
     pressProps.onKeyDown?.(event);
   };
+  // The underline's tone: current wins over muted.
+  let tone: "current" | "muted" | undefined;
+  if (muted) tone = "muted";
+  if (current) tone = "current";
   return (
     <Link
       // A consumer's handlers run first; the press handlers chain after them.
       {...(mergeProps(props, { ...pressProps, onKeyDown }) as LinkProps<TElement>)}
       disabled={disabled}
       // Presence attributes: `data-muted` / `data-current` / `data-pressed` when true, nothing otherwise.
-      data-muted={muted ? "" : undefined}
-      data-current={current ? "" : undefined}
-      data-pressed={isPressed ? "" : undefined}
+      data-muted={dataAttr(muted)}
+      data-current={dataAttr(current)}
+      data-pressed={dataAttr(isPressed)}
       // A consumer's own aria-current (e.g. "location") wins over the one `current` sets.
-      aria-current={ariaCurrent ?? (current ? "true" : undefined)}
-      className={className ? `${chipClassName} ${className}` : chipClassName}
+      aria-current={ariaCurrent ?? ((current && "true") || undefined)}
+      className={[chipClassName, className].filter(Boolean).join(" ")}
     >
       {children}
       <span
         aria-hidden="true"
         data-slot="underline"
-        data-tone={current ? "current" : muted ? "muted" : undefined}
+        data-tone={tone}
         className={underlineClassName}
       >
-        <span data-slot="dots" data-pressed={isPressed ? "" : undefined} className={dotsClassName}>
+        <span data-slot="dots" data-pressed={dataAttr(isPressed)} className={dotsClassName}>
           {/* Three dots, as Figma draws; the underline is aria-hidden, so so are they. */}
           {Array.from({ length: 3 }, (_, index) => (
             <span key={index} data-slot="dot" className={dotClassName} />

@@ -14,12 +14,14 @@ for (const [name, node] of Object.entries(variants)) {
   const [key, part] = name.replace(/^Chip\//, "").split(" > ");
   const isDots = key!.startsWith("dots ");
   const { muted, current, state } = Object.fromEntries(
-    (isDots ? key!.slice("dots ".length) : key!)
+    key!
+      .replace(/^dots /, "")
       .split(", ")
       .map((pair) => pair.split("=")),
   );
   // The dot a `> dot N` entry is, counting from 1 along the row.
-  const dotIndex = part?.startsWith("dot ") ? Number(part.slice("dot ".length)) : null;
+  let dotIndex: number | null = null;
+  if (part?.startsWith("dot ")) dotIndex = Number(part.slice("dot ".length));
   // The wrapper on the figma page that holds this state: "plain", "muted-current", and so on.
   const chipState = [muted === "true" && "muted", current === "true" && "current"].filter(Boolean).join("-") || "plain";
 
@@ -42,14 +44,10 @@ for (const [name, node] of Object.entries(variants)) {
 
     const underline = chip.locator('[data-slot="underline"]');
     const dots = chip.locator('[data-slot="dots"]');
-    const target =
-      dotIndex !== null
-        ? chip.locator('[data-slot="dot"]').nth(dotIndex - 1)
-        : isDots
-          ? dots
-          : part === "underline"
-            ? underline
-            : chip;
+    let target = chip;
+    if (part === "underline") target = underline;
+    if (isDots) target = dots;
+    if (dotIndex !== null) target = chip.locator('[data-slot="dot"]').nth(dotIndex - 1);
     await expectToMatchFigma(target, node);
     if (isDots || dotIndex !== null) {
       // The row is centred in the underline: Figma's underline and row widths give its place (the

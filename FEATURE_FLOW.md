@@ -69,3 +69,8 @@ none
   and positions across text-hugging siblings, whose fractions of a pixel add up, so a
   container's width is compared only when it holds one of them.
   Widths that hug text are allowed under 1px of difference.
+- Measured exactly, though they look like exceptions: a label's x is where its text starts (after
+  a leading dot or icon, not the padding), and radii are clamped to half the box on both sides,
+  so `rounded-full` matches Figma's `radius/full` (9999).
+- New colours: add the whole Tailwind scale to Figma's Colors collection (v4 values, OKLCH
+  converted to sRGB) and refresh `figma-tokens.json`; never a single shade.

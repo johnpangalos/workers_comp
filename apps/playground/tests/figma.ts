@@ -57,7 +57,9 @@ export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
 export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { width = true } = {}) {
   const box = await element.boundingBox();
   expect(box, "element is not rendered").not.toBeNull(); // hard: nothing else can be measured
-  for (const side of width ? (["width", "height"] as const) : (["height"] as const)) {
+  const sides: ("width" | "height")[] = ["height"];
+  if (width) sides.unshift("width");
+  for (const side of sides) {
     expect.soft(
       Math.abs(box![side] - figma[side]),
       `${side} is ${box![side]}px, Figma's is ${figma[side]}px`,
@@ -72,7 +74,8 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       context.fillStyle = color;
       context.fillRect(0, 0, 1, 1);
       const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
-      return a === 0 ? null : "#" + [r!, g!, b!].map((c) => c.toString(16).padStart(2, "0")).join("");
+      if (a === 0) return null;
+      return "#" + [r!, g!, b!].map((c) => c.toString(16).padStart(2, "0")).join("");
     };
     const style = getComputedStyle(el);
     const border = parseFloat(style.borderTopWidth);
@@ -80,7 +83,8 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
     const rings = style.boxShadow
       .split(/,(?![^(]*\))/)
       .map((layer) => layer.trim().match(/^(.+?) 0px 0px 0px (\d+)px$/))
-      .flatMap((match) => (match && Number(match[2]) > 0 && hex(match[1]!) ? [[hex(match[1]!), Number(match[2])]] : []))
+      .filter((match) => match && Number(match[2]) > 0 && hex(match[1]!))
+      .map((match) => [hex(match![1]!), Number(match![2])])
       .sort((a, b) => (b[1] as number) - (a[1] as number));
     const px = (value: string) => parseFloat(value) || 0;
     // Where the label's text starts, measured from the element's left edge. Not the padding: after
@@ -100,17 +104,25 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       range.setEnd(last, last.length);
       labelX = range.getBoundingClientRect().left - el.getBoundingClientRect().left;
     }
+    let direction: "row" | "column" = "row";
+    let gap = px(style.columnGap);
+    if (style.flexDirection.startsWith("column")) {
+      direction = "column";
+      gap = px(style.rowGap);
+    }
+    let stroke: string | null = null;
+    if (border > 0) stroke = hex(style.borderTopColor);
     return {
       layout: {
-        direction: style.flexDirection.startsWith("column") ? "column" : "row",
-        gap: px(style.flexDirection.startsWith("column") ? style.rowGap : style.columnGap),
+        direction,
+        gap,
         // Figma's padding is measured from the node's edge, so a border counts towards it.
         padding: (["Top", "Right", "Bottom", "Left"] as const).map(
           (side) => px(style[`padding${side}`]) + px(style[`border${side}Width`]),
         ),
       },
       fill: hex(style.backgroundColor),
-      stroke: border > 0 ? hex(style.borderTopColor) : null,
+      stroke,
       strokeWeight: border,
       radius: parseFloat(style.borderTopLeftRadius),
       rings,

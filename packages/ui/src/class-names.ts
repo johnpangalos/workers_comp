@@ -11,7 +11,10 @@ export type ClassValue = string | false | null | undefined | Record<string, unkn
  * are truthy, arrays are flattened, and falsy values are skipped.
  */
 export function bindClassNames(styles: Readonly<Record<string, string>>) {
-  const resolve = (name: string) => (Object.hasOwn(styles, name) ? styles[name]! : name);
+  const resolve = (name: string) => {
+    if (Object.hasOwn(styles, name)) return styles[name]!;
+    return name;
+  };
 
   const collect = (value: ClassValue, out: string[]): void => {
     if (!value) return;

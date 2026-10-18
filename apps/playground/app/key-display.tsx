@@ -26,7 +26,9 @@ export function KeyDisplay() {
   useEffect(() => {
     let id = 0;
     function onKeyDown(event: KeyboardEvent) {
-      const label = labels[event.key] ?? (event.key.length === 1 ? event.key.toUpperCase() : event.key);
+      let label = event.key;
+      if (event.key.length === 1) label = event.key.toUpperCase();
+      label = labels[event.key] ?? label;
       const entry = { id: id++, label };
       setKeys((current) => [...current.slice(-5), entry]);
       setTimeout(() => setKeys((current) => current.filter((k) => k.id !== entry.id)), 1500);

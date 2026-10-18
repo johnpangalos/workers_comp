@@ -60,10 +60,11 @@ export function Badge<TElement extends ElementType = "a">({
   children,
   ...props
 }: BadgeProps<TElement>) {
-  const classes = className ? `${badgeClassName} ${className}` : badgeClassName;
-  const dotElement = dot ? (
+  let classes = badgeClassName;
+  if (className) classes = `${badgeClassName} ${className}`;
+  const dotElement = dot && (
     <span aria-hidden="true" data-slot="dot" data-color={color} className={dotClassName} />
-  ) : null;
+  );
 
   if (as === undefined && href === undefined) {
     // `disabled` only means something on a link; a span would carry it as a stray attribute.

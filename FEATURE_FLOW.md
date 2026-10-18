@@ -10,6 +10,7 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 
 ## Checks
 
+- Full: `pnpm lint`
 - Full: `pnpm typecheck`
 - Full: `pnpm test`
 - Full: `pnpm build`

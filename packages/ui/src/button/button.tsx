@@ -55,12 +55,14 @@ export function Button<TElement extends ElementType = "button">({
   size = "default",
   ...props
 }: ButtonProps<TElement>) {
+  let classes = buttonClassName;
+  if (className) classes = `${buttonClassName} ${className}`;
   return (
     <Comp0Button
       {...(props as Comp0ButtonProps<TElement>)}
       data-variant={variant}
       data-size={size}
-      className={className ? `${buttonClassName} ${className}` : buttonClassName}
+      className={classes}
     />
   );
 }

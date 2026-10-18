@@ -7,12 +7,12 @@ import styles from "../tailwind.module.css";
 /**
  * Mirrors the Figma "Chip" component (Workers Comp Design System, page "Chip", node 39:15): a
  * tab-bar item for a section link, as in a day strip. An uppercase bold label sits over a dotted
- * underline, three 4px round dots centred under the label; there is no box. `muted` is Figma's `muted=true`, the day you're out: the label is gray-500 and the
- * dots gray-100. `current` is `current=true`, the section you're in: the dots are gray-900 and the
+ * underline, three 4px round dots centred under the label; there is no box. `muted` is Figma's
+ * `muted=true`, the day you're out: the label is gray-500 and the dots gray-100. `current` is `current=true`, the section you're in: the dots are gray-900 and the
  * link carries `aria-current`.
  *
- * Pressed (Figma's `state=pressed`) is a fuchsia fill that slides up from the bottom behind the
- * chip, with a white label and fuchsia dots. comp0's Link has no pressed state, so the
+ * Pressed (Figma's `state=pressed`) merges the dots: they turn fuchsia, close the gap and widen
+ * into one square-ended 24px dash, and part again on release. comp0's Link has no pressed state, so the
  * Chip takes `usePress` from `@comp0/core` and reports `data-pressed` for the styles to select on.
  *
  * Behaviour comes from comp0's headless Link, which reports `data-hovered` and
@@ -38,20 +38,14 @@ const cx = bindClassNames(styles);
  * hover and pressed states, which are on the link, reach the underline through the `*:` child
  * variant. That rule is more specific than any tone, so hover and press win whatever the tone,
  * without depending on the order of the stylesheet.
- *
- * The pressed label is white over the muted label too: `data-pressed:data-muted:` is the
- * two-attribute selector that beats `data-muted:text-gray-500` whatever order the CSS loads in.
  */
 export const chipClassName = cx(`
   m-0 appearance-none border-0 border-solid
-  relative isolate overflow-hidden
   inline-flex flex-col gap-1.5 px-1 pt-1.5 rounded-none
   font-sans text-sm font-bold uppercase whitespace-nowrap text-gray-900 no-underline outline-none
   data-muted:text-gray-500
-  data-pressed:text-white data-pressed:data-muted:text-white
   data-hovered:*:data-[slot=underline]:text-fuchsia-700
   data-pressed:*:data-[slot=underline]:text-fuchsia-700
-  data-pressed:*:data-[slot=fill]:translate-y-0
   data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
 `);
 
@@ -63,14 +57,14 @@ const underlineClassName = cx(`
 `);
 
 // Three dots, 4px apart (20px across), centred in the underline whatever the label's width.
-const dotsClassName = cx(`flex gap-1`);
-
-const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current`);
-
-// The fill slab sits below the chip, clipped by its overflow, until the chip is pressed.
-const fillClassName = cx(`
-  absolute inset-0 -z-10 bg-fuchsia-700 translate-y-full transition-transform
+// Pressed (`data-pressed` on the row too), the gap closes and each dot widens to a square-ended
+// 8px, so they merge into one 24px dash; the transition animates both ways.
+const dotsClassName = cx(`
+  flex gap-1 transition-all
+  data-pressed:gap-0 data-pressed:*:w-2 data-pressed:*:rounded-none
 `);
+
+const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current transition-all`);
 
 /**
  * `className` is appended as is, after the Chip's own classes, so a consumer's Tailwind
@@ -106,14 +100,13 @@ export function Chip<TElement extends ElementType = "a">({
       className={className ? `${chipClassName} ${className}` : chipClassName}
     >
       {children}
-      <span aria-hidden="true" data-slot="fill" className={fillClassName} />
       <span
         aria-hidden="true"
         data-slot="underline"
         data-tone={current ? "current" : muted ? "muted" : undefined}
         className={underlineClassName}
       >
-        <span data-slot="dots" className={dotsClassName}>
+        <span data-slot="dots" data-pressed={isPressed ? "" : undefined} className={dotsClassName}>
           {/* Three dots, as Figma draws; the underline is aria-hidden, so so are they. */}
           {Array.from({ length: 3 }, (_, index) => (
             <span key={index} data-slot="dot" className={dotClassName} />

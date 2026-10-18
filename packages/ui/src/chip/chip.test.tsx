@@ -148,13 +148,7 @@ describe("Chip", () => {
     ["the reset of native appearance", "appearance-none"],
     ["no wrapping of the label", "whitespace-nowrap"],
     ["the 4px horizontal padding", "px-1"],
-    ["the box the fill is placed in", "relative"],
-    ["the stacking context for the fill", "isolate"],
-    ["the clip of the fill below the chip", "overflow-hidden"],
-    ["the white pressed label", "data-pressed:text-white"],
-    ["the white pressed label over the muted one", "data-pressed:data-muted:text-white"],
     ["the fuchsia pressed underline", "data-pressed:*:data-[slot=underline]:text-fuchsia-700"],
-    ["the pressed fill slides up into place", "data-pressed:*:data-[slot=fill]:translate-y-0"],
   ])("chipClassName has %s", (_, expected) => {
     expect(chipClassName.split(/\s+/)).toContain(expected);
   });
@@ -307,21 +301,25 @@ describe("Chip", () => {
     expect(chip).not.toHaveAttribute("data-pressed");
   });
 
-  it("has a fill span under the label, aria-hidden, that the pressed state slides up", () => {
+  it("pressing merges the dots: the row and its dots carry data-pressed while held", async () => {
+    const user = userEvent.setup();
     const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const fill = container.querySelector('[data-slot="fill"]');
-    expect(fill).toBeInTheDocument();
-    expect(fill?.tagName).toBe("SPAN");
-    expect(fill).toHaveAttribute("aria-hidden", "true");
-    expect(fill?.getAttribute("class")!.split(/\s+/)).toEqual(
-      expect.arrayContaining(["absolute", "inset-0", "-z-10", "bg-fuchsia-700", "translate-y-full", "transition-transform"]),
+    const chip = screen.getByRole("link", { name: "Mon" });
+    const dots = container.querySelector('[data-slot="dots"]')!;
+    expect(dots).not.toHaveAttribute("data-pressed");
+    expect(dots.getAttribute("class")!.split(/\s+/)).toEqual(
+      expect.arrayContaining(["data-pressed:gap-0", "data-pressed:*:w-2", "data-pressed:*:rounded-none", "transition-all"]),
     );
+    await user.pointer({ keys: "[MouseLeft>]", target: chip });
+    expect(dots).toHaveAttribute("data-pressed", "");
+    await user.pointer({ keys: "[/MouseLeft]", target: chip });
+    expect(dots).not.toHaveAttribute("data-pressed");
   });
 
-  it("the fill and the pressed classes never use arbitrary values", () => {
+  it("there is no fill slab, and the pressed classes never use arbitrary values", () => {
     const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const fill = container.querySelector('[data-slot="fill"]')!;
-    expect(fill.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
+    expect(container.querySelector('[data-slot="fill"]')).toBeNull();
+    expect(container.querySelector('[data-slot="dots"]')!.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
   });
 
   // Hostile inputs

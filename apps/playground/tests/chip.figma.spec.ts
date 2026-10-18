@@ -63,10 +63,13 @@ for (const [name, node] of Object.entries(variants)) {
       expect(fill!.y - box!.y, "fill y in the chip").toBeCloseTo(node.y, 0);
     }
     if (isDots || dotIndex !== null) {
-      // The row sits at the underline's top-left, whatever the state.
-      const [row, line] = [await dots.boundingBox(), await underline.boundingBox()];
-      expect(row!.x - line!.x, "dots x in the underline").toBeCloseTo(0, 0);
-      expect(row!.y - line!.y, "dots y in the underline").toBeCloseTo(0, 0);
+      // The row is centred in the underline: Figma's underline and row widths give its place (the
+      // export can't say where a lone child sits, so it is worked out from the two widths).
+      const line = variants[`Chip/${key!.slice("dots ".length)} > underline`]!;
+      const row = variants[key!]!;
+      const [rowBox, lineBox] = [await dots.boundingBox(), await underline.boundingBox()];
+      expect(rowBox!.x - lineBox!.x, "dots x in the underline").toBeCloseTo((line.width - row.width) / 2, 0);
+      expect(rowBox!.y - lineBox!.y, "dots y in the underline").toBeCloseTo((line.height - row.height) / 2, 0);
     }
     if (dotIndex !== null) {
       // Each dot is at Figma's x and y within the row, not just the right size and colour.

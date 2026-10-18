@@ -182,27 +182,27 @@ describe("Chip", () => {
     const underline = container.querySelector('[data-slot="underline"]')!;
     const classes = underline.getAttribute("class")!.split(/\s+/);
     expect(classes.some((name) => /^(data-\[[^\]]+\]:)?bg-/.test(name))).toBe(false);
-    expect(classes).toEqual(expect.arrayContaining(["relative", "block", "h-1", "w-full", "overflow-hidden"]));
+    expect(classes).toEqual(expect.arrayContaining(["flex", "h-1", "w-full", "justify-center"]));
   });
 
-  it("the underline holds one dots row, aria-hidden with it, at its top-left", () => {
+  it("the underline holds one dots row, aria-hidden with it, centred", () => {
     const { container } = render(<Chip href="#mon">Mon</Chip>);
     const underline = container.querySelector('[data-slot="underline"]')!;
     const dots = underline.querySelector(':scope > [data-slot="dots"]');
     expect(dots).toBeInTheDocument();
     expect(dots?.tagName).toBe("SPAN");
     expect(dots?.getAttribute("class")!.split(/\s+/)).toEqual(
-      expect.arrayContaining(["absolute", "top-0", "left-0", "flex", "gap-1"]),
+      expect.arrayContaining(["flex", "gap-1"]),
     );
     // The underline is aria-hidden, so the dots inside it are hidden from assistive technology too.
     expect(underline.closest('[aria-hidden="true"]')).toBe(underline);
     expect(dots?.closest('[aria-hidden="true"]')).toBe(underline);
   });
 
-  it("the dots row holds eight round dots, the 4px dots Figma draws", () => {
+  it("the dots row holds three round dots, the 4px dots Figma draws", () => {
     const { container } = render(<Chip href="#mon">Mon</Chip>);
     const dots = container.querySelectorAll('[data-slot="dots"] > [data-slot="dot"]');
-    expect(dots).toHaveLength(8);
+    expect(dots).toHaveLength(3);
     for (const dot of dots) {
       expect(dot.tagName).toBe("SPAN");
       expect(dot.getAttribute("class")!.split(/\s+/)).toEqual(

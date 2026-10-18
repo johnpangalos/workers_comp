@@ -7,8 +7,7 @@ import styles from "../tailwind.module.css";
 /**
  * Mirrors the Figma "Chip" component (Workers Comp Design System, page "Chip", node 39:15): a
  * tab-bar item for a section link, as in a day strip. An uppercase bold label sits over a dotted
- * underline, a row of eight 4px round dots, 60px across and clipped to the label's width; there
- * is no box. `muted` is Figma's `muted=true`, the day you're out: the label is gray-500 and the
+ * underline, three 4px round dots centred under the label; there is no box. `muted` is Figma's `muted=true`, the day you're out: the label is gray-500 and the
  * dots gray-100. `current` is `current=true`, the section you're in: the dots are gray-900 and the
  * link carries `aria-current`.
  *
@@ -56,16 +55,15 @@ export const chipClassName = cx(`
   data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
 `);
 
-// The dotted underline: a 4px-high box the dots are drawn in. Its text colour is the dots' colour.
+// The dotted underline: a 4px-high row as wide as the label, centring the dots. Its text colour is
+// the dots' colour.
 const underlineClassName = cx(`
-  relative block h-1 w-full shrink-0 overflow-hidden text-gray-200 transition-colors
+  flex h-1 w-full shrink-0 justify-center text-gray-200 transition-colors
   data-[tone=muted]:text-gray-100 data-[tone=current]:text-gray-900
 `);
 
-// The dots row sits at the underline's top-left and is absolute, so it never widens the chip. It
-// is wider than most labels and the underline clips it. Figma draws eight dots (60px), enough for
-// the widest label it shows; a wider label leaves the underline's end bare.
-const dotsClassName = cx(`absolute top-0 left-0 flex gap-1`);
+// Three dots, 4px apart (20px across), centred in the underline whatever the label's width.
+const dotsClassName = cx(`flex gap-1`);
 
 const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current`);
 
@@ -116,8 +114,8 @@ export function Chip<TElement extends ElementType = "a">({
         className={underlineClassName}
       >
         <span data-slot="dots" className={dotsClassName}>
-          {/* Eight dots, as Figma draws; the underline is aria-hidden, so so are they. */}
-          {Array.from({ length: 8 }, (_, index) => (
+          {/* Three dots, as Figma draws; the underline is aria-hidden, so so are they. */}
+          {Array.from({ length: 3 }, (_, index) => (
             <span key={index} data-slot="dot" className={dotClassName} />
           ))}
         </span>

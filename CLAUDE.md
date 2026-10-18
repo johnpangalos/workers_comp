@@ -10,7 +10,7 @@ A Figma-driven design system for React. The Figma file is the source of truth:
 Use pnpm.
 
 ```sh
-pnpm lint         # ESLint; no ternaries (use `if`, `&&`/`??`, or comp0's `dataAttr`)
+pnpm lint         # oxlint; no ternaries (use `if`, `&&`/`??`, or comp0's `dataAttr`)
 pnpm typecheck
 pnpm test         # Vitest: component behaviour, and Figma tokens against the theme
 pnpm test:figma   # Playwright: rendered values (colours, sizes, type) against Figma's, exactly

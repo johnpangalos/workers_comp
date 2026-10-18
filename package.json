@@ -1,7 +1,6 @@
 {
   "name": "workers-comp",
   "private": true,
-  "type": "module",
   "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "pnpm -r build",
@@ -10,12 +9,10 @@
     "typecheck": "pnpm -r typecheck",
     "changeset": "changeset",
     "playground": "pnpm --filter @workers-comp/playground dev",
-    "lint": "eslint ."
+    "lint": "oxlint"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.13.0",
-    "typescript-eslint": "^8.71.2"
+    "oxlint": "^1.88.0"
   }
 }

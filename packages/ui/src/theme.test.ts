@@ -25,12 +25,16 @@ for (const css of [tailwindTheme, ourTheme]) {
   }
 }
 
-const px = (value: string) => (value.endsWith("rem") ? parseFloat(value) * 16 : parseFloat(value));
+const px = (value: string) => {
+  if (value.endsWith("rem")) return parseFloat(value) * 16;
+  return parseFloat(value);
+};
 
 // CSS Color 4: oklch → sRGB, as 0–255 channels.
 function rgb(color: string): number[] {
   if (color.startsWith("#")) {
-    const hex = color.length === 4 ? color.replace(/[\da-f]/gi, "$&$&") : color;
+    let hex = color;
+    if (color.length === 4) hex = color.replace(/[\da-f]/gi, "$&$&");
     return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   }
   const [l = 0, c = 0, h = 0] = color.match(/[\d.]+/g)!.map(Number);
@@ -46,7 +50,8 @@ function rgb(color: string): number[] {
     -1.2684380046 * L + 2.6097574011 * M - 0.3413193965 * S,
     -0.0041960863 * L - 0.7034186147 * M + 1.707614701 * S,
   ].map((linear) => {
-    const v = linear <= 0.0031308 ? 12.92 * linear : 1.055 * linear ** (1 / 2.4) - 0.055;
+    let v = 1.055 * linear ** (1 / 2.4) - 0.055;
+    if (linear <= 0.0031308) v = 12.92 * linear;
     return Math.round(Math.min(1, Math.max(0, v)) * 255);
   });
 }
@@ -96,20 +101,28 @@ describe("Figma styles", () => {
     expect(variables.find(([n]) => n === `${size.replace("-", "/")}--line-height`)?.[1].value).toBe(
       style.lineHeight,
     );
-    const weights: Record<string, string> = { Regular: "400", Medium: "500", "Semi Bold": "600", Bold: "700" };
+    const weights: Record<string, string> = {
+      Regular: "400",
+      Medium: "500",
+      "Semi Bold": "600",
+      Bold: "700",
+    };
     expect(theme.get(`--font-weight-${weight}`)).toBe(weights[style.style]);
     expect(theme.get("--font-sans")).toContain(style.family);
   });
 
   // "shadow-md" is the utility `shadow-md`: the same layers as --shadow-md.
   it.each(Object.entries(effectStyles))("%s is the theme's shadow", (name, layers) => {
-    const themed = theme.get(`--${name}`)!.split(/,\s*/).map((layer) => {
-      const [lengths = "", colour = ""] = layer.split(" rgb(");
-      const [x, y, blur = 0, spread = 0] = lengths.split(" ").map(parseFloat);
-      const [r = 0, g = 0, b = 0, alpha] = colour.match(/[\d.]+/g)!.map(Number);
-      const color = "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
-      return { type: "DROP_SHADOW", x, y, blur, spread, color, alpha };
-    });
+    const themed = theme
+      .get(`--${name}`)!
+      .split(/,\s*/)
+      .map((layer) => {
+        const [lengths = "", colour = ""] = layer.split(" rgb(");
+        const [x, y, blur = 0, spread = 0] = lengths.split(" ").map(parseFloat);
+        const [r = 0, g = 0, b = 0, alpha] = colour.match(/[\d.]+/g)!.map(Number);
+        const color = "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
+        return { type: "DROP_SHADOW", x, y, blur, spread, color, alpha };
+      });
     expect(layers).toEqual(themed);
   });
 });

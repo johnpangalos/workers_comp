@@ -22,22 +22,25 @@ const cx = bindClassNames(styles);
 
 /** The Button's scoped classes, for styling another element the same way. */
 export const buttonClassName = cx(`
-  m-0 appearance-none border-0 border-solid
-  inline-flex items-center justify-center rounded-md font-sans font-semibold transition-colors outline-none
+  m-0 inline-flex appearance-none items-center justify-center rounded-md border-0 border-solid font-sans
+  font-semibold transition-colors outline-none
+  data-disabled:pointer-events-none
   data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  data-[variant=default]:bg-fuchsia-700 data-[variant=default]:text-white
-  data-[variant=default]:data-hovered:bg-fuchsia-800 data-[variant=default]:data-pressed:bg-fuchsia-900
-  data-[variant=outline]:border data-[variant=outline]:border-gray-400
-  data-[variant=outline]:bg-white data-[variant=outline]:text-gray-900
-  data-[variant=outline]:data-hovered:bg-gray-50 data-[variant=outline]:data-pressed:bg-gray-100
-  data-[variant=ghost]:text-fuchsia-700
-  data-[variant=ghost]:data-hovered:bg-fuchsia-50 data-[variant=ghost]:data-pressed:bg-fuchsia-100
+  data-variant:data-disabled:text-gray-400
   data-[size=default]:px-4 data-[size=default]:py-2 data-[size=default]:text-sm
   data-[size=sm]:px-3 data-[size=sm]:py-1 data-[size=sm]:text-xs
-  data-disabled:pointer-events-none
-  data-[variant]:data-disabled:text-gray-400
+  data-[variant=default]:bg-fuchsia-700 data-[variant=default]:text-white
   data-[variant=default]:data-disabled:bg-gray-100
-  data-[variant=outline]:data-disabled:bg-gray-100 data-[variant=outline]:data-disabled:border-gray-200
+  data-[variant=default]:data-hovered:bg-fuchsia-800
+  data-[variant=default]:data-pressed:bg-fuchsia-900
+  data-[variant=ghost]:text-fuchsia-700
+  data-[variant=ghost]:data-hovered:bg-fuchsia-50
+  data-[variant=ghost]:data-pressed:bg-fuchsia-100
+  data-[variant=outline]:border data-[variant=outline]:border-gray-400 data-[variant=outline]:bg-white
+  data-[variant=outline]:text-gray-900
+  data-[variant=outline]:data-disabled:border-gray-200 data-[variant=outline]:data-disabled:bg-gray-100
+  data-[variant=outline]:data-hovered:bg-gray-50
+  data-[variant=outline]:data-pressed:bg-gray-100
 `);
 
 export type ButtonProps<TElement extends ElementType = "button"> = Comp0ButtonProps<TElement> & {
@@ -55,12 +58,14 @@ export function Button<TElement extends ElementType = "button">({
   size = "default",
   ...props
 }: ButtonProps<TElement>) {
+  let classes = buttonClassName;
+  if (className) classes = `${buttonClassName} ${className}`;
   return (
     <Comp0Button
       {...(props as Comp0ButtonProps<TElement>)}
       data-variant={variant}
       data-size={size}
-      className={className ? `${buttonClassName} ${className}` : buttonClassName}
+      className={classes}
     />
   );
 }

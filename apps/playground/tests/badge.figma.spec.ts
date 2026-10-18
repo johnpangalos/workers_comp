@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import { expectToMatchFigma, loadFigmaNodes } from "./figma";
 
 // Every entry of the Figma "Badge" component set against the rendered Badge: the values each is
@@ -18,15 +18,15 @@ for (const [name, node] of Object.entries(variants)) {
 
     // The span badge for default; the link badge for focus, which takes keyboard focus the way a
     // person gives it.
-    const badge =
-      state === "focus"
-        ? page.locator(`a[data-color="${color}"]`)
-        : page.locator(`span[data-color="${color}"]:not([data-slot])`);
+    let badge = page.locator(`span[data-color="${color}"]:not([data-slot])`);
     if (state === "focus") {
+      badge = page.locator(`a[data-color="${color}"]`);
       await page.keyboard.press("Tab"); // keyboard focus, so the focus ring shows
       await badge.focus();
     }
 
-    await expectToMatchFigma(part === "dot" ? badge.locator('[data-slot="dot"]') : badge, node);
+    let measured = badge;
+    if (part === "dot") measured = badge.locator('[data-slot="dot"]');
+    await expectToMatchFigma(measured, node);
   });
 }

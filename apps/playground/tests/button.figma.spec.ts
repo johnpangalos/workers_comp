@@ -15,9 +15,9 @@ for (const [name, node] of Object.entries(variants)) {
     // Wait for the label's font; before it loads the button has the fallback font's width.
     await page.evaluate(() => document.fonts.load(`600 14px Inter`));
 
-    const button = page
-      .locator(`button[data-variant="${variant}"][data-size="${size}"]`)
-      .nth(state === "disabled" ? 1 : 0);
+    let index = 0;
+    if (state === "disabled") index = 1;
+    const button = page.locator(`button[data-variant="${variant}"][data-size="${size}"]`).nth(index);
     if (state === "disabled") await expect(button).toBeDisabled();
 
     // Put the button in the Figma state the way a person would.

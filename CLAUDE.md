@@ -62,6 +62,7 @@ Components so far:
 | Figma component | Node | Code |
 |---|---|---|
 | Button | `1:91` | `Button` from `@workers-comp/ui` (`packages/ui/src/button/button.tsx`) |
+| Badge | `36:112` | `Badge` from `@workers-comp/ui` (`packages/ui/src/badge/badge.tsx`) |
 
 Rules:
 

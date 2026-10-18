@@ -83,6 +83,23 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       .flatMap((match) => (match && Number(match[2]) > 0 && hex(match[1]!) ? [[hex(match[1]!), Number(match[2])]] : []))
       .sort((a, b) => (b[1] as number) - (a[1] as number));
     const px = (value: string) => parseFloat(value) || 0;
+    // Where the label's text starts, measured from the element's left edge. Not the padding: after
+    // a leading child (a dot, with its gap) the text starts further in.
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let first: Text | null = null;
+    let last: Text | null = null;
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      if (!/\S/.test(node.data)) continue;
+      first ??= node;
+      last = node;
+    }
+    let labelX = px(style.paddingLeft) + border;
+    if (first && last) {
+      const range = document.createRange();
+      range.setStart(first, 0);
+      range.setEnd(last, last.length);
+      labelX = range.getBoundingClientRect().left - el.getBoundingClientRect().left;
+    }
     return {
       layout: {
         direction: style.flexDirection.startsWith("column") ? "column" : "row",
@@ -98,7 +115,7 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       radius: parseFloat(style.borderTopLeftRadius),
       rings,
       label: {
-        x: parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth),
+        x: labelX,
         y: parseFloat(style.paddingTop) + border,
         height: parseFloat(style.lineHeight),
         color: hex(style.color),
@@ -119,11 +136,14 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
   sameColor(rendered.fill, figma.fill, "fill");
   sameColor(rendered.stroke, figma.stroke, "border");
   expect.soft(rendered.strokeWeight, "border width").toBe(figma.strokeWeight);
-  expect.soft(rendered.radius, "radius").toBe(figma.radius);
+  // A radius past half the box is drawn as half the box: rounded-full computes to a huge value
+  // where Figma says 9999. Both sides are clamped to the box each is drawn in, which is exact.
+  const drawn = (radius: number, { width, height }: Region) => Math.min(radius, Math.min(width, height) / 2);
+  expect.soft(drawn(rendered.radius, box!), "radius").toBe(drawn(figma.radius, figma));
   // Figma can draw a ring another way (the ghost Button uses a rectangle), which this can't read.
   if (figma.rings.length > 0) {
     expect.soft(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
-    figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]![0], color, `ring ${i + 1}`));
+    figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]?.[0] ?? null, color, `ring ${i + 1}`));
   }
   if (figma.layout) expect.soft(rendered.layout, "direction, gap and padding").toEqual(figma.layout);
   if (figma.label) {

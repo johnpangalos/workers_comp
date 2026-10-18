@@ -1,4 +1,10 @@
 export {
+  Badge,
+  badgeClassName,
+  type BadgeColor,
+  type BadgeProps,
+} from "./badge/badge";
+export {
   Button,
   buttonClassName,
   type ButtonProps,

@@ -141,7 +141,7 @@ describe("Chip", () => {
     ["the uppercase label", "uppercase"],
     ["the gray-900 label", "text-gray-900"],
     ["the muted label", "data-muted:text-gray-500"],
-    ["the hover underline", "data-hovered:*:data-[slot=underline]:bg-fuchsia-700"],
+    ["the hover underline", "data-hovered:*:data-[slot=underline]:text-fuchsia-700"],
     ["the focus ring", "data-focus-visible:ring-2"],
     ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
@@ -153,7 +153,7 @@ describe("Chip", () => {
     ["the clip of the fill below the chip", "overflow-hidden"],
     ["the white pressed label", "data-pressed:text-white"],
     ["the white pressed label over the muted one", "data-pressed:data-muted:text-white"],
-    ["the fuchsia pressed underline", "data-pressed:*:data-[slot=underline]:bg-fuchsia-700"],
+    ["the fuchsia pressed underline", "data-pressed:*:data-[slot=underline]:text-fuchsia-700"],
     ["the pressed fill slides up into place", "data-pressed:*:data-[slot=fill]:translate-y-0"],
   ])("chipClassName has %s", (_, expected) => {
     expect(chipClassName.split(/\s+/)).toContain(expected);
@@ -165,16 +165,71 @@ describe("Chip", () => {
   });
 
   it.each([
-    ["default", {}, "bg-gray-200", null],
-    ["muted", { muted: true }, "data-[tone=muted]:bg-gray-100", "muted"],
-    ["current", { current: true }, "data-[tone=current]:bg-gray-900", "current"],
-    ["current and muted, current wins", { muted: true, current: true }, "data-[tone=current]:bg-gray-900", "current"],
+    ["default", {}, "text-gray-200", null],
+    ["muted", { muted: true }, "data-[tone=muted]:text-gray-100", "muted"],
+    ["current", { current: true }, "data-[tone=current]:text-gray-900", "current"],
+    ["current and muted, current wins", { muted: true, current: true }, "data-[tone=current]:text-gray-900", "current"],
   ])("the underline is %s", (_, props, colour, tone) => {
     const { container } = render(<Chip href="#mon" {...props}>Mon</Chip>);
     const underline = container.querySelector('[data-slot="underline"]')!;
     expect(underline.getAttribute("class")!.split(/\s+/)).toContain(colour);
     if (tone === null) expect(underline).not.toHaveAttribute("data-tone");
     else expect(underline).toHaveAttribute("data-tone", tone);
+  });
+
+  it("the underline is a dotted row, not a bar: no background on it, its colour is its text colour", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    const underline = container.querySelector('[data-slot="underline"]')!;
+    const classes = underline.getAttribute("class")!.split(/\s+/);
+    expect(classes.some((name) => /^(data-\[[^\]]+\]:)?bg-/.test(name))).toBe(false);
+    expect(classes).toEqual(expect.arrayContaining(["relative", "block", "h-1", "w-full", "overflow-hidden"]));
+  });
+
+  it("the underline holds one dots row, aria-hidden with it, at its top-left", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    const underline = container.querySelector('[data-slot="underline"]')!;
+    const dots = underline.querySelector(':scope > [data-slot="dots"]');
+    expect(dots).toBeInTheDocument();
+    expect(dots?.tagName).toBe("SPAN");
+    expect(dots?.getAttribute("class")!.split(/\s+/)).toEqual(
+      expect.arrayContaining(["absolute", "top-0", "left-0", "flex", "gap-1"]),
+    );
+    // The underline is aria-hidden, so the dots inside it are hidden from assistive technology too.
+    expect(underline.closest('[aria-hidden="true"]')).toBe(underline);
+    expect(dots?.closest('[aria-hidden="true"]')).toBe(underline);
+  });
+
+  it("the dots row holds eight round dots, the 4px dots Figma draws", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    const dots = container.querySelectorAll('[data-slot="dots"] > [data-slot="dot"]');
+    expect(dots).toHaveLength(8);
+    for (const dot of dots) {
+      expect(dot.tagName).toBe("SPAN");
+      expect(dot.getAttribute("class")!.split(/\s+/)).toEqual(
+        expect.arrayContaining(["block", "size-1", "shrink-0", "rounded-full", "bg-current"]),
+      );
+    }
+  });
+
+  it("the dots sit inside the underline that carries the tone (their colour is measured in the browser)", () => {
+    const { container } = render(
+      <Chip href="#mon" muted current>
+        Mon
+      </Chip>,
+    );
+    const underline = container.querySelector('[data-slot="underline"]')!;
+    expect(underline).toHaveAttribute("data-tone", "current");
+    for (const dot of container.querySelectorAll('[data-slot="dot"]')) {
+      expect(dot.parentElement?.parentElement).toBe(underline);
+    }
+  });
+
+  it("the dotted underline and its dots never use arbitrary values", () => {
+    const { container } = render(<Chip href="#mon">Mon</Chip>);
+    for (const selector of ['[data-slot="underline"]', '[data-slot="dots"]', '[data-slot="dot"]']) {
+      const element = container.querySelector(selector)!;
+      expect(element.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
+    }
   });
 
   it("pressing with the pointer sets data-pressed until the button is released", async () => {

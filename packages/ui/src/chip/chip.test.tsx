@@ -13,7 +13,7 @@ function RouterLink({ to, ...props }: ComponentProps<"a"> & { to: string }) {
 }
 
 describe("Chip", () => {
-  it("renders an anchor with the label, href and only its own classes by default", () => {
+  it("renders an anchor with the label, href, its own classes and an underline by default", () => {
     render(<Chip href="#mon">Mon</Chip>);
     const chip = screen.getByRole("link", { name: "Mon" });
     expect(chip.tagName).toBe("A");
@@ -21,6 +21,12 @@ describe("Chip", () => {
     expect(chip).toHaveTextContent("Mon");
     expect(chip).toHaveAttribute("class", chipClassName);
     expect(chip).not.toHaveAttribute("data-muted");
+    expect(chip).not.toHaveAttribute("data-current");
+    expect(chip).not.toHaveAttribute("aria-current");
+    const underline = chip.querySelector('[data-slot="underline"]');
+    expect(underline).toBeInTheDocument();
+    expect(underline).toHaveAttribute("aria-hidden", "true");
+    expect(underline?.tagName).toBe("SPAN");
   });
 
   it("is reached by Tab, followed by Enter, and shows a focus ring only for keyboard focus", async () => {
@@ -57,6 +63,29 @@ describe("Chip", () => {
       </Chip>,
     );
     expect(screen.getByRole("link", { name: "Tue" })).not.toHaveAttribute("muted");
+  });
+
+  it("current sets data-current and aria-current=\"true\"", () => {
+    render(
+      <Chip href="#mon" current>
+        Mon
+      </Chip>,
+    );
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip).toHaveAttribute("data-current", "");
+    expect(chip).toHaveAttribute("aria-current", "true");
+    expect(chip).not.toHaveAttribute("current");
+  });
+
+  it("a consumer's aria-current wins over the one current sets", () => {
+    render(
+      <Chip href="#mon" current aria-current="location">
+        Mon
+      </Chip>,
+    );
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip).toHaveAttribute("aria-current", "location");
+    expect(chip).toHaveAttribute("data-current", "");
   });
 
   it("className is appended as is, after the Chip's classes", () => {
@@ -102,15 +131,17 @@ describe("Chip", () => {
   });
 
   it.each([
-    ["the inline-flex pill", "inline-flex"],
-    ["the pill radius", "rounded-full"],
-    ["the gray-200 border", "border-gray-200"],
-    ["the white fill", "bg-white"],
-    ["the label size and weight", "text-sm"],
-    ["the semibold label", "font-semibold"],
+    ["the inline-flex column", "inline-flex"],
+    ["the column layout", "flex-col"],
+    ["the 6px gap", "gap-1.5"],
+    ["the 6px top padding", "pt-1.5"],
+    ["no radius", "rounded-none"],
+    ["the label size", "text-sm"],
+    ["the bold label", "font-bold"],
+    ["the uppercase label", "uppercase"],
     ["the gray-900 label", "text-gray-900"],
     ["the muted label", "data-muted:text-gray-500"],
-    ["the hover border", "data-hovered:border-fuchsia-700"],
+    ["the hover underline", "data-hovered:*:data-[slot=underline]:bg-fuchsia-700"],
     ["the focus ring", "data-focus-visible:ring-2"],
     ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
@@ -123,6 +154,19 @@ describe("Chip", () => {
   it("uses theme utilities only, never arbitrary values", () => {
     // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
     expect(chipClassName).not.toMatch(/(?<!data)-\[/);
+  });
+
+  it.each([
+    ["default", {}, "bg-gray-200", null],
+    ["muted", { muted: true }, "data-[tone=muted]:bg-gray-100", "muted"],
+    ["current", { current: true }, "data-[tone=current]:bg-gray-900", "current"],
+    ["current and muted, current wins", { muted: true, current: true }, "data-[tone=current]:bg-gray-900", "current"],
+  ])("the underline is %s", (_, props, colour, tone) => {
+    const { container } = render(<Chip href="#mon" {...props}>Mon</Chip>);
+    const underline = container.querySelector('[data-slot="underline"]')!;
+    expect(underline.getAttribute("class")!.split(/\s+/)).toContain(colour);
+    if (tone === null) expect(underline).not.toHaveAttribute("data-tone");
+    else expect(underline).toHaveAttribute("data-tone", tone);
   });
 
   // Hostile inputs
@@ -139,14 +183,27 @@ describe("Chip", () => {
     expect(chip.outerHTML).not.toMatch(/\sdata-muted[\s=>]/);
   });
 
-  it("className='border-red-500' ends the class attribute, after the Chip's own classes", () => {
+  it("current={false} renders no data-current and no aria-current at all", () => {
     render(
-      <Chip href="#mon" className="border-red-500">
+      <Chip href="#mon" current={false}>
         Mon
       </Chip>,
     );
     const chip = screen.getByRole("link", { name: "Mon" });
-    expect(chip.getAttribute("class")).toBe(`${chipClassName} border-red-500`);
+    expect(chip.hasAttribute("data-current")).toBe(false);
+    expect(chip.hasAttribute("aria-current")).toBe(false);
+    expect(chip.outerHTML).not.toMatch(/\sdata-current[\s=>]/);
+    expect(chip.outerHTML).not.toMatch(/\saria-current[\s=>]/);
+  });
+
+  it("className ends the class attribute, after the Chip's own classes", () => {
+    render(
+      <Chip href="#mon" className="text-red-500">
+        Mon
+      </Chip>,
+    );
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip.getAttribute("class")).toBe(`${chipClassName} text-red-500`);
   });
 
   it("with no href and no as, renders an anchor without crashing and without an href", () => {
@@ -157,14 +214,18 @@ describe("Chip", () => {
     expect(chip).toHaveClass(chipClassName);
   });
 
-  it("a long label stays on one line (the class is there; it never wraps)", () => {
+  it("a long label stays on one line, and its underline is full width", () => {
     render(<Chip href="#thu">Thursday leftovers</Chip>);
     const chip = screen.getByRole("link", { name: "Thursday leftovers" });
     expect(chip).toHaveClass("whitespace-nowrap");
+    const underline = chip.querySelector('[data-slot="underline"]')!;
+    expect(underline.getAttribute("class")!.split(/\s+/)).toContain("w-full");
   });
 
-  it("empty children render without crashing", () => {
+  it("empty children render without crashing, with the underline still there", () => {
     const { container } = render(<Chip href="#mon" />);
-    expect(container.querySelector("a")).toHaveClass(chipClassName);
+    const chip = container.querySelector("a")!;
+    expect(chip).toHaveClass(chipClassName);
+    expect(chip.querySelector('[data-slot="underline"]')).toBeInTheDocument();
   });
 });

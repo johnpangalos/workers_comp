@@ -74,7 +74,7 @@ none
 - Measured exactly, though they look like exceptions: a label's x is where its text starts (after
   a leading dot or icon, not the padding), and radii are clamped to half the box on both sides,
   so `rounded-full` matches Figma's `radius/full` (9999).
-- A border that is always on (the Chip's) keeps Button's reset minus `border-0`, which would
+- A border that is always on keeps Button's reset minus `border-0`, which would
   zero it; `border-0` is only for a border that some variants add.
 - New colours: add the whole Tailwind scale to Figma's Colors collection (v4 values, OKLCH
   converted to sRGB) and refresh `figma-tokens.json`; never a single shade.

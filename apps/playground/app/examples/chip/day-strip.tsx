@@ -1,7 +1,7 @@
 import { Chip } from "@workers-comp/ui";
 
 // A realistic use: a day strip that jumps to each section of a week of dinners. Days you're out
-// are muted; the current section is marked with aria-current.
+// are muted; the section you're in is marked current.
 const days: [id: string, label: string, out: boolean][] = [
   ["reuse", "Reuse", false],
   ["prep", "Prep", false],
@@ -19,10 +19,10 @@ export default function DayStrip() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav aria-label="Jump to a day" className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-        <ul className="flex gap-2 overflow-x-auto px-4 py-3">
+        <ul className="flex gap-6 overflow-x-auto px-4 py-3">
           {days.map(([id, label, out]) => (
             <li key={id} className="shrink-0">
-              <Chip href={`#${id}`} muted={out} aria-current={id === current ? "location" : undefined}>
+              <Chip href={`#${id}`} muted={out} current={id === current}>
                 {label}
               </Chip>
             </li>

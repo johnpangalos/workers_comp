@@ -2,4 +2,4 @@
 "@workers-comp/ui": minor
 ---
 
-Add `Chip` (with `muted` for a day you're out), matching the Figma component: a pill link for a day strip. Give it `href` or `as` to make it a link with a keyboard focus ring; `className` overrides it.
+Add `Chip`, matching the Figma component: an uppercase tab-bar item with a 4px underline. `muted` marks a day you're out and `current` marks the section you're in (`aria-current`); give it `href` or `as` to make it a link with a keyboard focus ring, and `className` overrides it.

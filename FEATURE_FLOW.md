@@ -15,7 +15,8 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Full: `pnpm build`
 - Full: `pnpm test:figma` (not in CI yet; needs Playwright's Chromium)
 - Targeted: `pnpm --filter @workers-comp/ui exec vitest run src/<component>/<component>.test.tsx`
-- Targeted, for anything that started from Figma: `pnpm test:figma`
+- Targeted, for anything that started from Figma: `pnpm test:figma <component>` (no `--`; it
+  passes the filter through literally)
 - Run it: `pnpm playground`, then http://localhost:5173/<component>/<page>
 
 ## Conventions
@@ -42,7 +43,8 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - The change follows the patterns around it; anything `button.tsx` does that the new code
   should and doesn't is a finding.
 - Keyboard: reachable with Tab, activated with Enter and Space, a visible focus ring only for
-  keyboard focus, nothing fires when disabled.
+  keyboard focus, nothing fires when disabled. A link (Badge, Chip) activates with Enter only,
+  as native links do; Space is for buttons.
 - Every node in the Figma export is covered by the measurement; every state the design draws
   is reached the way a person reaches it; nothing in the diff loosens the comparison or edits
   an export by hand.
@@ -72,5 +74,7 @@ none
 - Measured exactly, though they look like exceptions: a label's x is where its text starts (after
   a leading dot or icon, not the padding), and radii are clamped to half the box on both sides,
   so `rounded-full` matches Figma's `radius/full` (9999).
+- A border that is always on (the Chip's) keeps Button's reset minus `border-0`, which would
+  zero it; `border-0` is only for a border that some variants add.
 - New colours: add the whole Tailwind scale to Figma's Colors collection (v4 values, OKLCH
   converted to sRGB) and refresh `figma-tokens.json`; never a single shade.

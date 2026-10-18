@@ -63,6 +63,7 @@ Components so far:
 |---|---|---|
 | Button | `1:91` | `Button` from `@workers-comp/ui` (`packages/ui/src/button/button.tsx`) |
 | Badge | `36:112` | `Badge` from `@workers-comp/ui` (`packages/ui/src/badge/badge.tsx`) |
+| Chip | `39:15` | `Chip` from `@workers-comp/ui` (`packages/ui/src/chip/chip.tsx`) |
 
 Rules:
 

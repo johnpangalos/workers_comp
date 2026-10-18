@@ -10,8 +10,12 @@ import { Badge, badgeClassName, dotClassName, type BadgeColor } from "./badge";
 const colors: BadgeColor[] = ["gray", "fuchsia", "red", "amber", "green", "teal", "blue", "violet", "pink"];
 
 // A router-style link: takes `to`, renders an anchor.
-function RouterLink({ to, ...props }: ComponentProps<"a"> & { to: string }) {
-  return <a {...props} href={to} />;
+function RouterLink({ to, children, ...props }: ComponentProps<"a"> & { to: string }) {
+  return (
+    <a {...props} href={to}>
+      {children}
+    </a>
+  );
 }
 
 describe("Badge", () => {
@@ -64,7 +68,7 @@ describe("Badge", () => {
 
   it("with href, renders an anchor reached by Tab and activated by Enter", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Badge href="/recipes" onClick={onClick}>
         Label
@@ -103,7 +107,7 @@ describe("Badge", () => {
 
   it("disabled link has no href, is not tabbable, and does not fire onClick", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Badge href="/recipes" disabled onClick={onClick}>
         Label

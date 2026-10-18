@@ -25,26 +25,32 @@ const cx = bindClassNames(styles);
 
 /** The Badge's scoped classes, for styling another element the same way. */
 export const badgeClassName = cx(`
-  inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-semibold
-  no-underline outline-none
-  data-[color=gray]:bg-gray-100 data-[color=gray]:text-gray-800
-  data-[color=fuchsia]:bg-fuchsia-100 data-[color=fuchsia]:text-fuchsia-800
-  data-[color=red]:bg-red-100 data-[color=red]:text-red-800
-  data-[color=amber]:bg-amber-100 data-[color=amber]:text-amber-800
-  data-[color=green]:bg-green-100 data-[color=green]:text-green-800
-  data-[color=teal]:bg-teal-100 data-[color=teal]:text-teal-800
-  data-[color=blue]:bg-blue-100 data-[color=blue]:text-blue-800
-  data-[color=violet]:bg-violet-100 data-[color=violet]:text-violet-800
-  data-[color=pink]:bg-pink-100 data-[color=pink]:text-pink-800
+  inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-semibold no-underline
+  outline-none
   data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+  data-[color=amber]:bg-amber-100 data-[color=amber]:text-amber-800
+  data-[color=blue]:bg-blue-100 data-[color=blue]:text-blue-800
+  data-[color=fuchsia]:bg-fuchsia-100 data-[color=fuchsia]:text-fuchsia-800
+  data-[color=gray]:bg-gray-100 data-[color=gray]:text-gray-800
+  data-[color=green]:bg-green-100 data-[color=green]:text-green-800
+  data-[color=pink]:bg-pink-100 data-[color=pink]:text-pink-800
+  data-[color=red]:bg-red-100 data-[color=red]:text-red-800
+  data-[color=teal]:bg-teal-100 data-[color=teal]:text-teal-800
+  data-[color=violet]:bg-violet-100 data-[color=violet]:text-violet-800
 `);
 
 /** The dot's scoped classes: the colour of the badge it sits in. */
 export const dotClassName = cx(`
   size-2 shrink-0 rounded-full
-  data-[color=gray]:bg-gray-500 data-[color=fuchsia]:bg-fuchsia-500 data-[color=red]:bg-red-500
-  data-[color=amber]:bg-amber-500 data-[color=green]:bg-green-500 data-[color=teal]:bg-teal-500
-  data-[color=blue]:bg-blue-500 data-[color=violet]:bg-violet-500 data-[color=pink]:bg-pink-500
+  data-[color=amber]:bg-amber-500
+  data-[color=blue]:bg-blue-500
+  data-[color=fuchsia]:bg-fuchsia-500
+  data-[color=gray]:bg-gray-500
+  data-[color=green]:bg-green-500
+  data-[color=pink]:bg-pink-500
+  data-[color=red]:bg-red-500
+  data-[color=teal]:bg-teal-500
+  data-[color=violet]:bg-violet-500
 `);
 
 /**
@@ -68,7 +74,9 @@ export function Badge<TElement extends ElementType = "a">({
 
   if (as === undefined && href === undefined) {
     // `disabled` only means something on a link; a span would carry it as a stray attribute.
-    const { disabled: _disabled, ...spanProps } = props as ComponentPropsWithoutRef<"span"> & { disabled?: boolean };
+    const { disabled: _disabled, ...spanProps } = props as ComponentPropsWithoutRef<"span"> & {
+      disabled?: boolean;
+    };
     return (
       <span {...spanProps} data-color={color} className={classes}>
         {dotElement}
@@ -78,13 +86,7 @@ export function Badge<TElement extends ElementType = "a">({
   }
 
   return (
-    <Link
-      {...(props as LinkProps<TElement>)}
-      as={as}
-      href={href}
-      data-color={color}
-      className={classes}
-    >
+    <Link {...(props as LinkProps<TElement>)} as={as} href={href} data-color={color} className={classes}>
       {dotElement}
       {children}
     </Link>

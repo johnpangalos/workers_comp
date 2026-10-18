@@ -60,10 +60,9 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
   const sides: ("width" | "height")[] = ["height"];
   if (width) sides.unshift("width");
   for (const side of sides) {
-    expect.soft(
-      Math.abs(box![side] - figma[side]),
-      `${side} is ${box![side]}px, Figma's is ${figma[side]}px`,
-    ).toBeLessThan(1);
+    expect
+      .soft(Math.abs(box![side] - figma[side]), `${side} is ${box![side]}px, Figma's is ${figma[side]}px`)
+      .toBeLessThan(1);
   }
 
   const rendered = await element.evaluate((el) => {
@@ -154,7 +153,12 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
   expect.soft(drawn(rendered.radius, box!), "radius").toBe(drawn(figma.radius, figma));
   // Figma can draw a ring another way (the ghost Button uses a rectangle), which this can't read.
   if (figma.rings.length > 0) {
-    expect.soft(rendered.rings.map(([, spread]) => spread), "ring widths").toEqual(figma.rings.map(([, spread]) => spread));
+    expect
+      .soft(
+        rendered.rings.map(([, spread]) => spread),
+        "ring widths",
+      )
+      .toEqual(figma.rings.map(([, spread]) => spread));
     figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]?.[0] ?? null, color, `ring ${i + 1}`));
   }
   if (figma.layout) expect.soft(rendered.layout, "direction, gap and padding").toEqual(figma.layout);

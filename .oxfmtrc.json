@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 110,
+  "ignorePatterns": [
+    ".claude/",
+    "apps/playground/figma/",
+    "packages/ui/src/figma-tokens.json",
+    "pnpm-lock.yaml",
+    "**/*.md"
+  ]
+}

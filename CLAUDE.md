@@ -10,7 +10,9 @@ A Figma-driven design system for React. The Figma file is the source of truth:
 Use pnpm.
 
 ```sh
-pnpm lint         # oxlint; no ternaries (use `if`, `&&`/`??`, or comp0's `dataAttr`)
+pnpm format       # oxfmt; `pnpm format:check` is what CI runs
+pnpm lint         # oxlint: no ternaries (use `if`, `&&`/`??`, or comp0's `dataAttr`), no arbitrary
+                  # Tailwind values, sorted classes; `pnpm lint --fix` fixes the order
 pnpm typecheck
 pnpm test         # Vitest: component behaviour, and Figma tokens against the theme
 pnpm test:figma   # Playwright: rendered values (colours, sizes, type) against Figma's, exactly

@@ -28,6 +28,7 @@ pnpm playground  # http://localhost:5173 (Cloudflare also posts a preview link o
 pnpm test        # Vitest + Testing Library
 pnpm test:figma  # Playwright: rendered values against Figma's
 pnpm typecheck
+pnpm format      # oxfmt
 pnpm lint        # oxlint
 pnpm build       # tsdown → packages/ui/dist (index.js, styles.css, types)
 pnpm changeset   # describe a change for the next release

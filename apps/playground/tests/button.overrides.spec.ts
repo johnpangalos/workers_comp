@@ -6,7 +6,9 @@ test("className overrides the Button's own styles", async ({ page }) => {
   await page.goto("/button/overrides");
 
   const radius = (name: string) =>
-    page.getByRole("button", { name, exact: true }).evaluate((el) => parseFloat(getComputedStyle(el).borderRadius));
+    page
+      .getByRole("button", { name, exact: true })
+      .evaluate((el) => parseFloat(getComputedStyle(el).borderRadius));
   expect(await radius("Default")).toBe(6);
   expect(await radius("Pill")).toBeGreaterThan(1000);
   expect(await radius("Disabled pill")).toBeGreaterThan(1000);

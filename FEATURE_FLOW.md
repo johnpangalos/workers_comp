@@ -15,7 +15,8 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Full: `pnpm build`
 - Full: `pnpm test:figma` (not in CI yet; needs Playwright's Chromium)
 - Targeted: `pnpm --filter @workers-comp/ui exec vitest run src/<component>/<component>.test.tsx`
-- Targeted, for anything that started from Figma: `pnpm test:figma`
+- Targeted, for anything that started from Figma: `pnpm test:figma <component>` (no `--`; it
+  passes the filter through literally)
 - Run it: `pnpm playground`, then http://localhost:5173/<component>/<page>
 
 ## Conventions
@@ -42,7 +43,8 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - The change follows the patterns around it; anything `button.tsx` does that the new code
   should and doesn't is a finding.
 - Keyboard: reachable with Tab, activated with Enter and Space, a visible focus ring only for
-  keyboard focus, nothing fires when disabled.
+  keyboard focus, nothing fires when disabled. A link (Badge, Chip) activates with Enter only,
+  as native links do; Space is for buttons.
 - Every node in the Figma export is covered by the measurement; every state the design draws
   is reached the way a person reaches it; nothing in the diff loosens the comparison or edits
   an export by hand.
@@ -62,6 +64,11 @@ none
   result is saved to `apps/playground/figma/<name>.json`; several ids go in one file, and a
   node that lays out children also gets its gap, padding and an entry per child. Its
   `export-tokens` refreshes `packages/ui/src/figma-tokens.json`.
+- Motion: export-node doesn't read prototype transitions. A component that animates gets a
+  Smart Animate reaction in Figma, exported with `apps/playground/figma/export-motion.js` (run
+  through `use_figma`) to `apps/playground/figma/<name>-motion.json`, and a spec that checks the
+  CSS transition's duration and curve against it (`chip.motion.spec.ts`). Pick a curve Tailwind
+  has (`ease-in-out` is cubic-bezier(0.4, 0, 0.2, 1)), so the code stays on theme utilities.
 - Measure: `pnpm test:figma`, specs in `apps/playground/tests/` calling `expectToMatchFigma`.
 - Page: `apps/playground/app/examples/<component>/figma.tsx`, served at
   `/<component>/figma` by `pnpm playground`.
@@ -72,5 +79,7 @@ none
 - Measured exactly, though they look like exceptions: a label's x is where its text starts (after
   a leading dot or icon, not the padding), and radii are clamped to half the box on both sides,
   so `rounded-full` matches Figma's `radius/full` (9999).
+- A border that is always on keeps Button's reset minus `border-0`, which would
+  zero it; `border-0` is only for a border that some variants add.
 - New colours: add the whole Tailwind scale to Figma's Colors collection (v4 values, OKLCH
   converted to sRGB) and refresh `figma-tokens.json`; never a single shade.

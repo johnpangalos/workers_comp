@@ -1,0 +1,11 @@
+{
+  "file": "5OcRRw5a7qZGsgC43FjCp9",
+  "node": "39:15",
+  "variants": {
+    "muted=false, current=false, state=default -> muted=false, current=false, state=pressed": {"trigger":"ON_PRESS","transition":"SMART_ANIMATE","durationMs":150,"easing":[0.4,0,0.2,1]},
+    "muted=false, current=true, state=default -> muted=false, current=true, state=pressed": {"trigger":"ON_PRESS","transition":"SMART_ANIMATE","durationMs":150,"easing":[0.4,0,0.2,1]},
+    "muted=true, current=false, state=default -> muted=true, current=false, state=pressed": {"trigger":"ON_PRESS","transition":"SMART_ANIMATE","durationMs":150,"easing":[0.4,0,0.2,1]},
+    "muted=true, current=true, state=default -> muted=true, current=true, state=pressed": {"trigger":"ON_PRESS","transition":"SMART_ANIMATE","durationMs":150,"easing":[0.4,0,0.2,1]}
+  },
+  "hash": "631dbbc9"
+}

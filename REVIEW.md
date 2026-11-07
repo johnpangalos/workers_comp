@@ -113,5 +113,28 @@ Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID
 The Claude workflows only run once they are on `main`: on a PR that adds or changes one, the
 action skips itself (and the check still shows green).
 
-In the `main` ruleset, turn on "Require conversation resolution before merging", so every
-finding is fixed or resolved with a reason, and add `figma` to the required status checks.
+## Who can trigger what
+
+The repo is public, so anyone can fork it and open a PR; GitHub doesn't let a personal
+account's public repo turn forking off. What a fork or an outsider can start is limited
+instead:
+
+- The Claude reviews only run on PRs from this repo's own branches, opened by someone with
+  write access. Fork PRs don't get an OIDC token or secrets anyway; the guard means they
+  don't even start.
+- The fixer only runs on a comment from someone with write access, and stops if the PR comes
+  from a fork.
+- Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts that
+  don't push drop their credentials, and CI's token is read-only.
+
+Repository settings that go with it:
+
+- **Rules → `main` ruleset:** "Require conversation resolution before merging", `figma` in
+  the required status checks, and "Restrict deletions" and "Block force pushes".
+- **Actions → General:** "Require approval for all external contributors" for fork PR
+  workflows; allow only actions from GitHub, verified creators and `anthropics/*`,
+  `pnpm/*`, `changesets/*`, with "Require actions to be pinned to a full-length commit SHA".
+- **Moderation → Interaction limits:** "Limit to prior contributors" or "collaborators only"
+  stops outsiders from opening PRs, issues and comments, for up to six months at a time.
+- **Advanced Security:** Dependabot security updates on; secret scanning and push protection
+  are already on.

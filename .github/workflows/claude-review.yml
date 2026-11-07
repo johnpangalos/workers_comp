@@ -20,8 +20,13 @@ concurrency:
 
 jobs:
   review:
-    # Skip drafts, and the "Version Packages" PR the release workflow opens.
-    if: github.event.pull_request.draft == false && !startsWith(github.head_ref, 'changeset-release/')
+    # Only branches in this repo, opened by someone who can write to it: never forks or
+    # outsiders. Skip drafts, and the "Version Packages" PR the release workflow opens.
+    if: >-
+      github.event.pull_request.draft == false &&
+      !startsWith(github.head_ref, 'changeset-release/') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -29,11 +34,12 @@ jobs:
       pull-requests: write
       id-token: write # the OIDC token both exchanges start from
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0 # to diff against the commit the last review saw
+          fetch-depth: 0
+          persist-credentials: false # to diff against the commit the last review saw
 
-      - uses: anthropics/claude-code-action@v1
+      - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
           anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}

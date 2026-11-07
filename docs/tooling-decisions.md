@@ -108,7 +108,7 @@ Sizes can't match to the last fraction: Figma snaps text to whole pixels and bro
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
-This doesn't run in CI yet (it needs a Chromium install step). An axe check per page is still worth adding.
+It runs in CI as the `figma` job, which installs Playwright's Chromium first. An axe check per page is still worth adding.
 
 **Token check: Vitest.** `packages/ui/src/figma-tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (the skill's `export-tokens`).
 
@@ -116,9 +116,19 @@ Its first run failed for 23 of the 46 colours, and that was a real difference, n
 
 **Behaviour tests: Vitest + Testing Library** (`pnpm test`). 10 tests cover the defaults, each variant's Figma classes, the focus ring, `className` overrides, keyboard activation and disabled behaviour. They run in jsdom, so they test behaviour, not pixels.
 
-**CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
+**CI** (`.github/workflows/ci.yml`) runs format and lint checks, typecheck, tests, builds (the package and the playground) and the Figma measurement on every PR.
 
 **Previews on Cloudflare Workers.** The playground is a static-assets-only Worker named `workers-comp`, configured in the root `wrangler.jsonc`. The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. The build lives in the config's `build.command` (install the workspace with pnpm, then build the playground to `apps/playground/build/client`), and wrangler finds the config from the repo root or from `apps/playground`, so the dashboard only needs deploy `npx wrangler deploy` and preview `npx wrangler preview`; the root directory and build command can be left empty. Nothing in the repo needs secrets for this.
+
+## Review
+
+Review follows the Claude Code team's process, described in [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/), as closely as a one-person repo allows. The layers: the change is verified before the PR (the `pre-pr` skill, with the built-in `/simplify`, `/code-review` and `/security-review`, and a hook that formats and lints every edit); required CI; a Claude bug review where parallel hunters find and a vote of verifiers keeps only what holds up; a separate security review; every finding fixed or resolved with a reason before merge; and `@claude` to have an agent fix the findings, with the round cap and diff-only re-review that keep reviewer and fixer from going back and forth. REVIEW.md says what matters here; CLAUDE.md holds the rules both the agent writing the code and the reviewer read.
+
+All of it runs through `anthropics/claude-code-action` with workload identity federation, so there is no stored API key. The official `claude-code-security-review` action only takes an API key, which is why the security review is a second claude-code-action job with its own prompt.
+
+Left out, because they need more than one person or a history that doesn't exist yet: risk tiers and required human approvals (GitHub won't let the only maintainer approve their own PR), CODEOWNERS, a merge queue (only on organization-owned repos), feature flags and staged releases, and an eval set of past incidents for scoring the reviewer.
+
+It replaces feature-flow-lite, a subagent pipeline (investigator, implementor, simplifier, reviewer) that this repo used before. Its checks and conventions moved to CLAUDE.md and its reviewer checklist to REVIEW.md.
 
 ## Note on the Figma MCP
 

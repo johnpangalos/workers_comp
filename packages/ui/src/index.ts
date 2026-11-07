@@ -6,4 +6,5 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from "./button/button";
+export { Chip, type ChipProps, chipClassName } from "./chip/chip";
 export { bindClassNames, type ClassValue } from "./class-names";

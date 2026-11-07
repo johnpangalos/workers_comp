@@ -1,16 +1,21 @@
-name: Merge low-risk PRs
+name: Merge non-breaking PRs
 
 # Review happens before the PR, locally, with feature-flow-lite. On the PR, this only decides
-# whether it can merge with no person reading it (docs/merge-risk.md). It runs when CI or
-# the PR title check finishes on a PR's commit, so editing a PR's description re-rates it. It
-# runs from main (workflow_run always does), and so do its scripts, so a PR can't change the
-# rules it is judged by. Three jobs, so the Claude call never runs next to a token that can
-# write; each runs one script in .github/scripts/claude-risk/, which says what it does:
-#   gate:  the owner's PR, from a branch here, not a draft, CI passed on the commit, every file
-#          low tier. Most PRs stop here, with no Claude call.
-#   rate:  one Messages API request to Claude (Haiku): a verdict as schema-checked JSON,
-#          `merge-approved` or `needs-human`.
-#   merge: on exactly `merge-approved`, squash-merges that exact commit.
+# whether it can merge with no person reading it: it does unless it's breaking for the apps
+# that use @workers-comp/ui or touches what the safeguards rest on (docs/merge-risk.md). It runs
+# when CI or the PR title check finishes on a PR's commit, so editing a PR's description
+# re-rates it. It runs from main (workflow_run always does), and so do its scripts, so a PR
+# can't change the rules it is judged by. Separate jobs, so the Claude call never runs next to
+# a token that can write; each runs one script in .github/scripts/claude-risk/:
+#   gate:   the owner's PR, from a branch here, not a draft, CI passed on the commit, no
+#           always-you file, no change to the existing Figma measurement, no major changeset
+#           or `!` title, a changeset if the package changes. Otherwise it stops, with no
+#           Claude call.
+#   rate:   one Messages API request to Claude (Haiku): is it breaking, or does it weaken a
+#           check? A verdict as schema-checked JSON, `merge-approved` or `needs-human`.
+#   merge:  on exactly `merge-approved`, squash-merges that exact commit.
+#   report: keeps one comment on the PR saying where it stopped and why, for the person who
+#           reviews it.
 # No PR code runs: its commits are fetched and diffed, never checked out.
 
 on:
@@ -39,9 +44,10 @@ jobs:
       pull-requests: read
       checks: read # whether CI passed on the commit
     outputs:
-      low: ${{ steps.gate.outputs.low }}
+      eligible: ${{ steps.gate.outputs.eligible }}
       pr: ${{ steps.gate.outputs.pr }}
       base: ${{ steps.gate.outputs.base }}
+      reason: ${{ steps.gate.outputs.reason }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -58,7 +64,7 @@ jobs:
 
   rate:
     needs: gate
-    if: needs.gate.outputs.low == 'true'
+    if: needs.gate.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -106,3 +112,30 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
           VERDICT: ${{ needs.rate.outputs.verdict }}
         run: node .github/scripts/claude-risk/merge.ts
+
+  report:
+    needs: [gate, rate, merge]
+    # Whatever the others did, once the gate found the PR.
+    if: always() && needs.gate.outputs.pr != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write # the comment
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.gate.outputs.pr }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GATE_REASON: ${{ needs.gate.outputs.reason }}
+          RATE_RESULT: ${{ needs.rate.result }}
+          VERDICT: ${{ needs.rate.outputs.verdict }}
+          MERGE_RESULT: ${{ needs.merge.result }}
+        run: node .github/scripts/claude-risk/report.ts

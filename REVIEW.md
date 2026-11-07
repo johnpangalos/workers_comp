@@ -52,8 +52,16 @@ identity federation so each run trades its GitHub OIDC token for a short-lived C
 In the Claude Console, open
 [Workload identity](https://platform.claude.com/settings/workload-identity-federation) (it needs
 the admin or owner role), click **Connect workload** and pick **GitHub Actions**. The wizard
-creates the issuer, service account and federation rule together. Match the subject
-`repo:johnpangalos/workers_comp:pull_request` and the audience `https://api.anthropic.com`.
+creates the issuer, service account and federation rule together. The rule should be:
+
+| Field | Value |
+|---|---|
+| Issuer URL | `https://token.actions.githubusercontent.com` (prefilled) |
+| Subject | `repo:johnpangalos/workers_comp:pull_request`: exact, no `*`, no `ref:refs/heads/main` |
+| Audience | `https://api.anthropic.com` |
+| Claims | `repository_owner` = `johnpangalos`, and no `ref` claim (PR runs don't have `refs/heads/main`) |
+| OAuth scope | `workspace:developer` (prefilled) |
+| Token lifetime | `3600`, longer than a review takes (the prefilled `600` is ten minutes) |
 
 Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`),

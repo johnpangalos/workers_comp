@@ -49,16 +49,15 @@ without a test noticing:
 
 The workflow uses no secrets. It needs the Claude GitHub App on the repository, and workload
 identity federation so each run trades its GitHub OIDC token for a short-lived Claude API token.
-In the [Claude Console](https://platform.claude.com), under Settings → Workload identity:
-
-1. Register an issuer: `https://token.actions.githubusercontent.com`, JWKS source `discovery`.
-2. Create a service account (Settings → Service accounts) and add it to a workspace.
-3. Create a federation rule for that service account, matching the subject
-   `repo:johnpangalos/workers_comp:pull_request` and the audience `https://api.anthropic.com`.
+In the Claude Console, open
+[Workload identity](https://platform.claude.com/settings/workload-identity-federation) (it needs
+the admin or owner role), click **Connect workload** and pick **GitHub Actions**. The wizard
+creates the issuer, service account and federation rule together. Match the subject
+`repo:johnpangalos/workers_comp:pull_request` and the audience `https://api.anthropic.com`.
 
 Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`),
-`ANTHROPIC_ORGANIZATION_ID` (the organization UUID) and `ANTHROPIC_SERVICE_ACCOUNT_ID`
+`ANTHROPIC_ORGANIZATION_ID` (the UUID on [Organization](https://platform.claude.com/settings/organization)) and `ANTHROPIC_SERVICE_ACCOUNT_ID`
 (`svac_…`). Usage is billed as API usage to that organization.
 
 To make findings block merging, turn on "Require conversation resolution before merging" in

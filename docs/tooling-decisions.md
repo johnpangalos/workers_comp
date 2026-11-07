@@ -126,7 +126,9 @@ Review follows the Claude Code team's process, described in [How the Claude Code
 
 All of it runs through `anthropics/claude-code-action` with workload identity federation, so there is no stored API key. Every job, and every subagent the reviews start, runs on Haiku (`--model claude-haiku-5-5`): most of a review's cost is its fan-out of hunters and verifiers, the 2-of-3 vote makes up for a weaker single verifier, and feature-flow-lite's evals found the instructions mattered more than the subagents' model. The official `claude-code-security-review` action only takes an API key, which is why the security review is a second claude-code-action job with its own prompt.
 
-Left out, because they need more than one person or a history that doesn't exist yet: risk tiers and required human approvals (GitHub won't let the only maintainer approve their own PR), CODEOWNERS, a merge queue (only on organization-owned repos), feature flags and staged releases, and an eval set of past incidents for scoring the reviewer.
+Risk tiers are in, in a one-person form: `claude-automerge.yml` turns on auto-merge for a PR whose files are all on a low-risk list (docs, examples, tests) once the Claude review rates it `risk=low` with nothing to fix and the security review has no findings. The review doubles as the post's classifier, so there's no extra Claude call, and it can only make the path check stricter.
+
+Left out, because they need more than one person or a history that doesn't exist yet: required human approvals (GitHub won't let the only maintainer approve their own PR), CODEOWNERS, a merge queue (only on organization-owned repos), feature flags and staged releases, and an eval set of past incidents for scoring the reviewer.
 
 It replaces feature-flow-lite, a subagent pipeline (investigator, implementor, simplifier, reviewer) that this repo used before. Its checks and conventions moved to CLAUDE.md and its reviewer checklist to REVIEW.md.
 

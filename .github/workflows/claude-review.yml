@@ -60,7 +60,7 @@ jobs:
                Read earlier reviews: top-level comments (`gh pr view --comments`) and review
                threads, with whether each is resolved:
                `gh api graphql -f query='{ repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") { pullRequest(number: ${{ github.event.pull_request.number }}) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }'`.
-               Your earlier summaries start with `<!-- claude-review sha=<sha> round=<n> -->`.
+               Your earlier summaries start with `<!-- claude-review sha=<sha> round=<n>`.
                This run's round is the highest earlier n plus 1, or 1 if there is none.
 
             2. Scope. In round 1 and 2, review the whole diff (`gh pr diff`). From round 3,
@@ -100,11 +100,19 @@ jobs:
                `gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<id>"}) { thread { isResolved } } }'`.
                Leave every other thread alone.
 
-            7. Summary. Post one top-level comment with `gh pr comment`. Its first line is
-               exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=<n> -->`.
-               Then the count first, e.g. "2 Important, 1 Nit", or "Nothing to fix." when there is
-               nothing; then one line per finding, Important first; then nothing else, no praise
-               and no recap of the PR. After three rounds (round 4 or later), with Important
+            7. Risk. Decide whether this change could merge with no person reading it. `low` only
+               if it is docs, copy, playground example pages, or tests that only add coverage, and
+               changes nothing the published package, the build, CI, the release or these review
+               instructions depend on. Anything else, or any doubt, is `person`: a test that
+               loosens a check, docs that now contradict the code, an example page a Figma spec
+               measures that no longer shows every node. The auto-merge workflow checks the paths
+               itself; this is your read of the change, and it can only make that stricter.
+
+            8. Summary. Post one top-level comment with `gh pr comment`. Its first line is
+               exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=<n> risk=<low|person> -->`.
+               The second line is the count, e.g. "2 Important, 1 Nit", or exactly "Nothing to fix."
+               when there is nothing; then one line per finding, Important first; then nothing
+               else, no praise and no recap of the PR. After three rounds (round 4 or later), with Important
                findings still open, say so and ask the author to step back and reconsider the
                approach rather than going another round.
 

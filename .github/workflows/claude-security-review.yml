@@ -84,7 +84,8 @@ jobs:
                (`gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<id>"}) { thread { isResolved } } }'`).
             5. Post one top-level comment with `gh pr comment`, first line exactly
                `<!-- claude-security-review sha=${{ github.event.pull_request.head.sha }} -->`,
-               then the count ("1 High") or "No security findings.", then one line per finding.
+               then on the second line the count ("1 High") or exactly "No security findings.",
+               then one line per finding.
 
             Launch every subagent with `model: "haiku"`.
 

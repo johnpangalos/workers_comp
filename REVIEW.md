@@ -19,6 +19,25 @@ review comment comes up twice, add it here, or to CLAUDE.md or a lint rule if it
    that fixes a finding resolves its thread on the next review.
 6. **Fixes on request.** `@claude` in a PR comment (`claude-fix.yml`) has Claude fix the open
    findings, run the checks and push, which starts the next review round.
+7. **Merge by risk.** A low-risk PR merges by itself once both reviews of its latest commit
+   are clean (`claude-automerge.yml`); everything else waits for you.
+
+## Risk tiers
+
+The paths set the tier, and the Claude review can only make it stricter: it adds `risk=low` or
+`risk=person` to its summary, by its own read of the change.
+
+| Tier | What | Merge |
+|---|---|---|
+| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`), and tests (`packages/ui/src/**/*.test.ts(x)`, `apps/playground/tests/*.spec.ts`) | Automatic, when the Claude review says "Nothing to fix." and `risk=low`, the security review says "No security findings.", the required checks pass and every thread is resolved |
+| Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
+| Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md` and `REVIEW.md` (they steer the reviewer); `apps/playground/tests/figma.ts` (the measuring code); `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
+
+Start strict and widen with evidence: move a path down a tier only after its PRs have been
+reviewed clean for a while. A new push turns auto-merge off until both reviews of the new
+commit agree again. Auto-merge is turned on with the workflow's own token, so the merge
+doesn't start CI or the release on `main`; that's fine for the low tier, which has nothing
+to release.
 
 ## What failure looks like
 
@@ -135,6 +154,7 @@ instead:
 
 Repository settings that go with it:
 
+- **General → Pull Requests:** "Allow auto-merge", for the low tier.
 - **Rules → `main` ruleset:** "Require conversation resolution before merging", `figma` in
   the required status checks, and "Restrict deletions" and "Block force pushes".
 - **Actions → General:** "Require approval for all external contributors" for fork PR

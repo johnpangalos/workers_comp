@@ -49,7 +49,8 @@ Before opening or updating a PR, run the `pre-pr` skill: the checks with their o
 `/simplify`, `/code-review` and `/security-review`. Fill in the PR template's Testing, Risk
 and How to revert. In CI every PR gets a Claude review and a separate security review, and
 every finding has to be fixed or resolved with a reason before it merges; `@claude` in a PR
-comment asks Claude to fix them. What the review looks for, and how to set it up, is in
+comment asks Claude to fix them. Low-risk PRs (docs, examples, tests) merge by themselves once
+both reviews are clean; REVIEW.md has the tiers. What the review looks for, and how to set it up, is in
 [REVIEW.md](REVIEW.md).
 
 ## Where things live

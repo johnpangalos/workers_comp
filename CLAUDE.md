@@ -59,7 +59,9 @@ hold the code PR back. A convention a component taught you is that follow-up PR.
 - `packages/ui/src/figma-tokens.json` — a snapshot of the Figma file's variables, text styles
   and effect styles, which `theme.test.ts` checks against the theme.
 - `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
-  which the tests in `apps/playground/tests/` compare the rendered page against.
+  which the tests in `apps/playground/tests/` compare the rendered page against; and
+  `lint-node.js`, which lints a component set in Figma before it is exported, with its results
+  (`<name>-lint.json`) and the findings accepted on purpose (`lint-ignore.json`).
 - `.github/scripts/claude-risk/` — the steps of the merge-risk workflow, TypeScript that Node
   runs as is (no dependencies), with `node --test` tests that `pnpm test` runs.
 
@@ -107,15 +109,23 @@ conventions and where the Figma pieces live. What follows is what to do by hand 
 A component or page isn't done until its measurement passes. Measure to finish; look to find
 what the measurement can't read.
 
-1. **Export.** Export the node's values, fresh, every time you implement or change a design:
+1. **Lint.** Run `apps/playground/figma/lint-node.js` on the component set through the MCP's
+   `use_figma` (paste the file, end with `return await lintNode("<set id>");`) and save the
+   result exactly as returned to `apps/playground/figma/<name>-lint.json`. It lists everything
+   code would have to guess at: values not bound to a variable or style, text not linked to its
+   property, detached frames. Findings are fixed in Figma, by the designer, then linted again;
+   don't export or build around them. One that is right as it is goes in
+   `apps/playground/figma/lint-ignore.json` with a reason. `pnpm test:figma` fails while an
+   export has no lint file, or its lint has a finding that isn't accepted.
+2. **Export.** Export the node's values, fresh, every time you implement or change a design:
    use the figma-flow skill's `export-node` and save its output exactly as returned to
    `apps/playground/figma/<name>.json` (it ends in a hash the tests check).
-2. **Build**, following the mapping above.
-3. **Measure.** Add a playground page that renders the design and a spec in
+3. **Build**, following the mapping above.
+4. **Measure.** Add a playground page that renders the design and a spec in
    `apps/playground/tests/` that calls `expectToMatchFigma` for each node; see
    `button.figma.spec.ts`. The page doesn't have to look like the Figma file. Run
    `pnpm test:figma` and fix the code until it passes. Never loosen the comparison.
-4. **Look**, for what the export can't describe: a ring Figma draws as a separate shape,
+5. **Look**, for what the export can't describe: a ring Figma draws as a separate shape,
    shadows with blur, spacing between text-hugging siblings. Compare a screenshot of the
    Figma node (the MCP's `get_screenshot`) with one of the rendered page in the same states.
    "I see no difference" is not a pass: in a trial a model looking at screenshots reported

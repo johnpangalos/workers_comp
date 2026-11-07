@@ -52,7 +52,7 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
   as native links do; Space is for buttons.
 - Every node in the Figma export is covered by the measurement; every state the design draws
   is reached the way a person reaches it; nothing in the diff loosens the comparison or edits
-  an export by hand.
+  an export or lint file by hand. A new entry in `lint-ignore.json` has a reason that holds up.
 - `CHANGELOG.md` and versions are untouched: Changesets owns them.
 
 ## Risky paths
@@ -68,6 +68,10 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
   file key `5OcRRw5a7qZGsgC43FjCp9`. One page per component.
 - Mapping: CLAUDE.md, "Turning Figma into code". Tokens are checked against the theme by
   `packages/ui/src/theme.test.ts` from the snapshot in `packages/ui/src/figma-tokens.json`.
+- Lint, before the export: `apps/playground/figma/lint-node.js`, run through `use_figma`, saved
+  to `apps/playground/figma/<name>-lint.json`. A finding is fixed in Figma or accepted with a
+  reason in `apps/playground/figma/lint-ignore.json`, never worked around in code; CLAUDE.md
+  step 1 has the details. `pnpm test:figma` checks it.
 - Export: the figma-flow skill carries the scripts. Its `export-node <node id> [<node id>…]`
   result is saved to `apps/playground/figma/<name>.json`; several ids go in one file, and a
   node that lays out children also gets its gap, padding and an entry per child. Its

@@ -1,0 +1,31 @@
+{
+  "file": "5OcRRw5a7qZGsgC43FjCp9",
+  "node": "1:91",
+  "findings": [
+    {"variant":"variant=outline, size=default, state=default","layer":"","node":"1:59","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=default, state=hover","layer":"","node":"1:61","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=default, state=active","layer":"","node":"1:63","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=default, state=disabled","layer":"","node":"1:65","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=sm, state=default","layer":"","node":"1:67","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=sm, state=hover","layer":"","node":"1:69","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=sm, state=active","layer":"","node":"1:71","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=sm, state=disabled","layer":"","node":"1:73","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=default, state=focus","layer":"","node":"5:6","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=outline, size=sm, state=focus","layer":"","node":"5:8","rule":"raw-number","field":"strokeWeight","value":1},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"topLeftRadius","value":10},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"topRightRadius","value":10},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"bottomRightRadius","value":10},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"bottomLeftRadius","value":10},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"width","value":86},
+    {"variant":"variant=ghost, size=default, state=focus","layer":"focus-ring","node":"5:37","rule":"raw-number","field":"height","value":44},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"topLeftRadius","value":10},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"topRightRadius","value":10},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"bottomRightRadius","value":10},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"bottomLeftRadius","value":10},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"width","value":71},
+    {"variant":"variant=ghost, size=sm, state=focus","layer":"focus-ring","node":"5:38","rule":"raw-number","field":"height","value":32}
+  ],
+  "hash": "b1c1ee25"
+}

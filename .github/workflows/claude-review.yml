@@ -108,7 +108,10 @@ jobs:
                findings still open, say so and ask the author to step back and reconsider the
                approach rather than going another round.
 
+            Launch every subagent with `model: "haiku"`.
+
             Only communicate through those GitHub comments and thread resolutions. Don't edit
             files or push.
           claude_args: |
+            --model claude-haiku-5-5
             --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api graphql:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"

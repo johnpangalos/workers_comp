@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import { expectToMatchFigma, loadFigmaNodes } from "./figma";
+import { expectToMatchFigma, loadFigmaNodes, waitForInter } from "./figma";
 
 // Every entry of the Figma "Badge" component set against the rendered Badge: the values each is
 // drawn with, exactly. A `> dot` entry is measured on the dot inside the matching badge.
@@ -13,8 +13,7 @@ for (const [name, node] of Object.entries(variants)) {
   test(name, async ({ page }) => {
     await page.goto("/badge/figma");
     await page.addStyleTag({ content: "* { transition: none !important; }" });
-    // Wait for the label's font; before it loads the badge has the fallback font's width.
-    await page.evaluate(() => document.fonts.load("600 12px Inter"));
+    await waitForInter(page);
 
     // The span badge for default; the link badge for focus, which takes keyboard focus the way a
     // person gives it.

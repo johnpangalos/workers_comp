@@ -5,7 +5,7 @@ description: Use before opening or updating a pull request in workers_comp, or w
 
 # Before the pull request
 
-Most review should happen before a PR exists. Every PR then gets the Claude review and the
+Most review should happen before a PR exists. Every PR you open then gets the Claude review and the
 security review in CI (REVIEW.md); this is the same work done first, so CI finds less.
 
 1. **Verify, and show it.** Run each check and quote the command and its result line, not

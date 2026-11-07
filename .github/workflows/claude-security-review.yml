@@ -30,14 +30,30 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          ref: ${{ github.event.pull_request.head.sha }} # the PR head, not the merge commit
           fetch-depth: 0
           persist-credentials: false
+
+      # Claude gets no GraphQL, which would let it run any mutation, merging included. This
+      # step reads the review threads for it, into .git/ (inside the workspace Claude can read,
+      # and never committed); the last step resolves the ones it cleared.
+      - name: Read the review threads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
+            -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
+            -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
           anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
           anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          # The fixer pushes as claude[bot]; without this the review of its push is refused as a
+          # bot run. The PR-author check above still decides whose PRs are reviewed.
+          allowed_bots: claude
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -67,8 +83,8 @@ jobs:
             with no concrete exploit, issues only in tests or docs, and anything that needs an
             attacker who can already push to this repo.
 
-            1. Read your earlier findings: review threads with
-               `gh api graphql -f query='{ repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") { pullRequest(number: ${{ github.event.pull_request.number }}) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }'`.
+            1. Read your earlier findings: the review threads, with whether each is resolved, are
+               in `${{ github.workspace }}/.git/claude-review-threads.json`.
                Yours start with **Security**.
             2. For each candidate, launch three verifier subagents in parallel and ask each to
                show it can't be exploited. Keep it only if at least two find a concrete attack
@@ -80,17 +96,37 @@ jobs:
             4. For each unresolved thread of yours whose issue this push fixes, reply once
                naming the commit
                (`gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/<databaseId>/replies -f body=...`)
-               and resolve it
-               (`gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<id>"}) { thread { isResolved } } }'`).
+               and put its id on the resolve line of your summary (step 5).
             5. Post one top-level comment with `gh pr comment`, first line exactly
                `<!-- claude-security-review sha=${{ github.event.pull_request.head.sha }} -->`,
                then on the second line the count ("1 High") or exactly "No security findings.",
-               then one line per finding.
+               then one line per finding, then, if step 4 cleared any, a last line
+               `<!-- resolve: <id> <id> -->`; the workflow resolves them after you finish.
 
             Launch every subagent with `model: "haiku"`.
 
-            Only communicate through those GitHub comments and thread resolutions. Don't edit
-            files or push.
+            Only communicate through those GitHub comments. Don't edit files or push.
           claude_args: |
             --model claude-haiku-5-5
-            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api graphql:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
+
+      # Resolves the threads the summary lists on its `<!-- resolve: … -->` line, but only open
+      # ones that the security review started.
+      - name: Resolve the threads the review cleared
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          PREFIX: "<!-- claude-security-review sha=${{ github.event.pull_request.head.sha }} "
+        run: |
+          set -euo pipefail
+          body=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            -q '.[] | select(.user.login == "claude[bot]" and (.body | startswith(env.PREFIX))) | .body | @json' \
+            | tail -n 1 | jq -r 'select(. != null)')
+          read -ra ids <<< "$(sed -n 's/^<!-- resolve: \(.*\) -->$/\1/p' <<< "$body" | head -n 1)"
+          for id in ${ids[@]+"${ids[@]}"}; do
+            jq -e --arg id "$id" 'any(.[]; .id == $id and (.isResolved | not)
+              and ((.comments.nodes[0].author.login // "") | sub("\\[bot\\]$"; "")) == "claude"
+              and (.comments.nodes[0].body | test("\\A\\*\\*Security")))' "$GITHUB_WORKSPACE/.git/claude-review-threads.json" > /dev/null || continue
+            gh api graphql -f id="$id" -f query='mutation($id: ID!) { resolveReviewThread(input: {threadId: $id}) { thread { isResolved } } }' > /dev/null
+            echo "Resolved $id"
+          done

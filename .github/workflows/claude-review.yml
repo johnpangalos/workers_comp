@@ -37,14 +37,30 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0
-          persist-credentials: false # to diff against the commit the last review saw
+          ref: ${{ github.event.pull_request.head.sha }} # the PR head, not the merge commit
+          fetch-depth: 0 # to diff against the commit the last review saw
+          persist-credentials: false
+
+      # Claude gets no GraphQL, which would let it run any mutation, merging included. This
+      # step reads the review threads for it, into .git/ (inside the workspace Claude can read,
+      # and never committed); the last step resolves the ones it cleared.
+      - name: Read the review threads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
+            -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
+            -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
           anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
           anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          # The fixer pushes as claude[bot]; without this the review of its push is refused as a
+          # bot run. The PR-author check above still decides whose PRs are reviewed.
+          allowed_bots: claude
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -57,9 +73,8 @@ jobs:
             reviewed separately; leave it out.
 
             1. Context. Read the PR title and description (`gh pr view`) for what it intends.
-               Read earlier reviews: top-level comments (`gh pr view --comments`) and review
-               threads, with whether each is resolved:
-               `gh api graphql -f query='{ repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") { pullRequest(number: ${{ github.event.pull_request.number }}) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }'`.
+               Read earlier reviews: top-level comments (`gh pr view --comments`) and the review
+               threads, with whether each is resolved, in `${{ github.workspace }}/.git/claude-review-threads.json`.
                Your earlier summaries start with `<!-- claude-review sha=<sha> round=<n>`.
                This run's round is the highest earlier n plus 1, or 1 if there is none.
 
@@ -96,9 +111,8 @@ jobs:
             6. Clear what's fixed. For each unresolved thread you started (not the security
                review's) whose finding this push fixes, reply once naming the commit
                (`gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/<databaseId>/replies -f body=...`),
-               then resolve it:
-               `gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<id>"}) { thread { isResolved } } }'`.
-               Leave every other thread alone.
+               and put its id on the resolve line of your summary (step 8). Leave every other
+               thread alone.
 
             7. Risk. Decide whether this change could merge with no person reading it. `low` only
                if it is docs, copy, playground example pages, or tests that only add coverage, and
@@ -112,14 +126,36 @@ jobs:
                exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=<n> risk=<low|person> -->`.
                The second line is the count, e.g. "2 Important, 1 Nit", or exactly "Nothing to fix."
                when there is nothing; then one line per finding, Important first; then nothing
-               else, no praise and no recap of the PR. After three rounds (round 4 or later), with Important
+               else, no praise and no recap of the PR, except a last line
+               `<!-- resolve: <id> <id> -->` with the threads from step 6, if there are any; the
+               workflow resolves them after you finish. After three rounds (round 4 or later), with Important
                findings still open, say so and ask the author to step back and reconsider the
                approach rather than going another round.
 
             Launch every subagent with `model: "haiku"`.
 
-            Only communicate through those GitHub comments and thread resolutions. Don't edit
-            files or push.
+            Only communicate through those GitHub comments. Don't edit files or push.
           claude_args: |
             --model claude-haiku-5-5
-            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api graphql:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
+
+      # Resolves the threads the summary lists on its `<!-- resolve: … -->` line, but only open
+      # ones that the Claude review (not the security review) started.
+      - name: Resolve the threads the review cleared
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          PREFIX: "<!-- claude-review sha=${{ github.event.pull_request.head.sha }} "
+        run: |
+          set -euo pipefail
+          body=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            -q '.[] | select(.user.login == "claude[bot]" and (.body | startswith(env.PREFIX))) | .body | @json' \
+            | tail -n 1 | jq -r 'select(. != null)')
+          read -ra ids <<< "$(sed -n 's/^<!-- resolve: \(.*\) -->$/\1/p' <<< "$body" | head -n 1)"
+          for id in ${ids[@]+"${ids[@]}"}; do
+            jq -e --arg id "$id" 'any(.[]; .id == $id and (.isResolved | not)
+              and ((.comments.nodes[0].author.login // "") | sub("\\[bot\\]$"; "")) == "claude"
+              and (.comments.nodes[0].body | test("\\A\\*\\*(Important|Nit|Pre-existing)\\*\\*")))' "$GITHUB_WORKSPACE/.git/claude-review-threads.json" > /dev/null || continue
+            gh api graphql -f id="$id" -f query='mutation($id: ID!) { resolveReviewThread(input: {threadId: $id}) { thread { isResolved } } }' > /dev/null
+            echo "Resolved $id"
+          done

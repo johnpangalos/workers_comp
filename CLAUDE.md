@@ -23,7 +23,7 @@ pnpm playground   # http://localhost:5173/<component>/<page>
 All of these but `playground` run in CI. While working, run only what covers the change:
 `pnpm --filter @workers-comp/ui exec vitest run src/<component>/<component>.test.tsx`, and
 `pnpm test:figma <component>` (no `--`; it passes the filter through). A hook formats and
-lints each file Claude edits (`.claude/hooks/format-and-lint.sh`).
+lints each file Claude edits (`.claude/hooks/format-and-lint.sh`; it needs `jq`).
 
 A new component is `packages/ui/src/<component>/<component>.tsx` and `.test.tsx`, an export
 in `packages/ui/src/index.ts`, example pages in `apps/playground/app/examples/<component>/`
@@ -47,9 +47,9 @@ or the version by hand.
 
 Before opening or updating a PR, run the `pre-pr` skill: the checks with their output, then
 `/simplify`, `/code-review` and `/security-review`. Fill in the PR template's Testing, Risk
-and How to revert. In CI every PR gets a Claude review and a separate security review, and
+and How to revert. In CI every PR you open gets a Claude review and a separate security review, and
 every finding has to be fixed or resolved with a reason before it merges; `@claude` in a PR
-comment asks Claude to fix them. Low-risk PRs (docs, examples, tests) merge by themselves once
+comment asks Claude to fix them. Low-risk PRs (docs, examples, component tests) merge by themselves once
 both reviews are clean; REVIEW.md has the tiers. What the review looks for, and how to set it up, is in
 [REVIEW.md](REVIEW.md).
 

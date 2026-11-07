@@ -29,9 +29,9 @@ The paths set the tier, and the Claude review can only make it stricter: it adds
 
 | Tier | What | Merge |
 |---|---|---|
-| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`), and tests (`packages/ui/src/**/*.test.ts(x)`, `apps/playground/tests/*.spec.ts`) | Automatic, when the Claude review says "Nothing to fix." and `risk=low`, the security review says "No security findings.", the required checks pass and every thread is resolved |
+| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when the Claude review says "Nothing to fix." and `risk=low`, the security review says "No security findings.", the required checks pass and every thread is resolved |
 | Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
-| Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md` and `REVIEW.md` (they steer the reviewer); `apps/playground/tests/figma.ts` (the measuring code); `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
+| Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md` and `REVIEW.md` (they steer the reviewer); the Figma specs and the measuring code (`apps/playground/tests/`) and the token test (`packages/ui/src/theme.test.ts`), which say whether code matches Figma; `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
 
 Start strict and widen with evidence: move a path down a tier only after its PRs have been
 reviewed clean for a while. A new push turns auto-merge off until both reviews of the new
@@ -93,7 +93,7 @@ review's, not this one's.
 
 ## Setup
 
-The workflows use no secrets. They need the Claude GitHub App on the repository, and workload
+The Claude workflows use no secrets. They need the Claude GitHub App on the repository, and workload
 identity federation so each run trades its GitHub OIDC token for a short-lived Claude API
 token. In the Claude Console, open
 [Workload identity](https://platform.claude.com/settings/workload-identity-federation) (it needs
@@ -149,6 +149,13 @@ instead:
   Anyone else's `@claude`, collaborators included, is skipped before a token is requested.
 - Both check the GitHub user ID (6550688), not the login, so a rename doesn't hand the check
   to whoever takes the old name.
+- The fixer's pushes come from `claude[bot]`, and the reviews accept them (`allowed_bots:
+  claude`) so a fixed PR gets re-reviewed; the PR-author check still decides whose PRs those
+  are. PRs anyone else opens, Dependabot's included, get no Claude review.
+- Claude can't merge or change anything beyond the PR's comments: it has no GraphQL and no
+  `gh pr merge`, and its REST access is the PR's review comments. A workflow step reads the
+  review threads for it, and another resolves the ones a review lists as cleared, only if
+  that review (`claude[bot]`, with its own tag) started them.
 - Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts that
   don't push drop their credentials, and CI's token is read-only.
 

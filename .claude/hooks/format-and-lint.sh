@@ -4,6 +4,11 @@
 # (exit 2), so they get fixed while the change is being made rather than in CI.
 set -uo pipefail
 
+if ! command -v jq > /dev/null; then
+  echo "format-and-lint hook: jq isn't installed, so edits aren't being formatted or linted" >&2
+  exit 1
+fi
+
 file=$(jq -r '.tool_input.file_path // empty')
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 

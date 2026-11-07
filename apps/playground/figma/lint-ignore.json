@@ -5,54 +5,5 @@
     "layer": "",
     "field": "strokeWeight",
     "reason": "The outline Button's 1px border is Tailwind's `border`, which has no width scale to bind to, and Figma has no border-width variable."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "strokeWeight",
-    "reason": "The ghost Button has no fill, and Figma casts a fill-less frame's shadow from its text, so its focus ring can't be the spread shadows the other variants use; it is a rectangle 4px outside the button instead. Its 2px stroke is `ring-2`, which has no Figma variable. Covered by looking: the screenshot comparison in CLAUDE.md's Checking the result against Figma."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "topLeftRadius",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): its 10px corners are the button's 6px radius plus the ring's 4px reach, which no radius variable has."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "topRightRadius",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): its 10px corners are the button's 6px radius plus the ring's 4px reach, which no radius variable has."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "bottomRightRadius",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): its 10px corners are the button's 6px radius plus the ring's 4px reach, which no radius variable has."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "bottomLeftRadius",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): its 10px corners are the button's 6px radius plus the ring's 4px reach, which no radius variable has."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "width",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): it is the button's size plus 8px, set by hand because an absolutely positioned layer can't hug its parent."
-  },
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "focus-ring",
-    "field": "height",
-    "reason": "The ghost focus ring rectangle (see its strokeWeight entry): it is the button's size plus 8px, set by hand because an absolutely positioned layer can't hug its parent."
   }
 ]

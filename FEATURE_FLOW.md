@@ -29,6 +29,9 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Change to what a component ships: a changeset (`patch` for a fix), and its Figma test still
   passing.
 - Commit messages and PR titles are Conventional Commits; CI checks PR titles.
+- The PR description follows `.github/pull_request_template.md`; its "For review and decision
+  agents" disclosure gets the run's acceptance criteria, each check's result line, the
+  reviewer's findings (fixed and open) and what wasn't covered, from the report.
 
 ## Standing criteria
 

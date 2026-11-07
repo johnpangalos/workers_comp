@@ -9,8 +9,11 @@ are in FEATURE_FLOW.md; the rules are in CLAUDE.md.
    code, an implementor builds it against written acceptance criteria, the checks run, a
    simplifier tidies the diff, and a red-team reviewer writes and runs probes to break it,
    for at most two fix rounds. It runs on your Claude plan.
-2. **The PR** has a Conventional Commits title and the template filled in: Testing (the
-   output, not "tests pass"), Risk, and How to revert.
+2. **The PR** has a Conventional Commits title and the template filled in: what and why, the
+   risk, and, in its "For review and decision agents" disclosure, what an agent needs to judge
+   the change without rerunning it: the acceptance criteria, each check's result line, the
+   review findings and what is still open, and what wasn't covered. Copy it from the
+   feature-flow-lite report.
 3. **Required CI**: `check` (`pnpm check`: format, lint, types, tests, build), `figma`
    (`pnpm test:figma`, on macOS) and `pr-title`. Red blocks the merge.
 4. **Merge by risk** (`.github/workflows/claude-risk.yml`). When CI passes on a low-risk PR,
@@ -26,12 +29,13 @@ The paths set the tier, and Claude can only make it stricter.
 | Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
 | Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md`, `FEATURE_FLOW.md` and `REVIEW.md`; the Figma specs and the measuring code (`apps/playground/tests/`) and the token test (`packages/ui/src/theme.test.ts`), which say whether code matches Figma; `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
 
-For a PR whose files are all low tier, Claude (Haiku) gets the diff, CLAUDE.md and this file
-in one Messages API request and answers, as JSON that the API holds to a schema (structured
+For a PR whose files are all low tier, Claude (Haiku) gets the diff, the PR description,
+CLAUDE.md and this file in one Messages API request and answers, as JSON that the API holds to a schema (structured
 outputs), `merge-approved` or `needs-human` with a one-sentence reason. `merge-approved` only
 if the change is docs, copy, examples or tests that only add coverage, and is right: docs that
 say only what the code does, tests that loosen nothing. Anything else, any doubt, a refusal or a
-cut-off answer is `needs-human`. The verdict and its reason are in the run's summary.
+cut-off answer is `needs-human`, and so is a description claim the diff doesn't back or an
+open finding. The verdict and its reason are in the run's summary.
 
 Start strict and widen with evidence: move a path down a tier only after its PRs have been
 approved and merged clean for a while.

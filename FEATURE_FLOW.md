@@ -57,8 +57,9 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 
 ## Risky paths
 
-- `.github/workflows/`: they run with write tokens and spend API credit; probe their `run:`
-  scripts with a fake `gh` on `PATH`.
+- `.github/workflows/` and `.github/scripts/`: they run with write tokens and spend API credit;
+  probe the scripts end to end against a fake GitHub and Claude API (`GITHUB_API_URL`,
+  `ANTHROPIC_BASE_URL`), as well as their unit tests.
 - `.claude/hooks/`: they run on every edit on the owner's machine.
 
 ## Figma

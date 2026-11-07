@@ -56,6 +56,8 @@ tiers and the setup.
   and effect styles, which `theme.test.ts` checks against the theme.
 - `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
   which the tests in `apps/playground/tests/` compare the rendered page against.
+- `.github/scripts/claude-risk/` — the steps of the merge-risk workflow, TypeScript that Node
+  runs as is (no dependencies), with `node --test` tests that `pnpm test` runs.
 
 ## Turning Figma into code
 

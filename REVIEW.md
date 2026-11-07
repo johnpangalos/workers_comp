@@ -40,9 +40,11 @@ open finding. The verdict and its reason are in the run's summary.
 Start strict and widen with evidence: move a path down a tier only after its PRs have been
 approved and merged clean for a while.
 
-It runs when CI passes on a PR's commit (`workflow_run`), and GitHub always runs that from
-`main`'s copy of the workflow, so a PR can't change the rules it is judged by. It merges that
-exact commit (`--match-head-commit`), so a push after CI passed is refused, and nothing is left
+It runs when CI or the PR title check finishes on a PR's commit (`workflow_run`), so editing the
+description re-rates the PR, and it goes on only once `check` and `figma` have passed on that
+commit. GitHub always runs a `workflow_run` from `main`'s copy of the workflow, and its steps
+are `main`'s scripts in `.github/scripts/claude-risk/`, so a PR can't change the rules it is
+judged by. It merges that exact commit, so a push since is refused, and nothing is left
 switched on between pushes. The merge is made with the workflow's own token, so it doesn't
 start CI or the release on `main`; that's fine for the low tier, which has nothing to release.
 

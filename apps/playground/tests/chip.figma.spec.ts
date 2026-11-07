@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectToMatchFigma, loadFigmaNodes } from "./figma";
+import { expectToMatchFigma, loadFigmaNodes, waitForInter } from "./figma";
 
 // Every entry of the Figma "Chip" component set against the rendered Chip: the values each is
 // drawn with, exactly. A `> underline` entry is measured on the underline inside the matching chip.
@@ -29,8 +29,7 @@ for (const [name, node] of Object.entries(variants)) {
   test(name, async ({ page }) => {
     await page.goto("/chip/figma");
     await page.addStyleTag({ content: "* { transition: none !important; }" });
-    // Wait for the label's font; before it loads the chip has the fallback font's width.
-    await page.evaluate(() => document.fonts.load("700 14px Inter"));
+    await waitForInter(page);
 
     const chip = page.locator(`[data-figma-chip="${chipState}"] > a`);
     if (state === "hover") await chip.hover();

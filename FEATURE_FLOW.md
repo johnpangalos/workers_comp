@@ -28,6 +28,9 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
   row in CLAUDE.md's components table, and a changeset in `.changeset/` (`minor`).
 - Change to what a component ships: a changeset (`patch` for a fix), and its Figma test still
   passing.
+- This file, and CLAUDE.md beyond its components table, change only in their own `docs:` PR:
+  they always wait for a person, so a convention learned while building goes in a follow-up PR
+  and the code PR merges by itself.
 - Commit messages and PR titles are Conventional Commits; CI checks PR titles.
 - The PR description follows `.github/pull_request_template.md`; its "For review and decision
   agents" disclosure gets the run's acceptance criteria, each check's result line, the

@@ -1,9 +1,4 @@
-export {
-  Badge,
-  badgeClassName,
-  type BadgeColor,
-  type BadgeProps,
-} from "./badge/badge";
+export { Badge, badgeClassName, type BadgeColor, type BadgeProps } from "./badge/badge";
 export {
   Button,
   buttonClassName,

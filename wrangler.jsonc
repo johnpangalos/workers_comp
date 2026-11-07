@@ -6,12 +6,12 @@
   "name": "workers-comp",
   "compatibility_date": "2026-10-08",
   "build": {
-    "command": "pnpm install --frozen-lockfile && pnpm --filter @workers-comp/playground build"
+    "command": "pnpm install --frozen-lockfile && pnpm --filter @workers-comp/playground build",
   },
   "assets": {
     "directory": "./apps/playground/build/client",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
   },
   // Pull request Previews use the same settings as production.
-  "previews": {}
+  "previews": {},
 }

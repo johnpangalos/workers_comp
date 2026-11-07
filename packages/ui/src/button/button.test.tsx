@@ -46,7 +46,7 @@ describe("Button", () => {
 
   it("calls onClick when clicked and is reachable with Tab", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(<Button onClick={onClick}>Label</Button>);
     await user.tab();
     expect(screen.getByRole("button")).toHaveFocus();
@@ -57,7 +57,7 @@ describe("Button", () => {
 
   it("does not fire onClick when disabled", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Button disabled onClick={onClick}>
         Label

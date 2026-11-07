@@ -1,0 +1,147 @@
+name: Merge low-risk PRs
+
+# Review happens before the PR, locally, with feature-flow-lite. On the PR, this only decides
+# whether it can merge with no person reading it (REVIEW.md, "Risk tiers"). It runs when CI
+# passes on a PR's commit, from main's copy of this file (workflow_run always does), so a PR
+# can't change the rules it is judged by. Three jobs, so Claude never runs next to a token that
+# can write:
+#   gate:  the PR is johnpangalos's, from a branch here, not a draft, still at the commit CI
+#          passed, and every file it touches is on the low-risk list, a fixed check the change
+#          can't argue with. Most PRs stop here, with no Claude call.
+#   rate:  Claude (Haiku, read-only tools, the job's read-only token) reads the diff and returns
+#          a JSON verdict, `low` or `person`.
+#   merge: on exactly `low`, squash-merges that exact commit. GitHub still requires every
+#          required check, and refuses if a push landed since.
+# No PR code runs: the diff is read with git and by Claude, never executed.
+#
+# No secrets: workload identity federation trades the run's GitHub OIDC token for a
+# short-lived Claude API token (REVIEW.md, "Setup").
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  gate:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      low: ${{ steps.gate.outputs.low }}
+      pr: ${{ steps.gate.outputs.pr }}
+      base: ${{ steps.gate.outputs.base }}
+    steps:
+      # Low risk: docs, the README, playground example pages other than the ones the Figma
+      # specs measure (figma.tsx, overrides.tsx), and a component's own tests. Everything else
+      # (the package, the theme and its token test, Figma exports, the Figma specs and the
+      # measuring code, changesets, CI, .claude/, CLAUDE.md, FEATURE_FLOW.md, REVIEW.md,
+      # dependencies, config) needs a person. Whole names, renames' old names included, are
+      # matched in jq, so a name with a newline in it can't pass as two; a failed request
+      # stops the job (set -e); and the list has to be as long as the PR says it is.
+      - name: Only johnpangalos's low-risk PRs
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          person() { echo "Not merging by itself: $1." >> "$GITHUB_STEP_SUMMARY"; echo "low=false" >> "$GITHUB_OUTPUT"; exit 0; }
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" \
+            -q '[.[] | select(.state == "open" and .head.sha == env.SHA and .head.repo.full_name == env.GITHUB_REPOSITORY)][0] // empty')
+          [ -n "$pr" ] || person "no open PR from this repo is at $SHA"
+          n=$(jq -r .number <<< "$pr")
+          echo "pr=$n" >> "$GITHUB_OUTPUT"
+          echo "base=$(jq -r .base.sha <<< "$pr")" >> "$GITHUB_OUTPUT"
+          # By user ID, which survives a rename.
+          [ "$(jq -r .user.id <<< "$pr")" = 6550688 ] || person "#$n isn't johnpangalos's"
+          [ "$(jq -r .draft <<< "$pr")" = false ] || person "#$n is a draft"
+          changed=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$n" -q .changed_files)
+          files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$n/files" -q '.[] | [.filename, (.previous_filename // empty)] | @json')
+          [ -n "$files" ] && [ "$(wc -l <<< "$files")" -eq "$changed" ] || person "#$n's file list is empty or incomplete"
+          outside=$(jq -r '.[] | select((test("\\A(docs/.+|README\\.md|apps/playground/app/examples/.+|packages/ui/src/[^/]+/[^/]+\\.test\\.tsx?)\\z")
+              and (test("\\Aapps/playground/app/examples/[^/]+/(figma|overrides)\\.tsx\\z") | not)) | not) | @json' <<< "$files")
+          [ -z "$outside" ] || person "#$n touches $(head -n 1 <<< "$outside")"
+          echo "low=true" >> "$GITHUB_OUTPUT"
+
+  rate:
+    needs: gate
+    if: needs.gate.outputs.low == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # the OIDC token the Claude API token is exchanged from
+    outputs:
+      verdict: ${{ steps.claude.outputs.structured_output }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Into .git/: inside the workspace Claude can read, and never committed.
+      - name: Write the diff
+        env:
+          BASE: ${{ needs.gate.outputs.base }}
+        run: git diff "$BASE...HEAD" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
+
+      - id: claude
+        uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
+        with:
+          # The job's own read-only token, so the action doesn't fetch the Claude GitHub App's
+          # write token into a place Claude could read it.
+          github_token: ${{ github.token }}
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          prompt: |
+            Decide whether pull request #${{ needs.gate.outputs.pr }} can merge with no person
+            reading it. The diff is in `${{ github.workspace }}/.git/claude-pr.diff`; read the
+            files around it as you need. CLAUDE.md is loaded; REVIEW.md, "Risk tiers", says what
+            low risk is here.
+
+            Every file it touches is already on the low-risk list, so the question is the change
+            itself. `low` only if it is docs, copy, playground example pages, or tests that only
+            add coverage, and it is right: docs say only what the code does, examples use the
+            components the way CLAUDE.md says, tests test what they claim and loosen nothing.
+            Anything else, or any doubt, is `person`. Give the reason in one sentence.
+          claude_args: |
+            --model claude-haiku-5-5
+            --max-turns 15
+            --allowedTools "Read,Grep,Glob"
+            --disallowedTools "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Agent,Task"
+            --json-schema '{"type":"object","properties":{"risk":{"type":"string","enum":["low","person"]},"reason":{"type":"string"}},"required":["risk","reason"],"additionalProperties":false}'
+
+  merge:
+    needs: [gate, rate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # to merge
+      pull-requests: write
+    steps:
+      - name: Merge it if Claude rated it low
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.gate.outputs.pr }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          VERDICT: ${{ needs.rate.outputs.verdict }}
+        run: |
+          set -euo pipefail
+          verdict=${VERDICT:-}
+          echo "Claude on #$PR: $(jq -r '"\(.risk). \(.reason)"' <<< "$verdict" 2> /dev/null || echo "no verdict")" >> "$GITHUB_STEP_SUMMARY"
+          # Exactly {"risk": "low", "reason": "<text>"}, nothing else.
+          jq -e 'type == "object" and (keys == ["reason", "risk"]) and .risk == "low" and (.reason | type) == "string"' \
+            <<< "$verdict" > /dev/null 2>&1 || exit 0
+          # --match-head-commit: if a push landed since CI passed, GitHub refuses.
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$SHA"
+          echo "Merged #$PR at $SHA." >> "$GITHUB_STEP_SUMMARY"

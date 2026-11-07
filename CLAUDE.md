@@ -46,6 +46,10 @@ merges by itself unless it's a breaking change for apps that use `@workers-comp/
 what the safeguards rest on; then it waits for a person, with a comment saying why.
 [docs/merge-risk.md](docs/merge-risk.md) has what needs a person, how it's decided, and the setup.
 
+A change to FEATURE_FLOW.md, or to CLAUDE.md beyond a new row in the components table, goes in
+its own `docs:` PR, never with code: both always wait for a person, and on their own they don't
+hold the code PR back. A convention a component taught you is that follow-up PR.
+
 ## Where things live
 
 - `packages/ui/src/<component>/` — the React components (`@workers-comp/ui`), one folder each.

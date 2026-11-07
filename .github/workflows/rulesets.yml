@@ -1,0 +1,39 @@
+name: Rulesets
+
+# Applies .github/rulesets/*.json to the repo's live rulesets, matched by name: an existing
+# ruleset is updated, a new one is created. Rulesets removed from the folder are left alone.
+on:
+  push:
+    branches: [main]
+    paths: [.github/rulesets/**]
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply rulesets
+        env:
+          # GITHUB_TOKEN can't manage rulesets. This is a fine-grained token for this repo
+          # with the "Administration: read and write" permission.
+          GH_TOKEN: ${{ secrets.RULESETS_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add a RULESETS_TOKEN secret (fine-grained token, Administration: read and write)."
+            exit 1
+          fi
+          for file in .github/rulesets/*.json; do
+            name=$(jq -r .name "$file")
+            id=$(gh api "repos/$REPO/rulesets" --paginate --jq ".[] | select(.name == \"$name\") | .id")
+            if [ -n "$id" ]; then
+              echo "Updating ruleset \"$name\" ($id) from $file"
+              gh api -X PUT "repos/$REPO/rulesets/$id" --input "$file" > /dev/null
+            else
+              echo "Creating ruleset \"$name\" from $file"
+              gh api -X POST "repos/$REPO/rulesets" --input "$file" > /dev/null
+            fi
+          done

@@ -108,7 +108,7 @@ Sizes can't match to the last fraction: Figma snaps text to whole pixels and bro
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
-It runs in CI as the `figma` job, which installs Playwright's Chromium first. An axe check per page is still worth adding.
+It runs in CI as the `figma` job, on macOS: Chromium on Linux lays text out a pixel or two differently, and 129 of the 167 checks failed there on widths that hug text, while all pass on macOS. An axe check per page is still worth adding.
 
 **Token check: Vitest.** `packages/ui/src/figma-tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (the skill's `export-tokens`).
 

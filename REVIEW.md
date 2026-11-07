@@ -8,6 +8,8 @@ review comment comes up twice, add it here, or to CLAUDE.md or a lint rule if it
 
 1. **Before the PR**, the `pre-pr` skill (`.claude/skills/pre-pr/`) runs the checks and shows
    their output, then `/simplify`, `/code-review` and `/security-review` in fresh context.
+   For workflow, hook, script and dependency changes it also red-teams them with probes it
+   runs, which the CI reviews, limited to reading, can't.
 2. **Required CI**: `check` (format, lint, types, tests, build), `figma` (`pnpm test:figma`)
    and `pr-title`. Red blocks the merge.
 3. **Claude review** on every push: three bug hunters in parallel, three verifiers voting on

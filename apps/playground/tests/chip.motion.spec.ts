@@ -6,16 +6,16 @@ import { loadFigmaNodes } from "./figma";
 // row's gap, each dot's width, corners and colour) must animate with the same duration and curve.
 // The values come from figma/chip-motion.json, written by figma/export-motion.js.
 type Motion = { trigger: string; transition: string; durationMs: number; easing: number[] | string };
-const transitions = loadFigmaNodes(new URL("../figma/chip-motion.json", import.meta.url)) as unknown as Record<
-  string,
-  Motion
->;
+const transitions = loadFigmaNodes(
+  new URL("../figma/chip-motion.json", import.meta.url),
+) as unknown as Record<string, Motion>;
 
 for (const [name, motion] of Object.entries(transitions)) {
   // "muted=true, current=false, state=default -> muted=true, current=false, state=pressed"
   const [from] = name.split(" -> ");
   const { muted, current } = Object.fromEntries(from!.split(", ").map((pair) => pair.split("=")));
-  const chipState = [muted === "true" && "muted", current === "true" && "current"].filter(Boolean).join("-") || "plain";
+  const chipState =
+    [muted === "true" && "muted", current === "true" && "current"].filter(Boolean).join("-") || "plain";
 
   test(name, async ({ page }) => {
     // A press, so a pressed state is what the transition leads to; the end state itself is

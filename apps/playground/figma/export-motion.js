@@ -6,6 +6,7 @@
 // Run it with the Figma MCP's `use_figma`: paste this file and end with
 // `return await exportMotion("39:15");`, then save the result exactly as returned. Its last line
 // is a hash of the rest, the same check `loadFigmaNodes` in tests/figma.ts makes.
+// oxlint-disable-next-line no-unused-vars -- called by the snippet pasted into `use_figma`, not here.
 async function exportMotion(setId) {
   const set = await figma.getNodeByIdAsync(setId);
   if (set?.type !== "COMPONENT_SET") throw new Error(`${setId} is not a component set`);

@@ -8,8 +8,12 @@ import { Chip, chipClassName } from "./chip";
 // What those attributes look like is checked in a real browser (the playground).
 
 // A router-style link: takes `to`, renders an anchor.
-function RouterLink({ to, ...props }: ComponentProps<"a"> & { to: string }) {
-  return <a {...props} href={to} />;
+function RouterLink({ to, children, ...props }: ComponentProps<"a"> & { to: string }) {
+  return (
+    <a {...props} href={to}>
+      {children}
+    </a>
+  );
 }
 
 describe("Chip", () => {
@@ -31,7 +35,7 @@ describe("Chip", () => {
 
   it("is reached by Tab, followed by Enter, and shows a focus ring only for keyboard focus", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Chip href="#mon" onClick={onClick}>
         Mon
@@ -65,7 +69,7 @@ describe("Chip", () => {
     expect(screen.getByRole("link", { name: "Tue" })).not.toHaveAttribute("muted");
   });
 
-  it("current sets data-current and aria-current=\"true\"", () => {
+  it('current sets data-current and aria-current="true"', () => {
     render(
       <Chip href="#mon" current>
         Mon
@@ -115,7 +119,7 @@ describe("Chip", () => {
 
   it("disabled link has no href, is not tabbable, and does not fire onClick", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = vi.fn<() => void>();
     render(
       <Chip href="#mon" disabled onClick={onClick}>
         Mon
@@ -162,13 +166,22 @@ describe("Chip", () => {
     ["default", {}, "text-gray-200", null],
     ["muted", { muted: true }, "data-[tone=muted]:text-gray-100", "muted"],
     ["current", { current: true }, "data-[tone=current]:text-gray-900", "current"],
-    ["current and muted, current wins", { muted: true, current: true }, "data-[tone=current]:text-gray-900", "current"],
+    [
+      "current and muted, current wins",
+      { muted: true, current: true },
+      "data-[tone=current]:text-gray-900",
+      "current",
+    ],
   ])("the underline is %s", (_, props, colour, tone) => {
-    const { container } = render(<Chip href="#mon" {...props}>Mon</Chip>);
+    const { container } = render(
+      <Chip href="#mon" {...props}>
+        Mon
+      </Chip>,
+    );
     const underline = container.querySelector('[data-slot="underline"]')!;
     expect(underline.getAttribute("class")!.split(/\s+/)).toContain(colour);
-    if (tone === null) expect(underline).not.toHaveAttribute("data-tone");
-    else expect(underline).toHaveAttribute("data-tone", tone);
+    // `getAttribute` is null when there is no `data-tone`.
+    expect(underline.getAttribute("data-tone")).toBe(tone);
   });
 
   it("the underline is a dotted row, not a bar: no background on it, its colour is its text colour", () => {
@@ -185,9 +198,7 @@ describe("Chip", () => {
     const dots = underline.querySelector(':scope > [data-slot="dots"]');
     expect(dots).toBeInTheDocument();
     expect(dots?.tagName).toBe("SPAN");
-    expect(dots?.getAttribute("class")!.split(/\s+/)).toEqual(
-      expect.arrayContaining(["flex", "gap-1"]),
-    );
+    expect(dots?.getAttribute("class")!.split(/\s+/)).toEqual(expect.arrayContaining(["flex", "gap-1"]));
     // The underline is aria-hidden, so the dots inside it are hidden from assistive technology too.
     expect(underline.closest('[aria-hidden="true"]')).toBe(underline);
     expect(dots?.closest('[aria-hidden="true"]')).toBe(underline);
@@ -260,8 +271,12 @@ describe("Chip", () => {
 
   it("the user's onKeyDown still fires alongside the press", async () => {
     const user = userEvent.setup();
-    const onKeyDown = vi.fn();
-    render(<Chip href="#mon" onKeyDown={onKeyDown}>Mon</Chip>);
+    const onKeyDown = vi.fn<() => void>();
+    render(
+      <Chip href="#mon" onKeyDown={onKeyDown}>
+        Mon
+      </Chip>,
+    );
     const chip = screen.getByRole("link", { name: "Mon" });
     await user.tab();
     await user.keyboard("[Enter>]");
@@ -285,8 +300,8 @@ describe("Chip", () => {
 
   it("the user's onPointerDown and onClick still fire, and the chip is pressed in between", async () => {
     const user = userEvent.setup();
-    const onPointerDown = vi.fn();
-    const onClick = vi.fn();
+    const onPointerDown = vi.fn<() => void>();
+    const onClick = vi.fn<() => void>();
     render(
       <Chip href="#mon" onPointerDown={onPointerDown} onClick={onClick}>
         Mon
@@ -308,7 +323,12 @@ describe("Chip", () => {
     const dots = container.querySelector('[data-slot="dots"]')!;
     expect(dots).not.toHaveAttribute("data-pressed");
     expect(dots.getAttribute("class")!.split(/\s+/)).toEqual(
-      expect.arrayContaining(["data-pressed:gap-0", "data-pressed:*:w-2", "data-pressed:*:rounded-none", "transition-all"]),
+      expect.arrayContaining([
+        "data-pressed:gap-0",
+        "data-pressed:*:w-2",
+        "data-pressed:*:rounded-none",
+        "transition-all",
+      ]),
     );
     await user.pointer({ keys: "[MouseLeft>]", target: chip });
     expect(dots).toHaveAttribute("data-pressed", "");
@@ -324,7 +344,7 @@ describe("Chip", () => {
 
   // Hostile inputs
 
-  it("muted={false} renders no data-muted attribute at all, not data-muted=\"false\"", () => {
+  it('muted={false} renders no data-muted attribute at all, not data-muted="false"', () => {
     render(
       <Chip href="#mon" muted={false}>
         Mon

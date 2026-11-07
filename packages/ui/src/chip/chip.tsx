@@ -40,20 +40,20 @@ const cx = bindClassNames(styles);
  * without depending on the order of the stylesheet.
  */
 export const chipClassName = cx(`
-  m-0 appearance-none border-0 border-solid
-  inline-flex flex-col gap-1.5 px-1 pt-1.5 rounded-none
-  font-sans text-sm font-bold uppercase whitespace-nowrap text-gray-900 no-underline outline-none
+  m-0 inline-flex appearance-none flex-col gap-1.5 rounded-none border-0 border-solid px-1 pt-1.5 font-sans
+  text-sm font-bold whitespace-nowrap text-gray-900 uppercase no-underline outline-none
+  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
   data-muted:text-gray-500
   data-hovered:*:data-[slot=underline]:text-fuchsia-700
   data-pressed:*:data-[slot=underline]:text-fuchsia-700
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
 `);
 
 // The dotted underline: a 4px-high row as wide as the label, centring the dots. Its text colour is
 // the dots' colour.
 const underlineClassName = cx(`
   flex h-1 w-full shrink-0 justify-center text-gray-200 transition-colors
-  data-[tone=muted]:text-gray-100 data-[tone=current]:text-gray-900
+  data-[tone=current]:text-gray-900
+  data-[tone=muted]:text-gray-100
 `);
 
 // Three dots, 4px apart (20px across), centred in the underline whatever the label's width.
@@ -62,10 +62,13 @@ const underlineClassName = cx(`
 // default to pressed: 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve, Tailwind's ease-in-out.
 const dotsClassName = cx(`
   flex gap-1 transition-all duration-150 ease-in-out
-  data-pressed:gap-0 data-pressed:*:w-2 data-pressed:*:rounded-none
+  data-pressed:gap-0
+  data-pressed:*:w-2 data-pressed:*:rounded-none
 `);
 
-const dotClassName = cx(`block size-1 shrink-0 rounded-full bg-current transition-all duration-150 ease-in-out`);
+const dotClassName = cx(
+  `block size-1 shrink-0 rounded-full bg-current transition-all duration-150 ease-in-out`,
+);
 
 /**
  * `className` is appended as is, after the Chip's own classes, so a consumer's Tailwind
@@ -105,12 +108,7 @@ export function Chip<TElement extends ElementType = "a">({
       className={[chipClassName, className].filter(Boolean).join(" ")}
     >
       {children}
-      <span
-        aria-hidden="true"
-        data-slot="underline"
-        data-tone={tone}
-        className={underlineClassName}
-      >
+      <span aria-hidden="true" data-slot="underline" data-tone={tone} className={underlineClassName}>
         <span data-slot="dots" data-pressed={dataAttr(isPressed)} className={dotsClassName}>
           {/* Three dots, as Figma draws; the underline is aria-hidden, so so are they. */}
           {Array.from({ length: 3 }, (_, index) => (

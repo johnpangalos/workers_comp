@@ -23,7 +23,8 @@ for (const [name, node] of Object.entries(variants)) {
   let dotIndex: number | null = null;
   if (part?.startsWith("dot ")) dotIndex = Number(part.slice("dot ".length));
   // The wrapper on the figma page that holds this state: "plain", "muted-current", and so on.
-  const chipState = [muted === "true" && "muted", current === "true" && "current"].filter(Boolean).join("-") || "plain";
+  const chipState =
+    [muted === "true" && "muted", current === "true" && "current"].filter(Boolean).join("-") || "plain";
 
   test(name, async ({ page }) => {
     await page.goto("/chip/figma");
@@ -56,7 +57,10 @@ for (const [name, node] of Object.entries(variants)) {
       const row = variants[key!]!;
       const [rowBox, lineBox] = [await dots.boundingBox(), await underline.boundingBox()];
       expect(rowBox!.x - lineBox!.x, "dots x in the underline").toBeCloseTo((line.width - row.width) / 2, 0);
-      expect(rowBox!.y - lineBox!.y, "dots y in the underline").toBeCloseTo((line.height - row.height) / 2, 0);
+      expect(rowBox!.y - lineBox!.y, "dots y in the underline").toBeCloseTo(
+        (line.height - row.height) / 2,
+        0,
+      );
     }
     if (dotIndex !== null) {
       // Each dot is at Figma's x and y within the row, not just the right size and colour.

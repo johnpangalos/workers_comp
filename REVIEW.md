@@ -22,17 +22,19 @@ The paths set the tier, and Claude can only make it stricter.
 
 | Tier | What | Merge |
 |---|---|---|
-| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`) other than the ones the Figma specs measure (`figma.tsx`, `overrides.tsx`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when Claude also rates the change `low` and the required checks pass |
+| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`) other than the ones the Figma specs measure (`figma.tsx`, `overrides.tsx`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when the required checks pass and Claude answers `merge-approved` |
 | Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
 | Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md`, `FEATURE_FLOW.md` and `REVIEW.md`; the Figma specs and the measuring code (`apps/playground/tests/`) and the token test (`packages/ui/src/theme.test.ts`), which say whether code matches Figma; `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
 
-For a PR whose files are all low tier, Claude (Haiku) reads the diff and rates it `low` only
-if it is docs, copy, examples or tests that only add coverage, and is right: docs that say
-only what the code does, tests that loosen nothing. Anything else, or any doubt, is `person`.
-The verdict and its reason are in the run's summary.
+For a PR whose files are all low tier, Claude (Haiku) gets the diff, CLAUDE.md and this file
+in one Messages API request and answers, as JSON that the API holds to a schema (structured
+outputs), `merge-approved` or `needs-human` with a one-sentence reason. `merge-approved` only
+if the change is docs, copy, examples or tests that only add coverage, and is right: docs that
+say only what the code does, tests that loosen nothing. Anything else, any doubt, a refusal or a
+cut-off answer is `needs-human`. The verdict and its reason are in the run's summary.
 
 Start strict and widen with evidence: move a path down a tier only after its PRs have been
-rated and merged clean for a while.
+approved and merged clean for a while.
 
 It runs when CI passes on a PR's commit (`workflow_run`), and GitHub always runs that from
 `main`'s copy of the workflow, so a PR can't change the rules it is judged by. It merges that
@@ -75,10 +77,11 @@ instead:
   user ID (6550688) so a rename doesn't hand the check to whoever takes the old name.
 - The rules are `main`'s: the workflow runs on `workflow_run`, from the default branch, so
   a PR that edits it is judged by the version already on `main` (and needs a person anyway).
-- No PR code runs. The diff is read with `git diff` and by Claude.
-- Claude runs in a job whose token can only read, and with its tools limited to Read, Grep and
-  Glob (everything that writes, runs commands or reaches the network is disallowed). It
-  returns a JSON verdict; a separate job, not Claude, merges, and only on exactly `low`.
+- No PR code runs. The diff is read with `git diff` and sent to Claude as text.
+- Claude gets no tools at all: one request in, one JSON verdict out, from a job whose GitHub
+  token can only read. A separate job, not Claude, merges, and only on exactly
+  `{"decision": "merge-approved", "reason": …}`. The diff is marked as data, and a PR that talks
+  Claude into approving still has to be all low-tier files.
 - Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts drop
   their credentials, and CI's token is read-only.
 

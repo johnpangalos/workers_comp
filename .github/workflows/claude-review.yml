@@ -4,12 +4,9 @@ name: Claude review
 # verification pass that drops anything it can't back with a file and line, and inline
 # comments tagged Important, Nit or Pre-existing. What matters in this repo is in REVIEW.md.
 #
-# Auth, one of these (see REVIEW.md, "Setup"):
-# - Workload identity federation: set the repository variables ANTHROPIC_FEDERATION_RULE_ID and
-#   ANTHROPIC_ORGANIZATION_ID (and ANTHROPIC_SERVICE_ACCOUNT_ID). No secret at all.
-# - Or the repository secret CLAUDE_CODE_OAUTH_TOKEN, from `claude setup-token` (a Pro or Max
-#   plan). If it is set, it wins over federation.
-# GitHub access comes from the Claude GitHub App, as a short-lived token per run.
+# No secrets. Claude: workload identity federation trades this run's GitHub OIDC token for a
+# short-lived Anthropic one; the IDs are repository variables (see REVIEW.md, "Setup").
+# GitHub: the Claude GitHub App, as a short-lived token per run.
 
 on:
   pull_request:
@@ -29,7 +26,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      id-token: write # the GitHub App token, and workload identity federation
+      id-token: write # the OIDC token both exchanges start from
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,7 +34,6 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
           anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
           anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}

@@ -47,19 +47,19 @@ without a test noticing:
 
 ## Setup
 
-The workflow needs the Claude GitHub App on the repository (it is installed) and one way to
-reach Claude:
+The workflow uses no secrets. It needs the Claude GitHub App on the repository, and workload
+identity federation so each run trades its GitHub OIDC token for a short-lived Claude API token.
+In the [Claude Console](https://platform.claude.com), under Settings → Workload identity:
 
-- **No secret: workload identity federation.** In the Claude Console, under Settings →
-  Workload identity, register the issuer `https://token.actions.githubusercontent.com`, create
-  a service account, and a federation rule for the subject prefix
-  `repo:johnpangalos/workers_comp:`. Put the IDs in repository *variables* (not secrets; they
-  are identifiers): `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`,
-  `ANTHROPIC_SERVICE_ACCOUNT_ID`. Each run trades its GitHub OIDC token for a short-lived one.
-  This bills the Console organization's API usage.
-- **Or one secret: a Claude subscription token.** Run `claude setup-token` and save it as the
-  repository secret `CLAUDE_CODE_OAUTH_TOKEN`. It only calls Claude on your plan; it has no
-  GitHub or admin access. If both are set, the secret wins.
+1. Register an issuer: `https://token.actions.githubusercontent.com`, JWKS source `discovery`.
+2. Create a service account (Settings → Service accounts) and add it to a workspace.
+3. Create a federation rule for that service account, matching the subject
+   `repo:johnpangalos/workers_comp:pull_request` and the audience `https://api.anthropic.com`.
+
+Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
+Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`),
+`ANTHROPIC_ORGANIZATION_ID` (the organization UUID) and `ANTHROPIC_SERVICE_ACCOUNT_ID`
+(`svac_…`). Usage is billed as API usage to that organization.
 
 To make findings block merging, turn on "Require conversation resolution before merging" in
 the `main` branch rule. Then each finding has to be fixed or resolved with a reason.

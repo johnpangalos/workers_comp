@@ -1,8 +1,9 @@
 name: Claude review
 
-# Claude reviews every pull request before a person does: parallel bug hunting, a separate
-# verification pass that drops anything it can't back with a file and line, and inline
-# comments tagged Important, Nit or Pre-existing. What matters in this repo is in REVIEW.md.
+# Claude reviews every pull request before a person does: parallel bug hunting, a vote of
+# separate verifiers on each finding, and inline comments tagged Important, Nit or
+# Pre-existing. Security has its own pass (claude-security-review.yml), and `@claude` on a PR
+# asks for a fix (claude-fix.yml). What matters in this repo is in REVIEW.md.
 #
 # No secrets. Claude: workload identity federation trades this run's GitHub OIDC token for a
 # short-lived Anthropic one; the IDs are repository variables (see REVIEW.md, "Setup").
@@ -43,13 +44,15 @@ jobs:
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
             BASE SHA: ${{ github.event.pull_request.base.sha }}
 
-            Review this pull request. The PR head is checked out. Read REVIEW.md first: it says
-            what counts as a bug here, what to skip, and how to write findings. CLAUDE.md is
-            already loaded and its rules are review criteria too.
+            Review this pull request for bugs. The PR head is checked out. Read REVIEW.md first:
+            it says what counts as a bug here, what to skip, and how to write findings.
+            CLAUDE.md is already loaded and its rules are review criteria too. Security is
+            reviewed separately; leave it out.
 
             1. Context. Read the PR title and description (`gh pr view`) for what it intends.
-               Read earlier reviews: top-level comments (`gh pr view --comments`) and inline
-               comments (`gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments`).
+               Read earlier reviews: top-level comments (`gh pr view --comments`) and review
+               threads, with whether each is resolved:
+               `gh api graphql -f query='{ repository(owner: "${{ github.repository_owner }}", name: "${{ github.event.repository.name }}") { pullRequest(number: ${{ github.event.pull_request.number }}) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }'`.
                Your earlier summaries start with `<!-- claude-review sha=<sha> round=<n> -->`.
                This run's round is the highest earlier n plus 1, or 1 if there is none.
 
@@ -65,32 +68,40 @@ jobs:
                  type holes, tests that don't test what they claim;
                - this repo's rules: everything under "What failure looks like" in REVIEW.md and
                  the rules in CLAUDE.md;
-               - security and robustness: injection, unsafe HTML, secrets, workflow permissions
-                 and untrusted input in `.github/`, dependency changes.
+               - intent and fit: does the change do what the PR says, fit how the code around
+                 it works, and break nothing that calls it; on a bug fix, does it fix the root
+                 cause; does it leave a line in CLAUDE.md or REVIEW.md out of date.
                Each returns candidate findings with file, line, the evidence, and a severity.
 
-            4. Verify. For every candidate, launch a separate subagent that did not find it and
-               ask it to prove the finding wrong by reading the code. Keep a finding only if the
-               verifier confirms it with a concrete file and line. Drop anything that is style
-               only, anything oxlint, oxfmt, tsc or the tests already catch, anything already
-               posted in an earlier round (open or resolved), and duplicates. Where one cause
-               shows up in several places, keep one finding that names the class of bug and
-               lists every place.
+            4. Verify. For every candidate, launch three verifier subagents in parallel that
+               did not find it, and ask each to prove the finding wrong by reading the code.
+               Keep a finding only if at least two of the three confirm it with a concrete file
+               and line. Drop anything that is style only, anything oxlint, oxfmt, tsc or the
+               tests already catch, anything already posted in an earlier round (open or
+               resolved), and duplicates. Where one cause shows up in several places, keep one
+               finding that names the class of bug and lists every place.
 
             5. Post. One inline comment per surviving finding, on the line, with
-               `mcp__github_inline_comment__create_inline_comment` and `confirmed: true`. Start
-               each with its tag in bold: **Important**, **Nit** or **Pre-existing** (a real
-               bug the PR didn't introduce). At most 3 Nits. If an earlier inline finding of
-               yours is fixed by this push, reply to its thread once saying which commit fixed
-               it; don't reply to the others again.
+               `mcp__github_inline_comment__create_inline_comment` and `confirmed: true`, most
+               severe first. Start each with its tag in bold: **Important**, **Nit** or
+               **Pre-existing** (a real bug the PR didn't introduce). At most 3 Nits.
 
-            6. Summary. Post one top-level comment with `gh pr comment`. Its first line is
+            6. Clear what's fixed. For each unresolved thread you started (not the security
+               review's) whose finding this push fixes, reply once naming the commit
+               (`gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments/<databaseId>/replies -f body=...`),
+               then resolve it:
+               `gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<id>"}) { thread { isResolved } } }'`.
+               Leave every other thread alone.
+
+            7. Summary. Post one top-level comment with `gh pr comment`. Its first line is
                exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=<n> -->`.
                Then the count first, e.g. "2 Important, 1 Nit", or "Nothing to fix." when there is
-               nothing; then one line per finding; then nothing else, no praise and no recap of
-               the PR. In round 4 or later, with Important findings still open, say so and ask
-               whether the approach should change rather than going another round.
+               nothing; then one line per finding, Important first; then nothing else, no praise
+               and no recap of the PR. After three rounds (round 4 or later), with Important
+               findings still open, say so and ask the author to step back and reconsider the
+               approach rather than going another round.
 
-            Only communicate through those GitHub comments. Don't edit files or push.
+            Only communicate through those GitHub comments and thread resolutions. Don't edit
+            files or push.
           claude_args: |
-            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Agent,Task,Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api graphql:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*),Bash(git diff:*),Bash(git log:*),Bash(git merge-base:*),Bash(git show:*),mcp__github_inline_comment__create_inline_comment"

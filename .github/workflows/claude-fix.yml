@@ -1,0 +1,60 @@
+name: Claude fix
+
+# `@claude` in a pull request comment, review or review reply asks Claude to fix the PR's open
+# findings (or whatever the comment asks). It commits and pushes to the PR branch, and that
+# push gets a fresh review (claude-review.yml), which resolves the threads it fixed. The
+# reviewer never fixes and the fixer never reviews.
+#
+# Only someone who can write to the repo can trigger it. Comment events don't carry the
+# pull_request OIDC subject, so this uses its own federation rule (REVIEW.md, "Setup").
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+# One fix per PR at a time; a second request waits rather than cancelling a push half done.
+concurrency:
+  group: claude-fix-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: |
+      (
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
+      ) &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # to read CI results on the PR
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @workers-comp/playground exec playwright install --with-deps chromium
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FIX_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          claude_args: |
+            --allowedTools "Agent,Task,Read,Grep,Glob,Edit,Write,Bash(pnpm:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh api graphql:*),Bash(gh api repos/${{ github.repository }}/pulls/:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --append-system-prompt "You fix findings on this pull request. Unless the comment says otherwise, fix every unresolved review thread from the Claude review (tagged **Important**, **Nit** or **Pre-existing**) and the security review (tagged **Security**). Read them with gh api graphql (repository > pullRequest > reviewThreads, with isResolved and the comments). Where a finding names a class of bug, fix every place it occurs. Follow CLAUDE.md: Figma decides, theme utilities only, never loosen a Figma test or edit an export in apps/playground/figma/, and add a changeset if what @workers-comp/ui ships changes. Before you push, run pnpm format:check, pnpm lint, pnpm typecheck, pnpm test and pnpm build, plus pnpm test:figma if anything under packages/ui or apps/playground changed, and push only when they pass. Commit with a Conventional Commits message. Reply on each thread (gh api repos/<repo>/pulls/<number>/comments/<databaseId>/replies -f body=...) with what you changed, or, if you think the finding is wrong, why; don't resolve threads yourself: the next review resolves the ones the push fixed, and a person resolves the rest."

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# PostToolUse hook: format the file Claude just edited with oxfmt, then lint it with oxlint
+# (fixing what it can, such as class order). Lint errors that are left go back to Claude
+# (exit 2), so they get fixed while the change is being made rather than in CI.
+set -uo pipefail
+
+if ! command -v jq > /dev/null; then
+  echo "format-and-lint hook: jq isn't installed, so edits aren't being formatted or linted" >&2
+  exit 1
+fi
+
+file=$(jq -r '.tool_input.file_path // empty')
+[ -n "$file" ] && [ -f "$file" ] || exit 0
+
+root=${CLAUDE_PROJECT_DIR:-$PWD}
+case "$file" in "$root"/* | [!/]*) ;; *) exit 0 ;; esac # only files in this project
+cd "$root" || exit 0
+# Without node_modules (a fresh worktree), there's nothing to run; say so rather than
+# reporting a lint error that isn't there.
+if [ ! -x node_modules/.bin/oxlint ]; then
+  echo "format-and-lint hook: run pnpm install to get oxfmt and oxlint" >&2
+  exit 1
+fi
+
+pnpm exec oxfmt --no-error-on-unmatched-pattern "$file" > /dev/null 2>&1
+
+case "$file" in
+  *.ts | *.tsx | *.js | *.jsx | *.mjs | *.cjs) ;;
+  *) exit 0 ;;
+esac
+
+if ! out=$(pnpm exec oxlint --fix "$file" 2>&1); then
+  echo "oxlint found problems in $file:" >&2
+  echo "$out" >&2
+  exit 2
+fi

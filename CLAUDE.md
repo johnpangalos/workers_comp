@@ -17,8 +17,12 @@ pnpm typecheck
 pnpm test         # Vitest: component behaviour, and Figma tokens against the theme
 pnpm test:figma   # Playwright: rendered values (colours, sizes, type) against Figma's, exactly
 pnpm build
+pnpm check        # format:check, lint, typecheck, test and build: CI's check job
 pnpm playground   # http://localhost:5173
 ```
+
+A hook formats and lints each file Claude edits (`.claude/hooks/format-and-lint.sh`; it needs
+`jq`).
 
 ## Commits and releases
 
@@ -33,6 +37,15 @@ like the existing ones): `patch` for a fix, `minor` for something new, `major` f
 change, and one or two sentences for the people using the package. Never edit `CHANGELOG.md`
 or the version by hand.
 
+## Review
+
+Review happens before the PR, locally, with the feature-flow-lite skill (FEATURE_FLOW.md is
+its project file). Fill in the PR template, with the run's acceptance criteria, check results
+and findings in its disclosure for review agents. On GitHub, CI runs the checks, and a
+low-risk PR (docs, examples, a component's own tests) merges by itself once Claude approves
+it; everything else waits for a person. [docs/merge-risk.md](docs/merge-risk.md) has which PRs
+merge by themselves, how, and the setup.
+
 ## Where things live
 
 - `packages/ui/src/<component>/` — the React components (`@workers-comp/ui`), one folder each.
@@ -43,6 +56,8 @@ or the version by hand.
   and effect styles, which `theme.test.ts` checks against the theme.
 - `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
   which the tests in `apps/playground/tests/` compare the rendered page against.
+- `.github/scripts/claude-risk/` — the steps of the merge-risk workflow, TypeScript that Node
+  runs as is (no dependencies), with `node --test` tests that `pnpm test` runs.
 
 ## Turning Figma into code
 

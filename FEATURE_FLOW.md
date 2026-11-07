@@ -15,7 +15,7 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Full: `pnpm typecheck`
 - Full: `pnpm test`
 - Full: `pnpm build`
-- Full: `pnpm test:figma` (not in CI yet; needs Playwright's Chromium)
+- Full: `pnpm test:figma` (CI runs it on macOS: on Linux, Chromium lays text out differently)
 - Targeted: `pnpm --filter @workers-comp/ui exec vitest run src/<component>/<component>.test.tsx`
 - Targeted, for anything that started from Figma: `pnpm test:figma <component>` (no `--`; it
   passes the filter through literally)
@@ -29,6 +29,9 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Change to what a component ships: a changeset (`patch` for a fix), and its Figma test still
   passing.
 - Commit messages and PR titles are Conventional Commits; CI checks PR titles.
+- The PR description follows `.github/pull_request_template.md`; its "For review and decision
+  agents" disclosure gets the run's acceptance criteria, each check's result line, the
+  reviewer's findings (fixed and open) and what wasn't covered, from the report.
 
 ## Standing criteria
 
@@ -54,7 +57,10 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 
 ## Risky paths
 
-none
+- `.github/workflows/` and `.github/scripts/`: they run with write tokens and spend API credit;
+  probe the scripts end to end against a fake GitHub and Claude API (`GITHUB_API_URL`,
+  `ANTHROPIC_BASE_URL`), as well as their unit tests.
+- `.claude/hooks/`: they run on every edit on the owner's machine.
 
 ## Figma
 

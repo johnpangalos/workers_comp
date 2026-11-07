@@ -1,0 +1,108 @@
+name: Merge low-risk PRs
+
+# Review happens before the PR, locally, with feature-flow-lite. On the PR, this only decides
+# whether it can merge with no person reading it (docs/merge-risk.md). It runs when CI or
+# the PR title check finishes on a PR's commit, so editing a PR's description re-rates it. It
+# runs from main (workflow_run always does), and so do its scripts, so a PR can't change the
+# rules it is judged by. Three jobs, so the Claude call never runs next to a token that can
+# write; each runs one script in .github/scripts/claude-risk/, which says what it does:
+#   gate:  the owner's PR, from a branch here, not a draft, CI passed on the commit, every file
+#          low tier. Most PRs stop here, with no Claude call.
+#   rate:  one Messages API request to Claude (Haiku): a verdict as schema-checked JSON,
+#          `merge-approved` or `needs-human`.
+#   merge: on exactly `merge-approved`, squash-merges that exact commit.
+# No PR code runs: its commits are fetched and diffed, never checked out.
+
+on:
+  workflow_run:
+    workflows: [CI, PR title]
+    types: [completed]
+
+# On a push CI and the title check both finish, so one commit can start two runs: the second
+# waits, then finds the PR already merged, or rates it again.
+concurrency:
+  group: claude-risk-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  gate:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read # whether CI passed on the commit
+    outputs:
+      low: ${{ steps.gate.outputs.low }}
+      pr: ${{ steps.gate.outputs.pr }}
+      base: ${{ steps.gate.outputs.base }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node .github/scripts/claude-risk/gate.ts
+
+  rate:
+    needs: gate
+    if: needs.gate.outputs.low == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read # the PR description
+      id-token: write # the OIDC token the Claude API token is exchanged from
+    outputs:
+      verdict: ${{ steps.rate.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - id: rate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.gate.outputs.pr }}
+          BASE: ${{ needs.gate.outputs.base }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          ANTHROPIC_FEDERATION_RULE_ID: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          ANTHROPIC_ORGANIZATION_ID: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          ANTHROPIC_SERVICE_ACCOUNT_ID: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+        run: node .github/scripts/claude-risk/rate.ts
+
+  merge:
+    needs: [gate, rate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # to merge
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.gate.outputs.pr }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          VERDICT: ${{ needs.rate.outputs.verdict }}
+        run: node .github/scripts/claude-risk/merge.ts

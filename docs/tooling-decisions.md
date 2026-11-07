@@ -108,7 +108,7 @@ Sizes can't match to the last fraction: Figma snaps text to whole pixels and bro
 
 **The export is a manual step, on purpose.** The tests compare against the saved export, not live Figma: whoever implements or updates a design exports it at that moment. Nothing watches Figma for later changes.
 
-This doesn't run in CI yet (it needs a Chromium install step). An axe check per page is still worth adding.
+It runs in CI as the `figma` job, on macOS: Chromium on Linux lays text out a pixel or two differently, and 129 of the 167 checks failed there on widths that hug text, while all pass on macOS. An axe check per page is still worth adding.
 
 **Token check: Vitest.** `packages/ui/src/figma-tokens.json` is a snapshot of the Figma variables, text styles and effect styles, and `packages/ui/src/theme.test.ts` checks each one resolves to a token in the Tailwind theme with the same value. The Variables REST API is Enterprise-only, so the snapshot is refreshed through the Figma MCP (the skill's `export-tokens`).
 
@@ -116,9 +116,23 @@ Its first run failed for 23 of the 46 colours, and that was a real difference, n
 
 **Behaviour tests: Vitest + Testing Library** (`pnpm test`). 10 tests cover the defaults, each variant's Figma classes, the focus ring, `className` overrides, keyboard activation and disabled behaviour. They run in jsdom, so they test behaviour, not pixels.
 
-**CI** (`.github/workflows/ci.yml`) runs typecheck, tests and builds (the package and the playground) on every PR.
+**CI** (`.github/workflows/ci.yml`) runs format and lint checks, typecheck, tests, builds (the package and the playground) and the Figma measurement on every PR.
 
 **Previews on Cloudflare Workers.** The playground is a static-assets-only Worker named `workers-comp`, configured in the root `wrangler.jsonc`. The repo is connected to it with Cloudflare's **Workers Builds**, so Cloudflare itself builds every branch: pull requests get a preview link (`npx wrangler preview`) posted on the PR, and `main` deploys to production. The build lives in the config's `build.command` (install the workspace with pnpm, then build the playground to `apps/playground/build/client`), and wrangler finds the config from the repo root or from `apps/playground`, so the dashboard only needs deploy `npx wrangler deploy` and preview `npx wrangler preview`; the root directory and build command can be left empty. Nothing in the repo needs secrets for this.
+
+## Review
+
+Review follows the Claude Code team's process, described in [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/), split by where each part is worth running in a one-person repo.
+
+**Before the PR, locally: feature-flow-lite.** The post moves most review before the PR: verify the work, review it in fresh context, simplify, and hunt for bugs. feature-flow-lite does that with an investigator, an implementor, the checks, a simplifier and a red-team reviewer that writes and runs probes, and it runs on the owner's Claude plan. Running probes is what matters: on this PR, they found a file name with a newline in it passing the auto-merge path check as two names, and a failed request that still let auto-merge through. A review that only reads the code missed both.
+
+**On the PR: only the merge decision.** The first version of this PR also ran a Claude bug review, a separate security review and an `@claude` fixer in CI, as the post does. A red-team pass on those workflows found that each gave Claude a way to change the repo: GraphQL mutations (merging included), the REST merge endpoint, pushes as `claude[bot]` that the reviews then refused. Each was fixable, but for one maintainer who already reviews locally, the CI reviews mostly repeated that work, at API prices. So CI keeps the one thing that has to happen on GitHub: `claude-risk.yml` rates a PR whose files are all on the low-risk list (docs, examples, a component's own tests) and merges it when Claude, on Haiku, answers `merge-approved`. The paths are checked first, so most PRs never call Claude. It runs on `workflow_run` after CI passes rather than on `pull_request`, because a `pull_request` run uses the PR's own copy of the workflow, so a PR could rewrite the check it is judged by; `workflow_run` always uses `main`'s. It merges the commit CI passed directly, instead of switching on auto-merge, so there is no state to turn off when a new commit is pushed. The Claude call runs in a job with a read-only token, apart from the job that merges.
+
+The rating is one Messages API request: no agent, no tools and no GitHub App, since a classification needs none. The job exchanges its GitHub OIDC token for a Claude API token at `/v1/oauth/token` (workload identity federation, so no stored API key), sends the diff, the PR description and CLAUDE.md as the base commit has it, and asks for structured outputs (`output_config.format` with a JSON schema whose `decision` is `merge-approved` or `needs-human`), so the workflow reads a schema-checked field rather than parsing prose. An earlier version ran claude-code-action with read-only tools; its red-team pass found the action stored the Claude App's write token where Claude's Read tool could reach it, and the plain request removes that whole class of problem.
+
+The three jobs' steps are TypeScript in `.github/scripts/claude-risk/` rather than shell in the workflow: Node 22 runs them as they are (its type stripping), they need no dependencies (`fetch` for the APIs, `git` for the diff), and they are tested with `node --test`, type-checked, linted and formatted with the rest of the repo by `pnpm check`. The workflow runs `main`'s copy of them, never the PR's. The rating also starts when the PR title check finishes, which runs on edits, so a filled-in description gets re-rated without a new commit. Merges made with the workflow's token don't start CI or the release on `main`; the low tier has nothing to release.
+
+Left out, because they need more than one person or a history that doesn't exist yet: required human approvals (GitHub won't let the only maintainer approve their own PR), CODEOWNERS, a merge queue (only on organization-owned repos), feature flags and staged releases, and an eval set of past incidents for scoring the reviewer.
 
 ## Note on the Figma MCP
 

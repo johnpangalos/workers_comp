@@ -1,0 +1,17 @@
+{
+  "name": "@workers-comp/ci-scripts",
+  "private": true,
+  "description": "The steps of .github/workflows/claude-risk.yml, run by Node's own TypeScript support with no dependencies.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"claude-risk/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

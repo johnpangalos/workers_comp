@@ -65,16 +65,6 @@ jobs:
           [ "$(jq -r .user.id <<< "$pr")" = 6550688 ] || skip "#$n isn't johnpangalos's"
           [ "$(jq -r .draft <<< "$pr")" = false ] || skip "#$n is a draft"
 
-          # Low risk: docs, the README, playground example pages, and a component's own tests.
-          # Everything else (the package, the theme and its token test, Figma exports, the Figma
-          # specs and the measuring code, changesets, CI, .claude/, CLAUDE.md, REVIEW.md,
-          # dependencies, config) needs a person. Whole names are matched in jq, so a name with
-          # a newline in it can't pass as two, and a failed request stops the job (set -e).
-          outside=$(gh api --paginate "repos/$R/pulls/$n/files" -q '.[] | .filename, (.previous_filename // empty)
-            | select(test("\\A(docs/.+|README\\.md|apps/playground/app/examples/.+|packages/ui/src/[^/]+/[^/]+\\.test\\.tsx?)\\z") | not)
-            | @json')
-          [ -z "$outside" ] || skip "#$n touches $(head -n 1 <<< "$outside"), which needs a person"
-
           # The latest summary each review posted for this exact commit, from the Claude app only.
           summary() {
             PREFIX=$1 gh api --paginate "repos/$R/issues/$n/comments" \
@@ -88,6 +78,16 @@ jobs:
           security=$(summary "<!-- claude-security-review sha=$SHA ")
           [ -n "$security" ] || skip "the security review of $SHA hasn't posted its summary yet"
           grep -qx 'No security findings\.' <<< "$security" || skip "the security review of $SHA has findings"
+
+          # Low risk: docs, the README, playground example pages, and a component's own tests.
+          # Everything else (the package, the theme and its token test, Figma exports, the Figma
+          # specs and the measuring code, changesets, CI, .claude/, CLAUDE.md, REVIEW.md,
+          # dependencies, config) needs a person. Whole names are matched in jq, so a name with
+          # a newline in it can't pass as two, and a failed request stops the job (set -e).
+          outside=$(gh api --paginate "repos/$R/pulls/$n/files" -q '.[] | .filename, (.previous_filename // empty)
+            | select(test("\\A(docs/.+|README\\.md|apps/playground/app/examples/.+|packages/ui/src/[^/]+/[^/]+\\.test\\.tsx?)\\z") | not)
+            | @json')
+          [ -z "$outside" ] || skip "#$n touches $(head -n 1 <<< "$outside"), which needs a person"
 
           # --match-head-commit: if a push landed since the reviews read $SHA, this fails.
           gh pr merge "$n" --repo "$R" --auto --squash --match-head-commit "$SHA"

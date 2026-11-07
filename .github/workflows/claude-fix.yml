@@ -24,12 +24,11 @@ concurrency:
 
 jobs:
   fix:
-    if: |
-      (
-        (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude')) ||
-        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
-      ) &&
+    # A comment, review or review reply that mentions @claude, from johnpangalos, on a PR (an
+    # issue_comment can also be on a plain issue).
+    if: >-
+      (github.event_name != 'issue_comment' || github.event.issue.pull_request) &&
+      contains(github.event.comment.body || github.event.review.body, '@claude') &&
       (github.event.comment.user.id || github.event.review.user.id) == 6550688
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -48,11 +47,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
-          if [ "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json isCrossRepository -q .isCrossRepository)" != "false" ]; then
+          pr=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json isCrossRepository,headRefName)
+          if [ "$(jq -r .isCrossRepository <<< "$pr")" != "false" ]; then
             echo "::error::PR #$PR comes from a fork; claude-fix only works on branches in this repository."
             exit 1
           fi
-          echo "head=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefName -q .headRefName)" >> "$GITHUB_OUTPUT"
+          echo "head=$(jq -r .headRefName <<< "$pr")" >> "$GITHUB_OUTPUT"
       # The PR's branch, so dependencies are installed from it rather than from main.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -84,5 +84,5 @@ jobs:
           anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
           claude_args: |
             --model claude-haiku-5-5
-            --allowedTools "Agent,Task,Read,Grep,Glob,Edit,Write,Bash(pnpm format),Bash(pnpm format:check),Bash(pnpm lint),Bash(pnpm lint:*),Bash(pnpm typecheck),Bash(pnpm test),Bash(pnpm build),Bash(pnpm --filter @workers-comp/ui exec vitest run:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number || github.event.pull_request.number }}/comments:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
-            --append-system-prompt "You fix findings on this pull request. Launch any subagent with model haiku. Unless the comment says otherwise, fix every unresolved review thread from the Claude review (tagged **Important**, **Nit** or **Pre-existing**) and the security review (tagged **Security**). They are in ${{ github.workspace }}/.git/claude-review-threads.json, with isResolved and each thread's comments. Where a finding names a class of bug, fix every place it occurs. Follow CLAUDE.md: Figma decides, theme utilities only, never loosen a Figma test or edit an export in apps/playground/figma/, and add a changeset if what @workers-comp/ui ships changes. Before you push, run pnpm format:check, pnpm lint, pnpm typecheck, pnpm test and pnpm build, and push only when they pass. Don't run pnpm test:figma here: it only matches Figma on macOS, so CI's figma job checks it after your push; say in your reply when the change needs it. Commit with a Conventional Commits message. Reply on each thread (gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number || github.event.pull_request.number }}/comments/<databaseId>/replies -f body=...) with what you changed, or, if you think the finding is wrong, why; don't resolve threads yourself: the next review resolves the ones the push fixed, and a person resolves the rest."
+            --allowedTools "Agent,Task,Read,Grep,Glob,Edit,Write,Bash(pnpm check),Bash(pnpm format),Bash(pnpm format:check),Bash(pnpm lint),Bash(pnpm lint:*),Bash(pnpm typecheck),Bash(pnpm test),Bash(pnpm build),Bash(pnpm --filter @workers-comp/ui exec vitest run:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number || github.event.pull_request.number }}/comments:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --append-system-prompt "You fix findings on this pull request. Launch any subagent with model haiku. Unless the comment says otherwise, fix every unresolved review thread from the Claude review (tagged **Important**, **Nit** or **Pre-existing**) and the security review (tagged **Security**). They are in ${{ github.workspace }}/.git/claude-review-threads.json, with isResolved and each thread's comments. Where a finding names a class of bug, fix every place it occurs. Follow CLAUDE.md: Figma decides, theme utilities only, never loosen a Figma test or edit an export in apps/playground/figma/, and add a changeset if what @workers-comp/ui ships changes. Before you push, run pnpm check (format, lint, types, tests and build) and push only when it passes. Don't run pnpm test:figma here: it only matches Figma on macOS, so CI's figma job checks it after your push; say in your reply when the change needs it. Commit with a Conventional Commits message. Reply on each thread (gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number || github.event.pull_request.number }}/comments/<databaseId>/replies -f body=...) with what you changed, or, if you think the finding is wrong, why; don't resolve threads yourself: the next review resolves the ones the push fixed, and a person resolves the rest."

@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# A new push to a PR replaces the run for the previous one; runs on main all finish.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # PRs are squash-merged, so the PR title becomes the commit on main.
   pr-title:
@@ -44,10 +49,11 @@ jobs:
       - run: pnpm build
 
   # The rendered playground against Figma's exported values (CLAUDE.md, "Checking the result
-  # against Figma"). On macOS: Chromium on Linux lays text out a pixel or two differently, so
-  # widths that hug text don't match Figma's there (129 of 167 failed on ubuntu-latest).
+  # against Figma"). On macOS, because Chromium on Linux lays text out differently
+  # (docs/tooling-decisions.md, "Testing and playgrounds").
   figma:
     runs-on: macos-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -58,7 +64,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @workers-comp/playground exec playwright install --with-deps chromium
+      - run: pnpm --filter @workers-comp/playground exec playwright install chromium
       - run: pnpm test:figma
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

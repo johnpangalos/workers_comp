@@ -42,9 +42,11 @@ jobs:
           persist-credentials: false
 
       # Claude gets no GraphQL, which would let it run any mutation, merging included. This
-      # step reads the review threads for it, into .git/ (inside the workspace Claude can read,
-      # and never committed); the last step resolves the ones it cleared.
-      - name: Read the review threads
+      # step reads the review threads for it, with the diff and the round, into .git/ (inside
+      # the workspace Claude can read, and never committed); the last step resolves the threads
+      # it cleared.
+      - name: Read the PR, its review threads and the last round
+        id: context
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
@@ -52,6 +54,14 @@ jobs:
           gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
             -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
+          gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
+          # The round and the commit the last review saw, from the latest claude[bot] summary.
+          last=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            -q '.[] | select(.user.login == "claude[bot]" and (.body | startswith("<!-- claude-review sha="))) | .body | split("\n")[0]' | tail -n 1)
+          round=$(sed -n 's/.* round=\([0-9][0-9]*\) .*/\1/p' <<< "$last")
+          sha=$(sed -n 's/^<!-- claude-review sha=\([0-9a-f]\{40\}\) .*/\1/p' <<< "$last")
+          echo "round=$(( ${round:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+          echo "last_sha=${sha:-none}" >> "$GITHUB_OUTPUT"
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
@@ -65,27 +75,26 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
-            BASE SHA: ${{ github.event.pull_request.base.sha }}
+            ROUND: ${{ steps.context.outputs.round }}
+            LAST REVIEWED SHA: ${{ steps.context.outputs.last_sha }}
 
             Review this pull request for bugs. The PR head is checked out. Read REVIEW.md first:
             it says what counts as a bug here, what to skip, and how to write findings.
             CLAUDE.md is already loaded and its rules are review criteria too. Security is
             reviewed separately; leave it out.
 
-            1. Context. Read the PR title and description (`gh pr view`) for what it intends.
-               Read earlier reviews: top-level comments (`gh pr view --comments`) and the review
-               threads, with whether each is resolved, in `${{ github.workspace }}/.git/claude-review-threads.json`.
-               Your earlier summaries start with `<!-- claude-review sha=<sha> round=<n>`.
-               This run's round is the highest earlier n plus 1, or 1 if there is none.
+            1. Context. Read the PR title and description (`gh pr view`) for what it intends,
+               and the earlier review threads, with whether each is resolved, in
+               `${{ github.workspace }}/.git/claude-review-threads.json`.
 
-            2. Scope. In round 1 and 2, review the whole diff (`gh pr diff`). From round 3,
-               review only what changed since the last reviewed sha
-               (`git diff <sha> ${{ github.event.pull_request.head.sha }}`), and if the last sha
-               is not an ancestor of HEAD (a force-push), review the whole diff again.
+            2. Scope. In rounds 1 and 2, review the whole diff, which is in
+               `${{ github.workspace }}/.git/claude-pr.diff`. From round 3, review only what changed
+               since the last reviewed sha (`git diff <LAST REVIEWED SHA> HEAD`), unless that sha
+               is not an ancestor of HEAD (a force-push): then the whole diff again.
 
-            3. Hunt. Launch three subagents in parallel, each given the diff, the PR's intent
-               and REVIEW.md, and each reading the surrounding code in the repo, not just the
-               diff:
+            3. Hunt. Launch three subagents in parallel, each given the diff file's path, the
+               PR's intent and REVIEW.md, and each reading the surrounding code in the repo, not
+               just the diff:
                - correctness: logic errors, broken behaviour, missed states and edge cases,
                  type holes, tests that don't test what they claim;
                - this repo's rules: everything under "What failure looks like" in REVIEW.md and
@@ -95,12 +104,12 @@ jobs:
                  cause; does it leave a line in CLAUDE.md or REVIEW.md out of date.
                Each returns candidate findings with file, line, the evidence, and a severity.
 
-            4. Verify. For every candidate, launch three verifier subagents in parallel that
-               did not find it, and ask each to prove the finding wrong by reading the code.
-               Keep a finding only if at least two of the three confirm it with a concrete file
-               and line. Drop anything that is style only, anything oxlint, oxfmt, tsc or the
-               tests already catch, anything already posted in an earlier round (open or
-               resolved), and duplicates. Where one cause shows up in several places, keep one
+            4. Verify. Launch three verifier subagents in parallel, none of them a hunter, each
+               given every candidate (file, line, claim, evidence) and asked to prove each one
+               wrong by reading the code. Keep a candidate only if at least two of the three
+               confirm it with a concrete file and line. Then drop what REVIEW.md's Skip section
+               lists, anything already posted in an earlier round (open or resolved), and
+               duplicates. Where one cause shows up in several places, keep one
                finding that names the class of bug and lists every place.
 
             5. Post. One inline comment per surviving finding, on the line, with
@@ -123,13 +132,13 @@ jobs:
                itself; this is your read of the change, and it can only make that stricter.
 
             8. Summary. Post one top-level comment with `gh pr comment`. Its first line is
-               exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=<n> risk=<low|person> -->`.
+               exactly `<!-- claude-review sha=${{ github.event.pull_request.head.sha }} round=${{ steps.context.outputs.round }} risk=<low|person> -->`.
                The second line is the count, e.g. "2 Important, 1 Nit", or exactly "Nothing to fix."
                when there is nothing; then one line per finding, Important first; then nothing
                else, no praise and no recap of the PR, except a last line
                `<!-- resolve: <id> <id> -->` with the threads from step 6, if there are any; the
-               workflow resolves them after you finish. After three rounds (round 4 or later), with Important
-               findings still open, say so and ask the author to step back and reconsider the
+               workflow resolves them after you finish. From round 4, with Important findings
+               still open, say so and ask the author to step back and reconsider the
                approach rather than going another round.
 
             Launch every subagent with `model: "haiku"`.

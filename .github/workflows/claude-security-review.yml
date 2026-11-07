@@ -45,6 +45,7 @@ jobs:
           gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
             -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
+          gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
@@ -59,8 +60,8 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
 
-            Do a security review of this pull request. The PR head is checked out; the diff is
-            `gh pr diff`. Report only vulnerabilities this PR introduces that you are confident
+            Do a security review of this pull request. The PR head is checked out; the diff is in
+            `${{ github.workspace }}/.git/claude-pr.diff`. Report only vulnerabilities this PR introduces that you are confident
             are exploitable, not hardening ideas. A missed theoretical issue costs less than a
             false alarm that sends someone to change working code.
 
@@ -86,9 +87,9 @@ jobs:
             1. Read your earlier findings: the review threads, with whether each is resolved, are
                in `${{ github.workspace }}/.git/claude-review-threads.json`.
                Yours start with **Security**.
-            2. For each candidate, launch three verifier subagents in parallel and ask each to
-               show it can't be exploited. Keep it only if at least two find a concrete attack
-               path with a file and line. Drop anything already posted.
+            2. Launch three verifier subagents in parallel, each given every candidate, and ask
+               each to show every one can't be exploited. Keep a candidate only if at least two
+               find a concrete attack path with a file and line. Drop anything already posted.
             3. Post one inline comment per finding with
                `mcp__github_inline_comment__create_inline_comment` and `confirmed: true`,
                starting **Security: High** or **Security: Medium**, then the attack path and

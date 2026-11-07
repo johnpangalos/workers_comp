@@ -10,7 +10,7 @@ security review in CI (REVIEW.md); this is the same work done first, so CI finds
 
 1. **Verify, and show it.** Run each check and quote the command and its result line, not
    "tests pass":
-   - `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`
+   - `pnpm check` (format, lint, types, tests and build, as CI's `check` job runs them)
    - `pnpm test:figma` if anything under `packages/ui/` or `apps/playground/` changed. Anything
      built from Figma isn't done until its measurement passes (CLAUDE.md, "Checking the
      result against Figma"); never loosen a spec to get there.

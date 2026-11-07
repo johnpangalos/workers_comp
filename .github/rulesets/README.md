@@ -9,8 +9,11 @@ and the `check` and `pr-title` jobs from `.github/workflows/ci.yml` must pass fi
 
 The [Rulesets workflow](../workflows/rulesets.yml) applies every file here when a change to
 this folder merges to `main`, updating the ruleset with the same `name` or creating it. It
-needs a `RULESETS_TOKEN` repository secret: a fine-grained token for this repo with
-**Administration: read and write** (`GITHUB_TOKEN` can't manage rulesets). Run it by hand
+needs a `RULESETS_TOKEN` secret (`GITHUB_TOKEN` can't manage rulesets): a fine-grained token
+for this repo only, with **Administration: read and write** and an expiry. That permission
+can also change settings and delete the repo, so keep it out of reach of pull requests: in
+**Settings → Environments**, create a `rulesets` environment, set its deployment branches to
+`main` only, and add the secret there, not as a repository secret. Run it by hand
 from the Actions tab to apply the current files without a change. Deleting a file doesn't
 delete its ruleset; do that in Settings.
 

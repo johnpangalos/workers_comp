@@ -13,17 +13,24 @@ concurrency: ${{ github.workflow }}
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # The token is an environment secret, and the environment only allows main, so a
+    # workflow added in a pull request can't read it.
+    environment: rulesets
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Apply rulesets
         env:
           # GITHUB_TOKEN can't manage rulesets. This is a fine-grained token for this repo
-          # with the "Administration: read and write" permission.
+          # only, with the "Administration: read and write" permission and an expiry.
           GH_TOKEN: ${{ secrets.RULESETS_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Add a RULESETS_TOKEN secret (fine-grained token, Administration: read and write)."
+            echo "::error::Add a RULESETS_TOKEN secret to the rulesets environment (fine-grained token, Administration: read and write)."
             exit 1
           fi
           for file in .github/rulesets/*.json; do

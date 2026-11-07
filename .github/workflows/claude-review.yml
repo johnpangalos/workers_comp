@@ -50,18 +50,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
             -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
-          gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
           # The round and the commit the last review saw, from the latest claude[bot] summary.
           last=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
             -q '.[] | select(.user.login == "claude[bot]" and (.body | startswith("<!-- claude-review sha="))) | .body | split("\n")[0]' | tail -n 1)
           round=$(sed -n 's/.* round=\([0-9][0-9]*\) .*/\1/p' <<< "$last")
           sha=$(sed -n 's/^<!-- claude-review sha=\([0-9a-f]\{40\}\) .*/\1/p' <<< "$last")
-          echo "round=$(( ${round:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+          round=$(( ${round:-0} + 1 ))
+          echo "round=$round" >> "$GITHUB_OUTPUT"
           echo "last_sha=${sha:-none}" >> "$GITHUB_OUTPUT"
+          # What to review, from the local history (no API size limit): the whole PR in rounds 1
+          # and 2, and from round 3 only what changed since the last review, unless a force-push
+          # dropped that commit.
+          if [ "$round" -ge 3 ] && [ -n "$sha" ] && git merge-base --is-ancestor "$sha" HEAD 2> /dev/null; then
+            git diff "$sha" HEAD > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
+          else
+            git diff "$BASE...HEAD" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
+          fi
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:
@@ -87,10 +96,9 @@ jobs:
                and the earlier review threads, with whether each is resolved, in
                `${{ github.workspace }}/.git/claude-review-threads.json`.
 
-            2. Scope. In rounds 1 and 2, review the whole diff, which is in
-               `${{ github.workspace }}/.git/claude-pr.diff`. From round 3, review only what changed
-               since the last reviewed sha (`git diff <LAST REVIEWED SHA> HEAD`), unless that sha
-               is not an ancestor of HEAD (a force-push): then the whole diff again.
+            2. Scope. Review the diff in `${{ github.workspace }}/.git/claude-pr.diff`. The workflow
+               has already scoped it: the whole PR in rounds 1 and 2, and from round 3 only what
+               changed since the last reviewed sha (or the whole PR again after a force-push).
 
             3. Hunt. Launch three subagents in parallel, each given the diff file's path, the
                PR's intent and REVIEW.md, and each reading the surrounding code in the repo, not

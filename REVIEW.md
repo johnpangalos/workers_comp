@@ -31,7 +31,7 @@ The paths set the tier, and the Claude review can only make it stricter: it adds
 
 | Tier | What | Merge |
 |---|---|---|
-| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when the Claude review says "Nothing to fix." and `risk=low`, the security review says "No security findings.", the required checks pass and every thread is resolved |
+| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`) other than the ones the Figma specs measure (`figma.tsx`, `overrides.tsx`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when the Claude review says "Nothing to fix." and `risk=low`, the security review says "No security findings.", the required checks pass and every thread is resolved |
 | Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
 | Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md` and `REVIEW.md` (they steer the reviewer); the Figma specs and the measuring code (`apps/playground/tests/`) and the token test (`packages/ui/src/theme.test.ts`), which say whether code matches Figma; `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
 

@@ -41,11 +41,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           gh api graphql -F number="$PR" -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query='query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line comments(first: 20) { nodes { databaseId author { login } body } } } } } } }' \
             -q '.data.repository.pullRequest.reviewThreads.nodes' > "$GITHUB_WORKSPACE/.git/claude-review-threads.json"
-          gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
+          git diff "$BASE...HEAD" > "$GITHUB_WORKSPACE/.git/claude-pr.diff"
 
       - uses: anthropics/claude-code-action@61a9c274fa7110a66dfafc1bbbced03833eb25fe # v1.0.269
         with:

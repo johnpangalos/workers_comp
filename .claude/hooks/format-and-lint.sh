@@ -12,7 +12,15 @@ fi
 file=$(jq -r '.tool_input.file_path // empty')
 [ -n "$file" ] && [ -f "$file" ] || exit 0
 
-cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+root=${CLAUDE_PROJECT_DIR:-$PWD}
+case "$file" in "$root"/* | [!/]*) ;; *) exit 0 ;; esac # only files in this project
+cd "$root" || exit 0
+# Without node_modules (a fresh worktree), there's nothing to run; say so rather than
+# reporting a lint error that isn't there.
+if [ ! -x node_modules/.bin/oxlint ]; then
+  echo "format-and-lint hook: run pnpm install to get oxfmt and oxlint" >&2
+  exit 1
+fi
 
 pnpm exec oxfmt --no-error-on-unmatched-pattern "$file" > /dev/null 2>&1
 

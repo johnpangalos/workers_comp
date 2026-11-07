@@ -79,13 +79,15 @@ jobs:
           [ -n "$security" ] || skip "the security review of $SHA hasn't posted its summary yet"
           grep -qx 'No security findings\.' <<< "$security" || skip "the security review of $SHA has findings"
 
-          # Low risk: docs, the README, playground example pages, and a component's own tests.
-          # Everything else (the package, the theme and its token test, Figma exports, the Figma
-          # specs and the measuring code, changesets, CI, .claude/, CLAUDE.md, REVIEW.md,
+          # Low risk: docs, the README, playground example pages other than the ones the Figma
+          # specs measure (figma.tsx, overrides.tsx), and a component's own tests. Everything else
+          # (the package, the theme and its token test, Figma exports, the Figma specs, the
+          # measured pages and the measuring code, changesets, CI, .claude/, CLAUDE.md, REVIEW.md,
           # dependencies, config) needs a person. Whole names are matched in jq, so a name with
           # a newline in it can't pass as two, and a failed request stops the job (set -e).
           outside=$(gh api --paginate "repos/$R/pulls/$n/files" -q '.[] | .filename, (.previous_filename // empty)
-            | select(test("\\A(docs/.+|README\\.md|apps/playground/app/examples/.+|packages/ui/src/[^/]+/[^/]+\\.test\\.tsx?)\\z") | not)
+            | select((test("\\A(docs/.+|README\\.md|apps/playground/app/examples/.+|packages/ui/src/[^/]+/[^/]+\\.test\\.tsx?)\\z")
+                and (test("\\Aapps/playground/app/examples/[^/]+/(figma|overrides)\\.tsx\\z") | not)) | not)
             | @json')
           [ -z "$outside" ] || skip "#$n touches $(head -n 1 <<< "$outside"), which needs a person"
 

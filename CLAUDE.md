@@ -33,6 +33,11 @@ like the existing ones): `patch` for a fix, `minor` for something new, `major` f
 change, and one or two sentences for the people using the package. Never edit `CHANGELOG.md`
 or the version by hand.
 
+## Review
+
+Every PR gets an automated Claude review (`.github/workflows/claude-review.yml`). What it
+looks for, and how to set it up, is in [REVIEW.md](REVIEW.md).
+
 ## Where things live
 
 - `packages/ui/src/<component>/` — the React components (`@workers-comp/ui`), one folder each.

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectToMatchFigma, loadFigmaNodes } from "./figma";
+import { expectToMatchFigma, loadFigmaNodes, waitForInter } from "./figma";
 
 // Every variant of the Figma "Button" component set against the rendered Button: the values
 // each is drawn with, exactly.
@@ -12,8 +12,7 @@ for (const [name, node] of Object.entries(variants)) {
   test(name, async ({ page }) => {
     await page.goto("/button/figma");
     await page.addStyleTag({ content: "* { transition: none !important; }" });
-    // Wait for the label's font; before it loads the button has the fallback font's width.
-    await page.evaluate(() => document.fonts.load(`600 14px Inter`));
+    await waitForInter(page);
 
     let index = 0;
     if (state === "disabled") index = 1;

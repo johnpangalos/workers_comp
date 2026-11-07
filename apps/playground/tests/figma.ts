@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { expect, type Locator } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 export type Region = { x: number; y: number; width: number; height: number };
 
@@ -37,6 +37,24 @@ export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
     throw new Error(`${url.pathname} doesn't match its hash: export it from Figma again`);
   }
   return variants;
+}
+
+/**
+ * Waits until the page's text is drawn in Inter. Call it after `page.goto` and before measuring:
+ * in the fallback font, anything that hugs text has the wrong width.
+ *
+ * `document.fonts.load` alone isn't enough. In dev, React Router serves the route's CSS as a
+ * critical-CSS stylesheet and, on hydration, swaps it for Vite's `<style>` tags. Each declares
+ * Inter's `@font-face` again, and a face declared after the load starts unloaded, so the text
+ * falls back until it loads. Once the critical CSS is gone the page has its final faces.
+ */
+export async function waitForInter(page: Page) {
+  await page.waitForFunction(() => !document.querySelector("[data-react-router-critical-css]"));
+  await page.evaluate(async () => {
+    // Inter is one variable face (weights 100 to 900), so any weight loads it.
+    await document.fonts.load("14px Inter");
+    await document.fonts.ready;
+  });
 }
 
 /**

@@ -107,7 +107,7 @@ claims.sub.startsWith("repo:johnpangalos/workers_comp:") && claims.repository ==
 ```
 
 Audience, workspace, scope and lifetime as above, targeting the same service account. The job
-itself only runs for people who can write to the repo.
+itself only runs for johnpangalos.
 
 Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` and
@@ -124,11 +124,12 @@ The repo is public, so anyone can fork it and open a PR; GitHub doesn't let a pe
 account's public repo turn forking off. What a fork or an outsider can start is limited
 instead:
 
-- The Claude reviews only run on PRs from this repo's own branches, opened by someone with
-  write access. Fork PRs don't get an OIDC token or secrets anyway; the guard means they
-  don't even start.
-- The fixer only runs on a comment from someone with write access, and stops if the PR comes
-  from a fork.
+- The Claude reviews only run on PRs johnpangalos opened, from this repo's own branches. Fork
+  PRs don't get an OIDC token or secrets anyway; the guard means they don't even start.
+- The fixer only runs on johnpangalos's comments, and stops if the PR comes from a fork.
+  Anyone else's `@claude`, collaborators included, is skipped before a token is requested.
+- Both check the GitHub user ID (6550688), not the login, so a rename doesn't hand the check
+  to whoever takes the old name.
 - Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts that
   don't push drop their credentials, and CI's token is read-only.
 

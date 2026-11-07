@@ -20,13 +20,14 @@ concurrency:
 
 jobs:
   review:
-    # Only branches in this repo, opened by someone who can write to it: never forks or
-    # outsiders. Skip drafts, and the "Version Packages" PR the release workflow opens.
+    # Only PRs johnpangalos opened (by user ID, which survives a rename), from a branch in this
+    # repo: never forks or anyone else. Skip drafts, and the "Version Packages" PR the release
+    # workflow opens.
     if: >-
       github.event.pull_request.draft == false &&
       !startsWith(github.head_ref, 'changeset-release/') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+      github.event.pull_request.user.id == 6550688
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

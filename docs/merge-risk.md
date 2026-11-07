@@ -54,11 +54,13 @@ in the Default workspace) and a rule for it with **Rules → New rule**: issuer 
 Default workspace, scope `workspace:developer`, lifetime 1 hour, and match **CEL expression**:
 
 ```
-claims.sub == "repo:johnpangalos/workers_comp:ref:refs/heads/main" && claims.repository_owner_id == "6550688" && claims.event_name == "workflow_run" && claims.job_workflow_ref == "johnpangalos/workers_comp/.github/workflows/claude-risk.yml@refs/heads/main"
+claims.sub == "repo:johnpangalos@6550688/workers_comp@1410780847:ref:refs/heads/main" && claims.repository_owner_id == "6550688" && claims.event_name == "workflow_run" && claims.job_workflow_ref == "johnpangalos/workers_comp/.github/workflows/claude-risk.yml@refs/heads/main"
 ```
 
 A `workflow_run` always runs on `main`, so that is its subject; the last clause means only this
-workflow, as it is on `main`, can get a token.
+workflow, as it is on `main`, can get a token. The repo uses GitHub's immutable subject, which
+puts the owner and repo IDs in `sub` (`gh api repos/johnpangalos/workers_comp/actions/oidc/customization/sub`
+shows the prefix); the old `repo:johnpangalos/workers_comp:…` form never matches.
 
 Then add the IDs as repository _variables_ (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`),

@@ -34,7 +34,8 @@ export default function InviteForm({ actionData: result }: Route.ComponentProps)
             Clear
           </Button>
           <Button type="submit" pending={sending}>
-            {sending ? "Sending…" : "Send invite"}
+            {sending && "Sending…"}
+            {!sending && "Send invite"}
           </Button>
         </div>
       </Form>

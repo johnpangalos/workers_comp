@@ -13,8 +13,8 @@ export default function Home() {
       <h1 className="text-2xl font-semibold">Workers Comp playground</h1>
       <p className="mt-2 text-sm text-gray-500">
         Each page is a plain example built from{" "}
-        <code className="font-mono text-gray-700">@workers-comp/ui</code>. Open one, then click,
-        tab and press keys; the keys you press show up in the corner.
+        <code className="font-mono text-gray-700">@workers-comp/ui</code>. Open one, then click, tab and press
+        keys; the keys you press show up in the corner.
       </p>
       {[...groups].map(([component, paths]) => (
         <section key={component} className="mt-10">

@@ -96,13 +96,18 @@ the admin or owner role) and click **Connect workload** → **GitHub Actions**.
 | OAuth scope / Token lifetime | under **Advanced rule options**: `workspace:developer`, 1 hour |
 | Target | a new service account (`workers-comp-review`) |
 
-**Rule for the fixer** (`claude-fix.yml`): the same, except comment events aren't
+**Rule for the fixer** (`claude-fix.yml`, rule `workers-comp-fix`): comment events aren't
 `pull_request` runs. Their subject is the default branch's
-(`repo:johnpangalos/workers_comp:ref:refs/heads/main` for a PR comment), so: subject pattern
-`repo:johnpangalos/workers_comp:*`, no `event_name` claim, and the CEL condition
-`claims.event_name in ["issue_comment", "pull_request_review_comment", "pull_request_review"] && claims.job_workflow_ref.startsWith("johnpangalos/workers_comp/.github/workflows/claude-fix.yml@")`,
-so only that workflow can use it. Target the same service account. The job only runs for
-people who can write to the repo.
+(`repo:johnpangalos/workers_comp:ref:refs/heads/main` for a PR comment), so this rule is made
+with **Rules → New rule**, match **CEL expression**, so only that workflow on those events
+can use it (the Console's CEL has no `in`, hence the `||`):
+
+```
+claims.sub.startsWith("repo:johnpangalos/workers_comp:") && claims.repository == "johnpangalos/workers_comp" && claims.repository_owner_id == "6550688" && (claims.event_name == "issue_comment" || claims.event_name == "pull_request_review_comment" || claims.event_name == "pull_request_review") && claims.job_workflow_ref.startsWith("johnpangalos/workers_comp/.github/workflows/claude-fix.yml@")
+```
+
+Audience, workspace, scope and lifetime as above, targeting the same service account. The job
+itself only runs for people who can write to the repo.
 
 Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` and

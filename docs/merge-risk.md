@@ -1,14 +1,15 @@
-# Reviewing and merging workers_comp
+# Merging by risk
 
-How a change gets from a branch to `main`. What counts as a bug, and the reviewer's checklist,
-are in FEATURE_FLOW.md; the rules are in CLAUDE.md.
+How a change gets from a branch to `main`, and how low-risk PRs merge with no person reading
+them. Why it's built this way is in [tooling-decisions.md](tooling-decisions.md), "Review".
 
-## How a change gets reviewed
+## From branch to main
 
 1. **Before the PR, locally**, with the feature-flow-lite skill: an investigator maps the
    code, an implementor builds it against written acceptance criteria, the checks run, a
    simplifier tidies the diff, and a red-team reviewer writes and runs probes to break it,
-   for at most two fix rounds. It runs on your Claude plan.
+   for at most two fix rounds. It runs on your Claude plan. Its project file, with the
+   reviewer's checklist, is [FEATURE_FLOW.md](../FEATURE_FLOW.md).
 2. **The PR** has a Conventional Commits title and the template filled in: what and why, the
    risk, and, in its "For review and decision agents" disclosure, what an agent needs to judge
    the change without rerunning it: the acceptance criteria, each check's result line, the
@@ -16,37 +17,45 @@ are in FEATURE_FLOW.md; the rules are in CLAUDE.md.
    feature-flow-lite report.
 3. **Required CI**: `check` (`pnpm check`: format, lint, types, tests, build), `figma`
    (`pnpm test:figma`, on macOS) and `pr-title`. Red blocks the merge.
-4. **Merge by risk** (`.github/workflows/claude-risk.yml`). When CI passes on a low-risk PR,
-   it merges by itself; everything else waits for you.
+4. **Merge by risk** (`.github/workflows/claude-risk.yml`): a low-risk PR merges by itself;
+   everything else waits for you.
 
-## Risk tiers
+## What merges by itself
 
-The paths set the tier, and Claude can only make it stricter.
+Only a PR whose every file (and every rename's old name) is one of these:
 
-| Tier | What | Merge |
-|---|---|---|
-| Low | Only `docs/**`, `README.md`, playground example pages (`apps/playground/app/examples/**`) other than the ones the Figma specs measure (`figma.tsx`, `overrides.tsx`), and a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`) | Automatic, when the required checks pass and Claude answers `merge-approved` |
-| Medium | The package (`packages/ui/src/**`), `theme.css`, Figma exports and tokens, changesets | You |
-| Always you | `.github/**`; `.claude/**` (its hooks run on your machine); `CLAUDE.md`, `FEATURE_FLOW.md` and `REVIEW.md`; the Figma specs and the measuring code (`apps/playground/tests/`) and the token test (`packages/ui/src/theme.test.ts`), which say whether code matches Figma; `package.json`, `pnpm-lock.yaml`, lint, format and Wrangler config; the "Version Packages" PR, which publishes to npm | You |
+- `docs/**` and `README.md`;
+- a playground example page (`apps/playground/app/examples/**`) other than the ones the Figma
+  specs measure (`figma.tsx`, `overrides.tsx`);
+- a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`).
 
-For a PR whose files are all low tier, Claude (Haiku) gets the diff, the PR description,
-CLAUDE.md and this file in one Messages API request and answers, as JSON that the API holds to a schema (structured
-outputs), `merge-approved` or `needs-human` with a one-sentence reason. `merge-approved` only
-if the change is docs, copy, examples or tests that only add coverage, and is right: docs that
-say only what the code does, tests that loosen nothing. Anything else, any doubt, a refusal or a
-cut-off answer is `needs-human`, and so is a description claim the diff doesn't back or an
-open finding. The verdict and its reason are in the run's summary.
+`isLowRisk` in `.github/scripts/claude-risk/gate.ts` is the rule, with tests. Everything else
+waits for you: the package, the theme and its token test, Figma exports and specs and the
+measuring code, changesets, `.github/`, `.claude/` (its hooks run on your machine), CLAUDE.md
+and FEATURE_FLOW.md, dependencies and config, and the "Version Packages" PR, which publishes
+to npm. Start strict and widen with evidence: add a path only after PRs like it have merged
+clean for a while.
 
-Start strict and widen with evidence: move a path down a tier only after its PRs have been
-approved and merged clean for a while.
+## How the check runs
 
 It runs when CI or the PR title check finishes on a PR's commit (`workflow_run`), so editing the
-description re-rates the PR, and it goes on only once `check` and `figma` have passed on that
-commit. GitHub always runs a `workflow_run` from `main`'s copy of the workflow, and its steps
-are `main`'s scripts in `.github/scripts/claude-risk/`, so a PR can't change the rules it is
-judged by. It merges that exact commit, so a push since is refused, and nothing is left
-switched on between pushes. The merge is made with the workflow's own token, so it doesn't
-start CI or the release on `main`; that's fine for the low tier, which has nothing to release.
+description re-rates the PR. GitHub runs a `workflow_run` from `main`'s copy of the workflow,
+and its steps are `main`'s scripts in `.github/scripts/claude-risk/`, so a PR can't change the
+rules it is judged by. Three jobs, each one script:
+
+- **gate** (`gate.ts`): the PR is johnpangalos's, from a branch here, not a draft, still at
+  that commit, `check` and `figma` passed on it, and every file is on the list above. Most PRs
+  stop here, with no Claude call.
+- **rate** (`rate.ts`): Claude (Haiku) gets the diff, the PR description and CLAUDE.md in one
+  Messages API request, and answers, as JSON the API holds to a schema (structured outputs),
+  `merge-approved` or `needs-human` with a one-sentence reason. `merge-approved` only if the
+  change is docs, copy, examples or tests that only add coverage, and is right: docs that say
+  only what the code does, tests that loosen nothing. Anything else, any doubt, a description
+  claim the diff doesn't back, an open finding, a refusal or a cut-off answer is
+  `needs-human`. The verdict and its reason are in the run's summary.
+- **merge** (`merge.ts`): on exactly `merge-approved`, squash-merges that commit; a push since
+  is refused. The merge is made with the workflow's own token, so it doesn't start CI or the
+  release on `main`; the low tier has nothing to release.
 
 ## Setup
 
@@ -65,7 +74,7 @@ claims.sub == "repo:johnpangalos/workers_comp:ref:refs/heads/main" && claims.rep
 A `workflow_run` always runs on `main`, so that is its subject; the last clause means only this
 workflow, as it is on `main`, can get a token.
 
-Then add the IDs as repository *variables* (Settings → Secrets and variables → Actions →
+Then add the IDs as repository _variables_ (Settings → Secrets and variables → Actions →
 Variables; they are identifiers, not credentials): `ANTHROPIC_FEDERATION_RULE_ID` (`fdrl_…`),
 `ANTHROPIC_ORGANIZATION_ID` (the UUID on
 [Organization](https://platform.claude.com/settings/organization)) and
@@ -81,20 +90,21 @@ instead:
 
 - Only PRs johnpangalos opened, from this repo's own branches, are rated, checked by GitHub
   user ID (6550688) so a rename doesn't hand the check to whoever takes the old name.
-- The rules are `main`'s: the workflow runs on `workflow_run`, from the default branch, so
-  a PR that edits it is judged by the version already on `main` (and needs a person anyway).
-- No PR code runs. The diff is read with `git diff` and sent to Claude as text.
+- The rules are `main`'s, so a PR that edits them is judged by the version already on `main`
+  (and needs a person anyway).
+- No PR code runs: its commits are fetched and diffed, never checked out, and the diff goes to
+  Claude as text.
 - Claude gets no tools at all: one request in, one JSON verdict out, from a job whose GitHub
   token can only read. A separate job, not Claude, merges, and only on exactly
   `{"decision": "merge-approved", "reason": …}`. The diff is marked as data, and a PR that talks
-  Claude into approving still has to be all low-tier files.
+  Claude into approving still has to be all low-risk files.
 - Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts drop
   their credentials, and CI's token is read-only.
 
-Repository settings that go with it:
+## Repository settings
 
-- **Rules → `main` ruleset:** `figma` in the required status checks, and "Restrict deletions"
-  and "Block force pushes".
+- **Rules → `main` ruleset:** `check`, `figma` and `pr-title` in the required status checks,
+  and "Restrict deletions" and "Block force pushes".
 - **Actions → General:** "Require approval for all external contributors" for fork PR
   workflows; allow only actions from GitHub, verified creators and `anthropics/*`,
   `pnpm/*`, `changesets/*`, with "Require actions to be pinned to a full-length commit SHA".

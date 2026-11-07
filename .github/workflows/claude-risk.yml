@@ -1,7 +1,7 @@
 name: Merge low-risk PRs
 
 # Review happens before the PR, locally, with feature-flow-lite. On the PR, this only decides
-# whether it can merge with no person reading it (REVIEW.md, "Risk tiers"). It runs when CI or
+# whether it can merge with no person reading it (docs/merge-risk.md). It runs when CI or
 # the PR title check finishes on a PR's commit, so editing a PR's description re-rates it. It
 # runs from main (workflow_run always does), and so do its scripts, so a PR can't change the
 # rules it is judged by. Three jobs, so the Claude call never runs next to a token that can

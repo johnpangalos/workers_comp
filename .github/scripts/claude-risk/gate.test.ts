@@ -42,7 +42,6 @@ test("low-risk paths are docs, the README, unmeasured example pages and a compon
     ".github/workflows/claude-risk.yml",
     ".github/scripts/claude-risk/gate.ts",
     "CLAUDE.md",
-    "REVIEW.md",
     "FEATURE_FLOW.md",
     "pnpm-lock.yaml",
     "readme.md",

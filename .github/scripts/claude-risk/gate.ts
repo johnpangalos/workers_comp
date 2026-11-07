@@ -4,8 +4,8 @@
 // Low risk: docs, the README, playground example pages other than the ones the Figma specs
 // measure (figma.tsx, overrides.tsx), and a component's own tests. Everything else (the
 // package, the theme and its token test, Figma exports, the Figma specs and the measuring
-// code, changesets, CI, .claude/, CLAUDE.md, FEATURE_FLOW.md, REVIEW.md, dependencies,
-// config) needs a person. REVIEW.md, "Risk tiers", is the same list for people.
+// code, changesets, CI, .claude/, CLAUDE.md, FEATURE_FLOW.md, dependencies, config) needs a
+// person. docs/merge-risk.md, "What merges by itself", is the same list for people.
 
 import { env, github, githubAll, output, runIfMain, summary } from "./actions.ts";
 

@@ -11,7 +11,7 @@
     "rule": "raw-number",
     "layer": "focus-ring",
     "field": "strokeWeight",
-    "reason": "The ghost Button has no fill, and Figma casts a fill-less frame's shadow from its text, so its focus ring can't be the spread shadows the other variants use; it is a rectangle 4px outside the button instead. Its 2px stroke is `ring-2`, which has no Figma variable. Covered by looking (CLAUDE.md, step 5)."
+    "reason": "The ghost Button has no fill, and Figma casts a fill-less frame's shadow from its text, so its focus ring can't be the spread shadows the other variants use; it is a rectangle 4px outside the button instead. Its 2px stroke is `ring-2`, which has no Figma variable. Covered by looking: the screenshot comparison in CLAUDE.md's Checking the result against Figma."
   },
   {
     "node": "1:91",

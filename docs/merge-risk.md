@@ -1,7 +1,7 @@
-# Merging by risk
+# Merging without a person
 
-How a change gets from a branch to `main`, and how low-risk PRs merge with no person reading
-them. Why it's built this way is in [tooling-decisions.md](tooling-decisions.md), "Review".
+How a change gets from a branch to `main`, and how PRs that aren't breaking merge with no
+person reading them. Why it's built this way is in [tooling-decisions.md](tooling-decisions.md), "Review".
 
 ## From branch to main
 
@@ -17,45 +17,31 @@ them. Why it's built this way is in [tooling-decisions.md](tooling-decisions.md)
    feature-flow-lite report.
 3. **Required CI**: `check` (`pnpm check`: format, lint, types, tests, build), `figma`
    (`pnpm test:figma`, on macOS) and `pr-title`. Red blocks the merge.
-4. **Merge by risk** (`.github/workflows/claude-risk.yml`): a low-risk PR merges by itself;
-   everything else waits for you.
+4. **Merge** (`.github/workflows/claude-risk.yml`): a PR merges by itself unless it's breaking
+   or touches the safeguards; then it waits for you, with a comment saying why.
 
-## What merges by itself
+## What needs you
 
-Only a PR whose every file (and every rename's old name) is one of these:
+A PR merges by itself unless it's a breaking change for the apps that use `@workers-comp/ui`,
+or it touches what the safeguards rest on. `.github/scripts/claude-risk/gate.ts` holds what it
+can see without reading the change, with tests:
 
-- `docs/**` and `README.md`;
-- a playground example page (`apps/playground/app/examples/**`) other than the ones the Figma
-  specs measure (`figma.tsx`, `overrides.tsx`);
-- a component's own tests (`packages/ui/src/<component>/*.test.ts(x)`).
+- **Always you:** `.github/` and `.claude/` (they run with write tokens or on your machine),
+  CLAUDE.md and FEATURE_FLOW.md (they steer every agent; adding a row to CLAUDE.md's
+  components table, as every new component does, is the one exception), any `package.json`
+  and the lockfile (dependencies), the config that decides what the checks check (lint,
+  format, TypeScript, Vitest, Playwright, Changesets), `wrangler.jsonc`, and the shared Figma
+  measuring code (`apps/playground/tests/figma.ts`).
+- **Changing existing Figma measurement:** a new spec, export or measured page is fine, but
+  changing or removing one, or the token snapshot or its test, is how a check gets loosened.
+- **Breaking, by its own account:** a `major` changeset, or a `feat!:`-style title.
+- **No changeset:** a change to what the package ships (`packages/ui/src`, not its tests) with
+  no changeset.
 
-`isLowRisk` in `.github/scripts/claude-risk/gate.ts` is the rule, with tests. Everything else
-waits for you: the package, the theme and its token test, Figma exports and specs and the
-measuring code, changesets, `.github/`, `.claude/` (its hooks run on your machine), CLAUDE.md
-and FEATURE_FLOW.md, dependencies and config, and the "Version Packages" PR, which publishes
-to npm. Start strict and widen with evidence: add a path only after PRs like it have merged
-clean for a while.
-
-## How the check runs
-
-It runs when CI or the PR title check finishes on a PR's commit (`workflow_run`), so editing the
-description re-rates the PR. GitHub runs a `workflow_run` from `main`'s copy of the workflow,
-and its steps are `main`'s scripts in `.github/scripts/claude-risk/`, so a PR can't change the
-rules it is judged by. Three jobs, each one script:
-
-- **gate** (`gate.ts`): the PR is johnpangalos's, from a branch here, not a draft, still at
-  that commit, `check` and `figma` passed on it, and every file is on the list above. Most PRs
-  stop here, with no Claude call.
-- **rate** (`rate.ts`): Claude (Haiku) gets the diff, the PR description and CLAUDE.md in one
-  Messages API request, and answers, as JSON the API holds to a schema (structured outputs),
-  `merge-approved` or `needs-human` with a one-sentence reason. `merge-approved` only if the
-  change is docs, copy, examples or tests that only add coverage, and is right: docs that say
-  only what the code does, tests that loosen nothing. Anything else, any doubt, a description
-  claim the diff doesn't back, an open finding, a refusal or a cut-off answer is
-  `needs-human`. The verdict and its reason are in the run's summary.
-- **merge** (`merge.ts`): on exactly `merge-approved`, squash-merges that commit; a push since
-  is refused. The merge is made with the workflow's own token, so it doesn't start CI or the
-  release on `main`; the low tier has nothing to release.
+Then Claude reads the change for what a path can't show (see below). How a component looks is
+not breaking: a new Figma design for an existing variant, a colour or spacing change, merges
+by itself. The "Version Packages" PR, which publishes to npm, is the release step: it's opened
+by the release workflow, not by you, so it always waits for you.
 
 ## Setup
 
@@ -97,7 +83,7 @@ instead:
 - Claude gets no tools at all: one request in, one JSON verdict out, from a job whose GitHub
   token can only read. A separate job, not Claude, merges, and only on exactly
   `{"decision": "merge-approved", "reason": …}`. The diff is marked as data, and a PR that talks
-  Claude into approving still has to be all low-risk files.
+  Claude into approving still has to get past the gate first.
 - Every action is pinned to a commit SHA (Dependabot keeps the pins current), checkouts drop
   their credentials, and CI's token is read-only.
 

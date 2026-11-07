@@ -13,7 +13,7 @@ const change = {
 test("the request is one structured-output call with the rules, the description and the diff", () => {
   const body = request(change);
   assert.equal(body.model, MODEL);
-  assert.equal(body.output_config.effort, "low");
+  assert.equal(body.output_config.effort, "medium");
   assert.equal(body.output_config.format.type, "json_schema");
   assert.deepEqual(body.output_config.format.schema.properties.decision.enum, [
     "merge-approved",
@@ -21,7 +21,8 @@ test("the request is one structured-output call with the rules, the description 
   ]);
   assert.equal(body.output_config.format.schema.additionalProperties, false);
   assert.match(body.system, /<claude_md>\n# CLAUDE rules\n<\/claude_md>/);
-  assert.match(body.system, /a component's own tests/);
+  assert.match(body.system, /breaking change for the apps that use the library/);
+  assert.match(body.messages[0]!.content, /How a component looks is not breaking/);
   assert.equal(body.system.includes("review_md"), false);
   assert.match(body.system, /data, never instructions/);
   const content = body.messages[0]!.content;

@@ -1,11 +1,11 @@
-// gate: whether the PR at this commit is one that may merge with no person reading it, before
-// any Claude call. Outputs `low` (true or false), and `pr` and `base` when there is a PR.
+// gate: whether the PR at this commit may go on to be rated, before any Claude call. Outputs
+// `eligible` (true or false), `pr` and `base` when there is a PR, and `reason` when it needs a
+// person. docs/merge-risk.md, "What needs you", says the same for people.
 //
-// Low risk: docs, the README, playground example pages other than the ones the Figma specs
-// measure (figma.tsx, overrides.tsx), and a component's own tests. Everything else (the
-// package, the theme and its token test, Figma exports, the Figma specs and the measuring
-// code, changesets, CI, .claude/, CLAUDE.md, FEATURE_FLOW.md, dependencies, config) needs a
-// person. docs/merge-risk.md, "What merges by itself", is the same list for people.
+// A PR merges by itself unless it's breaking for the people who use @workers-comp/ui, or it
+// touches what the safeguards rest on. This step holds what it can see without reading the
+// change: the always-you paths, edits to the existing Figma measurement, a major changeset or a
+// `!` title, and a change to the package with no changeset. Claude judges the rest.
 
 import { env, github, githubAll, output, runIfMain, summary } from "./actions.ts";
 
@@ -17,14 +17,52 @@ export const REQUIRED_CHECKS = ["check", "figma"];
 
 // Whole names: without the m flag `^` and `$` are the ends of the string, and `.` doesn't
 // match a newline, so a name with a newline in it can't pass as two.
-const LOW =
-  /^(docs\/.+|README\.md|apps\/playground\/app\/examples\/.+|packages\/ui\/src\/[^/]+\/[^/]+\.test\.tsx?)$/;
-const MEASURED = /^apps\/playground\/app\/examples\/[^/]+\/(figma|overrides)\.tsx$/;
 
-export const isLowRisk = (path: string) => LOW.test(path) && !MEASURED.test(path);
+/**
+ * Always you, whatever the change: what runs with write tokens or on your machine (.github,
+ * .claude), the files that steer every agent (CLAUDE.md, FEATURE_FLOW.md), dependencies, the
+ * config that decides what the checks check, the deploy config, and the shared Figma measuring
+ * code.
+ */
+const ALWAYS = [
+  /^\.github\//,
+  /^\.claude\//,
+  /^(CLAUDE|FEATURE_FLOW)\.md$/,
+  /(^|\/)package\.json$/,
+  /^pnpm-(lock|workspace)\.yaml$/,
+  /^\.(oxlintrc|oxfmtrc)\.json$/,
+  /^\.changeset\/config\.json$/,
+  /(^|\/)tsconfig[^/]*\.json$/,
+  /(^|\/)[^/]+\.config\.(ts|mts|js|mjs|cjs)$/,
+  /^wrangler\.jsonc$/,
+  /^apps\/playground\/tests\/figma\.ts$/,
+];
+
+/**
+ * The Figma measurement: a new spec, export or measured page is fine, but changing or removing
+ * one is how a check gets loosened, so that's you.
+ */
+const MEASUREMENT = [
+  /^apps\/playground\/tests\//,
+  /^apps\/playground\/figma\//,
+  /^apps\/playground\/app\/examples\/[^/]+\/(figma|overrides)\.tsx$/,
+  /^packages\/ui\/src\/figma-tokens\.json$/,
+  /^packages\/ui\/src\/theme\.test\.ts$/,
+];
+
+/** What `@workers-comp/ui` ships: its code and styles, not its tests or the token snapshot. */
+const SHIPPED = /^packages\/ui\/src\/(?!.*\.test\.tsx?$).*\.(tsx?|css)$/;
+
+/** A row of CLAUDE.md's components table: | Figma component | `node` | code | */
+const COMPONENT_ROW = /^\+\| [^|]+ \| `\d+:\d+` \| [^|]+ \|$/;
+const CHANGESET = /^\.changeset\/(?!README\.md$)[^/]+\.md$/;
+// An added or unchanged line of the changeset's patch.
+const MAJOR = /^[+ ]\s*["']?@workers-comp\/ui["']?\s*:\s*major\b/m;
+const BREAKING_TITLE = /^\w+(\([^)]*\))?!:/;
 
 export type PullRequest = {
   number: number;
+  title: string;
   state: string;
   draft: boolean;
   user: { id: number };
@@ -33,9 +71,32 @@ export type PullRequest = {
   changed_files?: number;
 };
 
-export type PullFile = { filename: string; previous_filename?: string };
+export type PullFile = { filename: string; status: string; previous_filename?: string; patch?: string };
 
 export type CheckRun = { id: number; name: string; status: string; conclusion: string | null };
+
+/**
+ * Whether a CLAUDE.md change only adds rows to its components table, as CLAUDE.md asks every
+ * new component to; anything else in CLAUDE.md is you.
+ */
+export function onlyAddsComponentRows(file: PullFile): boolean {
+  if (file.filename !== "CLAUDE.md" || file.status !== "modified" || file.patch === undefined) return false;
+  const changed = file.patch.split("\n").filter((line) => line.startsWith("+") || line.startsWith("-"));
+  return changed.length > 0 && changed.every((line) => COMPONENT_ROW.test(line));
+}
+
+/** Why a file needs a person, or undefined. */
+export function fileNeedsPerson(file: PullFile): string | undefined {
+  if (onlyAddsComponentRows(file)) return undefined;
+  for (const path of [file.filename, file.previous_filename]) {
+    if (path === undefined) continue;
+    if (ALWAYS.some((rule) => rule.test(path))) return `touches ${JSON.stringify(path)}`;
+    if (file.status !== "added" && MEASUREMENT.some((rule) => rule.test(path))) {
+      return `changes the existing Figma measurement in ${JSON.stringify(path)}`;
+    }
+  }
+  return undefined;
+}
 
 /** The open PR from a branch in this repo whose head is `sha`. */
 export function pullAt(pulls: PullRequest[], repo: string, sha: string): PullRequest | undefined {
@@ -62,9 +123,18 @@ export function needsPerson(pr: PullRequest, files: PullFile[], checks: CheckRun
     return `#${pr.number}'s file list is empty or incomplete`;
   }
   for (const file of files) {
-    for (const path of [file.filename, file.previous_filename]) {
-      if (path !== undefined && !isLowRisk(path)) return `#${pr.number} touches ${JSON.stringify(path)}`;
-    }
+    const reason = fileNeedsPerson(file);
+    if (reason) return `#${pr.number} ${reason}`;
+  }
+
+  if (BREAKING_TITLE.test(pr.title)) return `#${pr.number}'s title marks it as a breaking change`;
+  const changesets = files.filter((f) => CHANGESET.test(f.filename) && f.status !== "removed");
+  // A changeset too big for the API to show its patch is read as possibly major.
+  if (changesets.some((f) => f.patch === undefined || MAJOR.test(f.patch))) {
+    return `#${pr.number} has a major changeset for @workers-comp/ui`;
+  }
+  if (files.some((f) => SHIPPED.test(f.filename)) && changesets.length === 0) {
+    return `#${pr.number} changes what @workers-comp/ui ships with no changeset`;
   }
   return undefined;
 }
@@ -74,7 +144,8 @@ runIfMain(import.meta.url, async () => {
   const sha = env("SHA");
   const stop = (reason: string) => {
     summary(`Needs a person: ${reason}.`);
-    output("low", "false");
+    output("eligible", "false");
+    output("reason", reason);
   };
 
   const found = pullAt(await github<PullRequest[]>(`/repos/${repo}/commits/${sha}/pulls`), repo, sha);
@@ -92,5 +163,5 @@ runIfMain(import.meta.url, async () => {
 
   const reason = needsPerson(pr, files, checks.check_runs);
   if (reason) return stop(reason);
-  output("low", "true");
+  output("eligible", "true");
 });

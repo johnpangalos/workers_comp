@@ -41,10 +41,10 @@ or the version by hand.
 
 Review happens before the PR, locally, with the feature-flow-lite skill (FEATURE_FLOW.md is
 its project file). Fill in the PR template, with the run's acceptance criteria, check results
-and findings in its disclosure for review agents. On GitHub, CI runs the checks, and a
-low-risk PR (docs, examples, a component's own tests) merges by itself once Claude approves
-it; everything else waits for a person. [docs/merge-risk.md](docs/merge-risk.md) has which PRs
-merge by themselves, how, and the setup.
+and findings in its disclosure for review agents. On GitHub, CI runs the checks, and a PR
+merges by itself unless it's a breaking change for apps that use `@workers-comp/ui` or touches
+what the safeguards rest on; then it waits for a person, with a comment saying why.
+[docs/merge-risk.md](docs/merge-risk.md) has what needs a person, how it's decided, and the setup.
 
 ## Where things live
 

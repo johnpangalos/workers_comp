@@ -86,6 +86,7 @@ Components so far:
 | Button | `1:91` | `Button` from `@workers-comp/ui` (`packages/ui/src/button/button.tsx`) |
 | Badge | `36:112` | `Badge` from `@workers-comp/ui` (`packages/ui/src/badge/badge.tsx`) |
 | Chip | `39:15` | `Chip` from `@workers-comp/ui` (`packages/ui/src/chip/chip.tsx`) |
+| Tabs | `18:23` | `Tabs`, `TabList`, `Tab`, `TabPanel` from `@workers-comp/ui` (`packages/ui/src/tabs/tabs.tsx`); Figma's parts are TabList `18:14`, Tab `18:13`, TabPanel `18:21` |
 
 Rules:
 

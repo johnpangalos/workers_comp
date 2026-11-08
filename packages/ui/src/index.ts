@@ -7,4 +7,18 @@ export {
   type ButtonVariant,
 } from "./button/button";
 export { Chip, type ChipProps, chipClassName } from "./chip/chip";
+export {
+  Tab,
+  TabList,
+  type TabListProps,
+  TabPanel,
+  type TabPanelProps,
+  type TabProps,
+  Tabs,
+  type TabsProps,
+  tabClassName,
+  tabListClassName,
+  tabPanelClassName,
+  tabsClassName,
+} from "./tabs/tabs";
 export { bindClassNames, type ClassValue } from "./class-names";

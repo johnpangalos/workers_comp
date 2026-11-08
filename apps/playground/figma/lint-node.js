@@ -1,6 +1,11 @@
-// Lints a component set before it is exported: everything code would have to guess at is a
+// Lints the nodes of an export before it is exported: everything code would have to guess at is a
 // finding. Figma decides, so a mistake in the file becomes a mistake in code; this catches it at
 // the source. Returns the text of a lint file (apps/playground/figma/<name>-lint.json). Read-only.
+//
+// It takes the same ids as the export (export-node): component sets, whose variants it lints, and
+// components and frames, each linted as a variant of its own. An id inside another of the ids is
+// covered by it. With several ids, a set's variants are named `<set name>/<variant>`, as in the
+// export.
 //
 // Rules, for every layer inside every variant (an instance's own layers are its component's
 // business, so the lint stops at instances):
@@ -15,13 +20,28 @@
 // - detached: a frame detached from a component, so code can't tell which component it is.
 //
 // Run it with the Figma MCP's `use_figma`: paste this file and end with
-// `return await lintNode("1:91");`, then save the result exactly as returned. Its last line is a
-// hash of the rest, the same check `loadFigmaExport` in tests/figma.ts makes. A finding that is
-// right as it is goes in figma/lint-ignore.json, with a reason.
+// `return await lintNode("1:91");` (or `lintNode("18:13", "18:14", …)`, the export's ids in its
+// order), then save the result exactly as returned. Its last line is a hash of the rest, the same
+// check `loadFigmaExport` in tests/figma.ts makes. A finding that is right as it is goes in
+// figma/lint-ignore.json, with a reason.
 // oxlint-disable-next-line no-unused-vars -- called by the snippet pasted into `use_figma`, not here.
-async function lintNode(setId) {
-  const set = await figma.getNodeByIdAsync(setId);
-  if (set?.type !== "COMPONENT_SET") throw new Error(`${setId} is not a component set`);
+async function lintNode(...nodeIds) {
+  // Each id's variants, as [the name the export gives it, the node].
+  const roots = [];
+  for (const nodeId of nodeIds) {
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node) throw new Error(`${nodeId} does not exist`);
+    // A node inside another of the ids (the Chip export's dot rows) is linted as part of it.
+    let inside = false;
+    for (let parent = node.parent; parent; parent = parent.parent) inside ||= nodeIds.includes(parent.id);
+    if (inside) continue;
+    let prefix = "";
+    if (nodeIds.length > 1) prefix = `${node.name}/`;
+    if (node.type === "COMPONENT_SET") {
+      roots.push(node.children.map((variant) => [{ name: prefix + variant.name }, variant]));
+    } else if (node.type === "COMPONENT" || node.type === "FRAME") roots.push([[{ name: node.name }, node]]);
+    else throw new Error(`${nodeId} is not a component set, component or frame`);
+  }
 
   const findings = [];
   const add = (variant, layer, node, rule, field, value) =>
@@ -53,8 +73,9 @@ async function lintNode(setId) {
     add(variant, layer, node, "raw-number", field, round(value));
   }
 
-  // layer path (inside a variant) -> the variants whose text there is linked, and those whose isn't
-  const textLinks = new Map();
+  // layer path (inside a variant) -> the variants whose text there is linked, and those whose isn't;
+  // one map per id, since different components can have layers of the same name
+  let textLinks = new Map();
 
   function lintLayer(variant, layer, node) {
     if ("fills" in node) lintPaints(variant, layer, node, "fills", node.fillStyleId);
@@ -104,16 +125,19 @@ async function lintNode(setId) {
     for (const child of node.children) lintLayer(variant, [layer, child.name].filter(Boolean).join(" > "), child);
   }
 
-  for (const variant of set.children) lintLayer(variant, "", variant);
-  for (const [layer, { linked, unlinked }] of textLinks) {
-    if (linked.length === 0) continue; // static text in every variant: nothing to link
-    for (const [variant, node] of unlinked) add(variant, layer, node, "unlinked-text", "characters", node.characters);
+  for (const variants of roots) {
+    textLinks = new Map();
+    for (const [variant, node] of variants) lintLayer(variant, "", node);
+    for (const [layer, { linked, unlinked }] of textLinks) {
+      if (linked.length === 0) continue; // static text in every variant: nothing to link
+      for (const [variant, node] of unlinked) add(variant, layer, node, "unlinked-text", "characters", node.characters);
+    }
   }
 
   const lines = findings.map((finding) => `    ${JSON.stringify(finding)}`);
   let list = "[]";
   if (lines.length > 0) list = `[\n${lines.join(",\n")}\n  ]`;
-  const body = `{\n  "file": ${JSON.stringify(figma.fileKey ?? null)},\n  "node": ${JSON.stringify(setId)},\n  "findings": ${list},\n`;
+  const body = `{\n  "file": ${JSON.stringify(figma.fileKey ?? null)},\n  "node": ${JSON.stringify(nodeIds.join(" "))},\n  "findings": ${list},\n`;
   let hash = 5381;
   for (let i = 0; i < body.length; i++) hash = ((hash * 33) ^ body.charCodeAt(i)) >>> 0;
   return `${body}  "hash": "${hash.toString(16)}"\n}\n`;

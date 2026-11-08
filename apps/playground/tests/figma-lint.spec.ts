@@ -27,16 +27,16 @@ for (const file of exports) {
   test(`${name} passes the Figma lint`, () => {
     const exported = loadFigmaExport(new URL(file, folder));
     const lintFile = new URL(`${name}-lint.json`, folder);
-    expect(readdirSync(folder), `figma/${name}-lint.json: lint the node with figma/lint-node.js`).toContain(
+    expect(readdirSync(folder), `figma/${name}-lint.json: lint the nodes with figma/lint-node.js`).toContain(
       `${name}-lint.json`,
     );
     const lint = loadFigmaExport(lintFile);
-    // An export's "node" lists the set first, then any other nodes it measures.
-    const [set] = String(exported.node).split(" ");
-    expect(lint.node, "the lint is of the node that was exported").toBe(set);
+    // The export's ids, space-separated in its order; the lint takes the same ones.
+    const nodes = String(exported.node);
+    expect(lint.node, "the lint is of the nodes that were exported").toBe(nodes);
 
     const open = (lint.findings as Finding[]).filter(
-      (finding) => !ignores.some((ignore) => matches(ignore, set!, finding)),
+      (finding) => !ignores.some((ignore) => matches(ignore, nodes, finding)),
     );
     // One line per problem, with how many variants have it and a link to the first.
     const grouped = new Map<string, { count: number; node: string }>();

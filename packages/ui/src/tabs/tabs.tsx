@@ -91,13 +91,17 @@ export function TabList({ className, ...props }: TabListProps) {
   return <Comp0TabList {...props} className={[tabListClassName, className].filter(Boolean).join(" ")} />;
 }
 
-/** A consumer's `onClick` runs first; calling `preventDefault()` in it keeps the tab from being selected. */
+/**
+ * A consumer's `onClick` runs first; calling `preventDefault()` in it keeps the tab from being selected.
+ * The hover and focus hooks merge before the consumer's handlers, so a consumer's `preventDefault()`
+ * can't stop them and leave `data-hovered` or `data-focus-visible` stale.
+ */
 export function Tab({ className, disabled, ...props }: TabProps) {
   const { focusProps, isFocusVisible } = useFocusRing({ disabled });
   const { hoverProps, isHovered } = useHover({ disabled });
   return (
     <Comp0Tab
-      {...(mergeProps(props, focusProps, hoverProps) as TabProps)}
+      {...(mergeProps(focusProps, hoverProps, props) as TabProps)}
       disabled={disabled}
       data-hovered={dataAttr(isHovered && !disabled)}
       data-focus-visible={dataAttr(isFocusVisible)}

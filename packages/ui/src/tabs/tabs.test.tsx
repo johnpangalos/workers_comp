@@ -175,6 +175,37 @@ describe("Tab", () => {
     expect(activity).not.toHaveAttribute("data-hovered");
   });
 
+  it("a consumer's pointer and focus handlers that call preventDefault still run, and hover and the focus ring still report", async () => {
+    const user = userEvent.setup();
+    type Handler = (event: { preventDefault: () => void }) => void;
+    const prevent: Handler = (event) => event.preventDefault();
+    const handlers = {
+      onPointerEnter: vi.fn<Handler>(prevent),
+      onPointerLeave: vi.fn<Handler>(prevent),
+      onFocus: vi.fn<Handler>(prevent),
+      onBlur: vi.fn<Handler>(prevent),
+    };
+    render(
+      <Tabs defaultValue="overview">
+        <TabList>
+          <Tab value="overview" {...handlers}>
+            Overview
+          </Tab>
+          <Tab value="activity">Activity</Tab>
+        </TabList>
+      </Tabs>,
+    );
+    await user.hover(tab("Overview"));
+    expect(tab("Overview")).toHaveAttribute("data-hovered", "");
+    await user.unhover(tab("Overview"));
+    expect(tab("Overview")).not.toHaveAttribute("data-hovered");
+    await user.tab();
+    expect(tab("Overview")).toHaveAttribute("data-focus-visible", "");
+    await user.tab();
+    expect(tab("Overview")).not.toHaveAttribute("data-focus-visible");
+    for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalled();
+  });
+
   it("reports data-disabled on a disabled tab", () => {
     render(<Example defaultValue="overview" />);
     expect(tab("Settings")).toBeDisabled();

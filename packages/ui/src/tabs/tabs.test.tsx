@@ -401,6 +401,24 @@ describe("TabPanel", () => {
     }
   });
 
+  it.each([
+    ["matching no tab", "missing"],
+    ["naming a disabled tab", "settings"],
+  ])("defaultValue %s: Shift+Tab from the first tab leaves the TabList", async (_, defaultValue) => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">Before</button>
+        <Example defaultValue={defaultValue} />
+      </>,
+    );
+    await user.tab();
+    await user.tab();
+    expect(tab("Overview")).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Before" })).toHaveFocus();
+  });
+
   it("defaultValue naming a disabled tab: the Tab key reaches an enabled tab, and arrows never land on the disabled one", async () => {
     const user = userEvent.setup();
     render(<Example defaultValue="settings" />);

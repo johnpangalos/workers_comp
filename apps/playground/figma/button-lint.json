@@ -1,17 +1,6 @@
 {
   "file": "5OcRRw5a7qZGsgC43FjCp9",
   "node": "1:91",
-  "findings": [
-    {"variant":"variant=outline, size=default, state=default","layer":"","node":"1:59","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=default, state=hover","layer":"","node":"1:61","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=default, state=active","layer":"","node":"1:63","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=default, state=disabled","layer":"","node":"1:65","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=sm, state=default","layer":"","node":"1:67","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=sm, state=hover","layer":"","node":"1:69","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=sm, state=active","layer":"","node":"1:71","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=sm, state=disabled","layer":"","node":"1:73","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=default, state=focus","layer":"","node":"5:6","rule":"raw-number","field":"strokeWeight","value":1},
-    {"variant":"variant=outline, size=sm, state=focus","layer":"","node":"5:8","rule":"raw-number","field":"strokeWeight","value":1}
-  ],
-  "hash": "454ea96"
+  "findings": [],
+  "hash": "d8d5786a"
 }

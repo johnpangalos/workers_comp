@@ -26,7 +26,11 @@ async function lintNode(setId) {
   const findings = [];
   const add = (variant, layer, node, rule, field, value) =>
     findings.push({ variant: variant.name, layer, node: node.id, rule, field, value });
-  const bound = (node, field) => Boolean(node.boundVariables?.[field]);
+  const sides = ["strokeTopWeight", "strokeRightWeight", "strokeBottomWeight", "strokeLeftWeight"];
+  // Figma records a stroke weight's variable on each side, not on `strokeWeight` itself.
+  const bound = (node, field) =>
+    Boolean(node.boundVariables?.[field]) ||
+    (field === "strokeWeight" && sides.every((side) => node.boundVariables?.[side]));
   // Figma stores numbers as 32-bit floats: round them for the report.
   const round = (value) => Number(value.toFixed(2));
   const hex = ({ r, g, b }) =>
@@ -57,9 +61,7 @@ async function lintNode(setId) {
     if ("strokes" in node && node.strokes.length > 0) {
       lintPaints(variant, layer, node, "strokes", node.strokeStyleId);
       if (node.strokeWeight === figma.mixed) {
-        for (const side of ["strokeTopWeight", "strokeRightWeight", "strokeBottomWeight", "strokeLeftWeight"]) {
-          lintNumber(variant, layer, node, side);
-        }
+        for (const side of sides) lintNumber(variant, layer, node, side);
       } else lintNumber(variant, layer, node, "strokeWeight");
     }
     if ("topLeftRadius" in node) {

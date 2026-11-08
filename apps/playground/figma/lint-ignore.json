@@ -1,9 +1,1 @@
-[
-  {
-    "node": "1:91",
-    "rule": "raw-number",
-    "layer": "",
-    "field": "strokeWeight",
-    "reason": "The outline Button's 1px border is Tailwind's `border`, which has no width scale to bind to, and Figma has no border-width variable."
-  }
-]
+[]

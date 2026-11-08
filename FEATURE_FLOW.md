@@ -20,6 +20,8 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Targeted, for anything that started from Figma: `pnpm test:figma <component>` (no `--`; it
   passes the filter through literally)
 - Run it: `pnpm playground`, then http://localhost:5173/<component>/<page>
+- `pnpm test:figma` can't launch Chromium inside Claude Code's sandbox (`bootstrap_check_in ...
+  Permission denied`); the orchestrator runs it unsandboxed, subagents skip it.
 
 ## Conventions
 
@@ -90,6 +92,9 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
 - Measured exactly, though they look like exceptions: a label's x is where its text starts (after
   a leading dot or icon, not the padding), and radii are clamped to half the box on both sides,
   so `rounded-full` matches Figma's `radius/full` (9999).
+- A `flex` class beats the `hidden` attribute comp0 puts on a closed part (a TabPanel): hide
+  it with a class on the state too (`not-data-selected:hidden`) and check `display: none` in
+  the spec.
 - A border that is always on keeps Button's reset minus `border-0`, which would
   zero it; `border-0` is only for a border that some variants add.
 - New colours: add the whole Tailwind scale to Figma's Colors collection (v4 values, OKLCH

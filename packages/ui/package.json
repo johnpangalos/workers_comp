@@ -32,8 +32,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@comp0/core": "0.1.0-next.25",
-    "@comp0/react": "0.1.0-next.25"
+    "@comp0/core": "0.1.0-next.26",
+    "@comp0/react": "0.1.0-next.26"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

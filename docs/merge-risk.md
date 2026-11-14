@@ -48,7 +48,8 @@ Then Claude reads the change for what a path can't show (see below). How a compo
 not breaking: a new Figma design for an existing variant, a colour or spacing change, merges
 by itself, as long as Claude finds its measurement checks no less. The "Version Packages" PR,
 which publishes to npm, is the release step: it's opened by the release workflow, not by you,
-so it always waits for you.
+so it always waits for you. Merging it starts the publish, which waits for you a second time:
+the `npm` environment needs your approval before anything reaches npm.
 
 ## Setup
 

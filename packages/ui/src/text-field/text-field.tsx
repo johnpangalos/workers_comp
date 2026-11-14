@@ -76,6 +76,14 @@ export type TextFieldProps = Omit<
 };
 
 /**
+ * Whether a message was given something to show. Not `message && …`, which renders a bare `0` next to
+ * the input when the message is the number 0.
+ */
+function shows(message: ReactNode) {
+  return message === 0 || Boolean(message);
+}
+
+/**
  * The props not named above (`name`, `type`, `placeholder`, `autoComplete`, `ref`, event handlers)
  * go to the input. `className` is appended as is to the outer column, so a consumer's utilities or
  * plain CSS override its width.
@@ -110,8 +118,12 @@ export function TextField({
     >
       <Label className={textFieldLabelClassName}>{label}</Label>
       <Input {...inputProps} className={textFieldInputClassName} />
-      {description && <Description className={textFieldDescriptionClassName}>{description}</Description>}
-      {errorMessage && <FieldError className={textFieldErrorMessageClassName}>{errorMessage}</FieldError>}
+      {shows(description) && (
+        <Description className={textFieldDescriptionClassName}>{description}</Description>
+      )}
+      {shows(errorMessage) && (
+        <FieldError className={textFieldErrorMessageClassName}>{errorMessage}</FieldError>
+      )}
     </Comp0TextField>
   );
 }

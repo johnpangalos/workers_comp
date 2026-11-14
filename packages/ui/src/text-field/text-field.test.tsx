@@ -44,6 +44,20 @@ describe("TextField", () => {
     expect(input).toHaveAccessibleDescription("Help Enter a valid email address.");
   });
 
+  it("shows a description or error message of 0 in its place, not as a bare 0", () => {
+    render(<TextField label="Claims open" description={0} errorMessage={0} invalid />);
+    const input = screen.getByRole("textbox");
+    expect(screen.getByRole("alert")).toHaveTextContent("0");
+    expect(input).toHaveAccessibleDescription("0 0");
+  });
+
+  it("shows no description or error message for false or an empty string", () => {
+    const { container } = render(<TextField label="Email" description={false} errorMessage="" invalid />);
+    expect(container).toHaveTextContent(/^Email$/);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox")).not.toHaveAttribute("aria-describedby");
+  });
+
   it("passes the input props through: name, type, placeholder, autoComplete and ref", () => {
     const ref = createRef<HTMLInputElement>();
     render(

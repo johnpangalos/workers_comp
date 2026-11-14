@@ -97,6 +97,126 @@ test("new Figma measurement is fine; changing or removing existing measurement i
   assert.match(fileNeedsPerson(modified("packages/ui/src/theme.test.ts")) ?? "", /measurement/);
 });
 
+const code = modified("packages/ui/src/chip/chip.tsx");
+const measured = (path: string) => `#7 changes the existing Figma measurement in ${JSON.stringify(path)}`;
+
+test("a component's own measurement, changed with its shipped code, goes on to be rated", () => {
+  for (const path of [
+    "apps/playground/figma/chip.json",
+    "apps/playground/figma/chip-lint.json",
+    "apps/playground/figma/chip-motion.json",
+    "apps/playground/tests/chip.figma.spec.ts",
+    "apps/playground/tests/chip.motion.spec.ts",
+    "apps/playground/tests/chip.overrides.spec.ts",
+    "apps/playground/app/examples/chip/figma.tsx",
+    "apps/playground/app/examples/chip/overrides.tsx",
+  ]) {
+    assert.equal(check([modified(path), code, minor]), undefined, path);
+    // Added shipped code counts as a redesign too.
+    assert.equal(
+      check([modified(path), added("packages/ui/src/chip/chip-group.tsx"), minor]),
+      undefined,
+      path,
+    );
+  }
+});
+
+test("PR #34, a redesign of Chip with its own measurement and a minor changeset, goes on to be rated", () => {
+  const files = [
+    modified(".changeset/chip.md", ' ---\n-"@workers-comp/ui": minor\n+"@workers-comp/ui": minor\n ---'),
+    modified("apps/playground/app/examples/chip/day-strip.tsx"),
+    modified("apps/playground/figma/chip-lint.json"),
+    modified("apps/playground/figma/chip.json"),
+    modified("apps/playground/tests/chip.figma.spec.ts"),
+    modified("apps/playground/tests/chip.motion.spec.ts"),
+    modified("packages/ui/src/chip/chip.test.tsx"),
+    code,
+  ];
+  assert.equal(check(files), undefined);
+});
+
+test("a component's measurement changed without its own shipped code is you", () => {
+  // Only its tests, or another component's code, change with it.
+  assert.equal(
+    check([
+      modified("apps/playground/figma/chip-lint.json"),
+      modified("packages/ui/src/chip/chip.test.tsx"),
+      minor,
+    ]),
+    measured("apps/playground/figma/chip-lint.json"),
+  );
+  // Specs and test helpers aren't its code either, though SHIPPED doesn't tell them apart.
+  for (const helper of [
+    "packages/ui/src/chip/chip.spec.tsx",
+    "packages/ui/src/chip/chip.spec.ts",
+    "packages/ui/src/chip/__tests__/helper.ts",
+    "packages/ui/src/chip/parts/__tests__/helper.tsx",
+  ]) {
+    assert.equal(
+      check([modified("apps/playground/tests/chip.figma.spec.ts"), added(helper), minor]),
+      measured("apps/playground/tests/chip.figma.spec.ts"),
+      helper,
+    );
+  }
+  // A component's name starts with a letter or digit.
+  assert.equal(
+    check([modified("apps/playground/figma/-lint.json"), added("packages/ui/src/-lint/x.tsx"), minor]),
+    measured("apps/playground/figma/-lint.json"),
+  );
+  assert.equal(
+    check([
+      modified("apps/playground/figma/chip.json"),
+      modified("packages/ui/src/chipset/chipset.tsx"),
+      minor,
+    ]),
+    measured("apps/playground/figma/chip.json"),
+  );
+  // Its code removed is not a redesign.
+  const removed = { filename: "packages/ui/src/chip/chip.tsx", status: "removed" };
+  assert.equal(
+    check([modified("apps/playground/figma/chip.json"), removed, minor]),
+    measured("apps/playground/figma/chip.json"),
+  );
+  // A path under the measuring folders that isn't a component's own measurement.
+  assert.equal(
+    check([modified("apps/playground/figma/chip/x.json"), code, minor]),
+    measured("apps/playground/figma/chip/x.json"),
+  );
+  // A name with a newline in it is one name, not chip's export.
+  assert.equal(
+    check([modified("apps/playground/figma/chip.json\nx"), code, minor]),
+    measured("apps/playground/figma/chip.json\nx"),
+  );
+});
+
+test("shared measurement is you, even with a new folder named after it", () => {
+  for (const [path, folder] of [
+    ["apps/playground/figma/lint-ignore.json", "lint-ignore"],
+    ["apps/playground/tests/figma-lint.spec.ts", "figma-lint"],
+    ["apps/playground/figma/lint-node.js", "lint-node"],
+    ["apps/playground/figma/export-motion.js", "export-motion"],
+    ["packages/ui/src/figma-tokens.json", "figma-tokens"],
+    ["packages/ui/src/theme.test.ts", "theme"],
+  ] as const) {
+    assert.equal(
+      check([modified(path), added(`packages/ui/src/${folder}/x.tsx`), minor]),
+      measured(path),
+      path,
+    );
+  }
+});
+
+test("a renamed or removed component measurement is you, even with its code changed", () => {
+  const renamed = {
+    filename: "docs/chip.json",
+    status: "renamed",
+    previous_filename: "apps/playground/figma/chip.json",
+  };
+  assert.equal(check([renamed, code, minor]), measured("apps/playground/figma/chip.json"));
+  const removed = { filename: "apps/playground/figma/chip.json", status: "removed" };
+  assert.equal(check([removed, code, minor]), measured("apps/playground/figma/chip.json"));
+});
+
 test("a new component with its measurement and a minor changeset goes on to be rated", () => {
   const files = [
     minor,
@@ -121,7 +241,6 @@ test("docs, an example page, a component test, or a theme change alone go on to 
 });
 
 test("a breaking title, a major changeset, or a package change with no changeset is you", () => {
-  const code = modified("packages/ui/src/chip/chip.tsx");
   assert.match(check([code, minor], { title: "feat(ui)!: rename Chip's tone prop" }) ?? "", /breaking/);
   assert.match(check([code, minor], { title: "feat!: drop Badge" }) ?? "", /breaking/);
   const major = added(".changeset/x.md", '+---\n+"@workers-comp/ui": major\n+---');

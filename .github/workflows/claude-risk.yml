@@ -8,9 +8,9 @@ name: Merge non-breaking PRs
 # can't change the rules it is judged by. Separate jobs, so the Claude call never runs next to
 # a token that can write; each runs one script in .github/scripts/claude-risk/:
 #   gate:   the owner's PR, from a branch here, not a draft, CI passed on the commit, no
-#           always-you file, no change to the existing Figma measurement, no major changeset
-#           or `!` title, a changeset if the package changes. Otherwise it stops, with no
-#           Claude call.
+#           always-you file, no change to the existing Figma measurement unless it's a
+#           component's own, changed with that component's code, no major changeset or `!`
+#           title, a changeset if the package changes. Otherwise it stops, with no Claude call.
 #   rate:   one Messages API request to Claude (Haiku): is it breaking, or does it weaken a
 #           check? A verdict as schema-checked JSON, `merge-approved` or `needs-human`.
 #   merge:  on exactly `merge-approved`, squash-merges that exact commit.

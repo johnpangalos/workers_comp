@@ -32,16 +32,23 @@ can see without reading the change, with tests:
   and the lockfile (dependencies), the config that decides what the checks check (lint,
   format, TypeScript, Vitest, Playwright, Changesets), `wrangler.jsonc`, and the shared Figma
   measuring code (`apps/playground/tests/figma.ts`).
-- **Changing existing Figma measurement:** a new spec, export or measured page is fine, but
-  changing or removing one, or the token snapshot or its test, is how a check gets loosened.
+- **Existing Figma measurement:** a new spec, export or measured page is fine. Removing or renaming
+  any of it is you, and so is changing the shared measuring code and snapshots (`figma-lint.spec.ts`,
+  `lint-node.js`, `export-motion.js`, `lint-ignore.json`, the token snapshot and its test), since
+  that is how a check gets loosened. A component's own export, lint file, specs and measured page
+  (`<c>.json`, `<c>-lint.json`, `<c>-motion.json`, `tests/<c>.*.spec.ts`, `examples/<c>/figma.tsx`
+  and `overrides.tsx`) may change in the same PR as that component's shipped code, a redesign; then
+  Claude checks that it still measures no less. With only its tests changed, or another component's
+  code, it's you.
 - **Breaking, by its own account:** a `major` changeset, or a `feat!:`-style title.
 - **No changeset:** a change to what the package ships (`packages/ui/src`, not its tests) with
   no changeset.
 
 Then Claude reads the change for what a path can't show (see below). How a component looks is
 not breaking: a new Figma design for an existing variant, a colour or spacing change, merges
-by itself. The "Version Packages" PR, which publishes to npm, is the release step: it's opened
-by the release workflow, not by you, so it always waits for you.
+by itself, as long as Claude finds its measurement checks no less. The "Version Packages" PR,
+which publishes to npm, is the release step: it's opened by the release workflow, not by you,
+so it always waits for you.
 
 ## Setup
 

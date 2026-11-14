@@ -205,6 +205,9 @@
     "breakpoint/xl": {"value":1280,"web":"var(--breakpoint-xl)"},
     "breakpoint/2xl": {"value":1536,"web":"var(--breakpoint-2xl)"}
   },
+  "Border": {
+    "border-width/default": {"value":1,"web":"var(--default-border-width)"}
+  },
   "textStyles": {
     "text-xs/bold": {"family":"Inter","style":"Bold","size":12,"lineHeight":16},
     "text-xs/medium": {"family":"Inter","style":"Medium","size":12,"lineHeight":16},

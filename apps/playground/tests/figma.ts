@@ -24,19 +24,25 @@ export type FigmaNode = Region & {
 };
 
 /**
- * Reads a file written by the figma-flow skill's export-node. Its last line is a hash of the rest, so a
- * copy that lost or changed a character throws here instead of testing against wrong numbers.
+ * Reads a file written in Figma (by the figma-flow skill's export-node, or a script in figma/). Its
+ * last line is a hash of the rest, so a copy that lost or changed a character throws here instead
+ * of testing against wrong numbers.
  */
-export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
+export function loadFigmaExport(url: URL): Record<string, unknown> {
   const text = readFileSync(url, "utf8");
   const body = text.slice(0, text.lastIndexOf('  "hash"'));
   let hash = 5381;
   for (let i = 0; i < body.length; i++) hash = ((hash * 33) ^ body.charCodeAt(i)) >>> 0;
-  const { variants, hash: expected } = JSON.parse(text);
-  if (hash.toString(16) !== expected) {
+  const parsed = JSON.parse(text);
+  if (hash.toString(16) !== parsed.hash) {
     throw new Error(`${url.pathname} doesn't match its hash: export it from Figma again`);
   }
-  return variants;
+  return parsed;
+}
+
+/** The nodes of a file written by the figma-flow skill's export-node. */
+export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
+  return loadFigmaExport(url).variants as Record<string, FigmaNode>;
 }
 
 /**

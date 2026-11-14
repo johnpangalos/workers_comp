@@ -59,6 +59,12 @@ describe("Select", () => {
     expect(screen.queryByText("Choose the injured body part.")).not.toBeInTheDocument();
   });
 
+  it("without a label, an aria-label names the trigger and the listbox", () => {
+    render(<Select aria-label="Injury" placeholder="Select an injury" items={bodyParts} defaultOpen />);
+    expect(screen.getByRole("button")).toHaveAccessibleName("Injury");
+    expect(listbox()).toHaveAccessibleName("Injury");
+  });
+
   it("carries its own classes and appends className last", () => {
     const { container } = render(<Example className="w-full" id="body-part" />);
     const root = container.querySelector('[data-slot="select"]')!;
@@ -122,6 +128,33 @@ describe("Select", () => {
     expect(trigger()).toHaveAttribute("aria-expanded", "false");
     expect(onValueChange).not.toHaveBeenCalled();
     expect(trigger()).toHaveTextContent("Head");
+  });
+
+  it("closes when Tab moves the focus out of the listbox, as a native select does", async () => {
+    // jsdom has no popover API: hide the listbox as a browser does, with a `toggle` event.
+    const hidePopover = vi.fn<(this: HTMLElement) => void>(function () {
+      this.dispatchEvent(Object.assign(new Event("toggle"), { oldState: "open", newState: "closed" }));
+    });
+    HTMLElement.prototype.hidePopover = hidePopover;
+    const user = userEvent.setup();
+    const onValueChange = vi.fn<(value: string) => void>();
+    try {
+      render(
+        <>
+          <Example defaultValue="head" onValueChange={onValueChange} />
+          <button type="button">After</button>
+        </>,
+      );
+      await user.tab();
+      await user.keyboard("{Enter}{ArrowDown}");
+      expect(option("Back")).toHaveFocus();
+      await user.tab();
+      expect(hidePopover).toHaveBeenCalledTimes(1);
+      expect(trigger()).toHaveAttribute("aria-expanded", "false");
+      expect(onValueChange).not.toHaveBeenCalled();
+    } finally {
+      delete (HTMLElement.prototype as Partial<HTMLElement>).hidePopover;
+    }
   });
 
   it("shows no focus ring after a pointer click", async () => {

@@ -26,11 +26,11 @@ import styles from "../tailwind.module.css";
  * Behaviour comes from comp0's headless Select: the trigger is a button that opens the listbox on
  * click, Enter, Space or the arrow keys, types ahead while closed, and is labelled by the label and
  * described by the description or error message; in the listbox the arrow keys, Home and End move
- * between options, Enter or Space picks one and Escape closes it. A hidden native `<select>` takes
- * part in forms (`name`, `required`). Figma's trigger `state` is comp0's data attributes:
- * `data-hovered`, `data-focus-visible`, `data-disabled` and `data-open`. An option's
- * `state=highlighted` is the option that has focus: the arrow keys move focus, and so does the
- * pointer, so one option is highlighted at a time.
+ * between options, Enter or Space picks one, Escape closes it, and Tab closes it and moves on. A
+ * hidden native `<select>` takes part in forms (`name`, `required`). Figma's trigger `state` is
+ * comp0's data attributes: `data-hovered`, `data-focus-visible`, `data-disabled` and `data-open`.
+ * An option's `state=highlighted` is the option that has focus: the arrow keys move focus, and so
+ * does the pointer, so one option is highlighted at a time.
  */
 
 // Names in the module resolve to their scoped class.
@@ -143,7 +143,8 @@ export type SelectProps = Omit<ComponentProps<"div">, "children" | "defaultValue
 
 /**
  * `className` is appended to the Select's classes as is, so a consumer's utilities (a width, say)
- * override them. The listbox opens below the trigger, `spacing/1` (4px) away.
+ * override them. The listbox opens below the trigger, `spacing/1` (4px) away. An `aria-label` or
+ * `aria-labelledby` names the trigger and the listbox, which comp0 otherwise names by the label.
  */
 export function Select({
   label,
@@ -156,12 +157,20 @@ export function Select({
   invalid,
   disabled,
   className,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
   ...props
 }: SelectProps) {
   // A disabled trigger can't take focus, but a key event sent to it still reached comp0's
   // ArrowDown-opens and type-ahead handling; marking it handled keeps a disabled Select shut.
   const preventWhenDisabled = (event: KeyboardEvent) => {
     if (disabled) event.preventDefault();
+  };
+  // comp0 leaves the listbox open when Tab takes the focus out of it; a native select's closes.
+  // Hiding the popover closes it the way a click outside does, and the focus moves on. (jsdom has
+  // no popover API, hence the optional call.)
+  const closeOnTab = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Tab") event.currentTarget.hidePopover?.();
   };
   let options = children;
   if (items) {
@@ -182,6 +191,8 @@ export function Select({
     >
       {label !== undefined && <Label>{label}</Label>}
       <SelectTrigger
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         data-invalid={dataAttr(Boolean(invalid))}
         onKeyDown={preventWhenDisabled}
         className={selectTriggerClassName}
@@ -195,7 +206,14 @@ export function Select({
         <Description className={selectDescriptionClassName}>{description}</Description>
       )}
       {errorMessage !== undefined && <FieldError className={selectErrorClassName}>{errorMessage}</FieldError>}
-      <SelectPopover placement="bottom start" offset={4} className={selectPopoverClassName}>
+      <SelectPopover
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+        placement="bottom start"
+        offset={4}
+        onKeyDown={closeOnTab}
+        className={selectPopoverClassName}
+      >
         <div className={selectOptionsClassName}>{options}</div>
       </SelectPopover>
     </Comp0Select>

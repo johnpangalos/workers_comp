@@ -100,6 +100,11 @@ Rules:
   the same name. `pnpm test` fails until it does.
 - Component classes are inline Tailwind passed through `cx(…)` (bound to
   `tailwind.module.css`), selecting on `data-*` attributes. Copy how `button.tsx` does it.
+- Keep a component's classes local to it: write `cx(…)` in the `className` of the element it
+  styles, not in a variable, and don't export class names from `@workers-comp/ui` (no
+  `buttonClassName`). Append the consumer's `className` after `cx(…)`, not inside it, so it
+  stays unscoped and overrides: ``className={[cx(`…`), className].filter(Boolean).join(" ")}``.
+  Tests check the rendered element's classes, not an exported string.
 - Behaviour comes from comp0 (`@comp0/react`). Don't add another headless library.
 - The font is Inter 3.19, the version Figma uses. Don't switch to Google Fonts' Inter.
 

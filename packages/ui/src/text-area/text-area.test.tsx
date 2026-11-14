@@ -13,15 +13,45 @@ describe("TextArea", () => {
     const textarea = screen.getByRole("textbox", { name: "Injury description" });
     expect(textarea.tagName).toBe("TEXTAREA");
     expect(textarea).toHaveAttribute("placeholder", "What happened?");
-    expect(textarea).toHaveClass("block", "min-h-24", "w-full", "resize-none", "rounded-md", "border");
+    expect(textarea).toHaveClass(
+      "m-0",
+      "box-border",
+      "block",
+      "min-h-24",
+      "w-full",
+      "resize-none",
+      "appearance-none",
+      "rounded-md",
+      "border",
+      "border-solid",
+      "border-gray-400",
+      "bg-white",
+      "px-3",
+      "py-2",
+      "font-sans",
+      "text-sm",
+      "font-normal",
+      "text-gray-900",
+      "transition-colors",
+      "outline-none",
+      "placeholder:text-gray-500",
+    );
     // Every state selects on comp0's data attributes, and the placeholder colours the control.
     expect(textarea).toHaveClass(
-      "data-disabled:bg-gray-100",
-      "not-data-invalid:data-hovered:border-gray-500",
-      "not-data-disabled:data-invalid:border-red-600",
-      "data-focus-visible:ring-fuchsia-600",
       "not-data-disabled:placeholder-shown:text-gray-500",
+      "not-data-disabled:data-invalid:border-red-600",
+      "data-disabled:pointer-events-none",
+      "data-disabled:border-gray-200",
+      "data-disabled:bg-gray-100",
+      "data-disabled:text-gray-400",
+      "data-disabled:placeholder:text-gray-400",
+      "data-focus-visible:ring-2",
+      "data-focus-visible:ring-fuchsia-600",
+      "data-focus-visible:ring-offset-2",
+      "not-data-invalid:data-hovered:border-gray-500",
     );
+    // Those and nothing else.
+    expect(textarea.classList).toHaveLength(32);
     // Theme utilities only: no arbitrary value (`w-[137px]`) in what renders.
     expect(textarea.className).not.toMatch(/\[/);
   });
@@ -143,7 +173,17 @@ describe("TextArea", () => {
   it("appends className to the field's own classes", () => {
     const { container } = render(<TextArea label="Notes" className="w-full" />);
     const field = container.firstElementChild!;
-    expect(field).toHaveClass("flex", "flex-col", "gap-1.5", "text-sm", "font-medium");
+    expect(field).toHaveClass(
+      "flex",
+      "flex-col",
+      "gap-1.5",
+      "font-sans",
+      "text-sm",
+      "font-medium",
+      "text-gray-900",
+    );
+    // The field's seven and the consumer's, nothing of the textarea's.
+    expect(field.classList).toHaveLength(8);
     // Last and as given, so it isn't scoped and a consumer's utilities override the field's.
     expect(field.getAttribute("class")).toMatch(/ w-full$/);
     expect(field.className).not.toMatch(/\[/);

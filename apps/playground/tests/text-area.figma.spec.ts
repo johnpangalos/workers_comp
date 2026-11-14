@@ -25,8 +25,13 @@ for (const [name, node] of Object.entries(variants)) {
     // Put the textarea in the Figma state the way a person would.
     if (state === "hover") await textarea.hover();
     if (state === "focus") {
-      await page.keyboard.press("Tab"); // keyboard focus, so the focus ring shows
-      await textarea.focus();
+      // Tab to it, as a keyboard user does: a text field focused from script would match
+      // :focus-visible anyway, so only real Tab presses show that keyboard focus draws the ring.
+      const isFocused = () => textarea.evaluate((element) => element === document.activeElement);
+      for (let presses = 0; presses < 10 && !(await isFocused()); presses++) {
+        await page.keyboard.press("Tab");
+      }
+      await expect(textarea).toBeFocused();
       await expect(textarea).toHaveAttribute("data-focus-visible");
     }
     if (state === "disabled") await expect(textarea).toBeDisabled();

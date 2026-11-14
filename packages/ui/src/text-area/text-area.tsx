@@ -15,7 +15,7 @@ import styles from "../tailwind.module.css";
  * Prop names are the Figma property names: the text properties `label`, `placeholder`,
  * `description` and `errorMessage`, and the variant `invalid`. Figma's `state` (hover, focus,
  * disabled) is not a prop: comp0's TextArea reports it as `data-hovered`, `data-focus-visible` and
- * `data-disabled`, and `invalid` as `data-invalid`, which the classes below select on.
+ * `data-disabled`, and `invalid` as `data-invalid`, which the textarea's classes select on.
  *
  * Behaviour comes from comp0: its TextField wires the label to the textarea and the description and
  * error message to `aria-describedby`, and only mounts the error message while the field is invalid.
@@ -23,39 +23,6 @@ import styles from "../tailwind.module.css";
 
 // Names in the module resolve to their scoped class.
 const cx = bindClassNames(styles);
-
-/**
- * The field's scoped classes: the column, in the label's type. The description and error message
- * set their own weight and colour.
- */
-export const textAreaFieldClassName = cx(`flex flex-col gap-1.5 font-sans text-sm font-medium text-gray-900`);
-
-/**
- * The textarea's scoped classes. The reset classes are Button's, minus `border-0`: the border is
- * always on. It is at least Figma's minimum height, `spacing/24` (`min-h-24`, 96px, just under four
- * lines of text); `rows={4}` or more makes it taller. Figma draws no resize handle, so it has none
- * (`resize-none`): longer text scrolls.
- *
- * Figma draws the placeholder as the control's text, so while the placeholder shows, the textarea's
- * own colour is the placeholder's (`placeholder-shown`); typed text is gray-900. Invalid wins over
- * hover, and disabled over both.
- */
-export const textAreaClassName = cx(`
-  m-0 box-border block min-h-24 w-full resize-none appearance-none rounded-md border border-solid
-  border-gray-400 bg-white px-3 py-2 font-sans text-sm font-normal text-gray-900 transition-colors
-  outline-none
-  placeholder:text-gray-500
-  not-data-disabled:placeholder-shown:text-gray-500
-  not-data-disabled:data-invalid:border-red-600
-  data-disabled:pointer-events-none data-disabled:border-gray-200 data-disabled:bg-gray-100
-  data-disabled:text-gray-400
-  data-disabled:placeholder:text-gray-400
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  not-data-invalid:data-hovered:border-gray-500
-`);
-
-const descriptionClassName = cx(`font-normal text-gray-600`);
-const errorMessageClassName = cx(`font-normal text-red-600`);
 
 export type TextAreaProps = Omit<ComponentProps<"textarea">, "className" | "children"> & {
   /** The label above the textarea; Figma's `label`. */
@@ -93,12 +60,45 @@ export function TextArea({
       invalid={invalid}
       disabled={disabled}
       required={required}
-      className={[textAreaFieldClassName, className].filter(Boolean).join(" ")}
+      // The column, in the label's type. The description and error message set their own weight
+      // and colour.
+      className={[cx(`flex flex-col gap-1.5 font-sans text-sm font-medium text-gray-900`), className]
+        .filter(Boolean)
+        .join(" ")}
     >
       <Comp0Label>{label}</Comp0Label>
-      <Comp0TextArea {...props} className={textAreaClassName} />
-      {description && <Comp0Description className={descriptionClassName}>{description}</Comp0Description>}
-      {errorMessage && <Comp0FieldError className={errorMessageClassName}>{errorMessage}</Comp0FieldError>}
+      {/*
+        The reset classes are Button's, minus `border-0`: the border is always on. It is at least
+        Figma's minimum height, `spacing/24` (`min-h-24`, 96px, just under four lines of text);
+        `rows={4}` or more makes it taller. Figma draws no resize handle, so it has none
+        (`resize-none`): longer text scrolls.
+
+        Figma draws the placeholder as the control's text, so while the placeholder shows, the
+        textarea's own colour is the placeholder's (`placeholder-shown`); typed text is gray-900.
+        Invalid wins over hover, and disabled over both.
+      */}
+      <Comp0TextArea
+        {...props}
+        className={cx(`
+          m-0 box-border block min-h-24 w-full resize-none appearance-none rounded-md border border-solid
+          border-gray-400 bg-white px-3 py-2 font-sans text-sm font-normal text-gray-900 transition-colors
+          outline-none
+          placeholder:text-gray-500
+          not-data-disabled:placeholder-shown:text-gray-500
+          not-data-disabled:data-invalid:border-red-600
+          data-disabled:pointer-events-none data-disabled:border-gray-200 data-disabled:bg-gray-100
+          data-disabled:text-gray-400
+          data-disabled:placeholder:text-gray-400
+          data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+          not-data-invalid:data-hovered:border-gray-500
+        `)}
+      />
+      {description && (
+        <Comp0Description className={cx(`font-normal text-gray-600`)}>{description}</Comp0Description>
+      )}
+      {errorMessage && (
+        <Comp0FieldError className={cx(`font-normal text-red-600`)}>{errorMessage}</Comp0FieldError>
+      )}
     </Comp0TextField>
   );
 }

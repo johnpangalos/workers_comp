@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { TextArea, textAreaClassName, textAreaFieldClassName } from "./text-area";
+import { TextArea } from "./text-area";
 
 // These tests cover behaviour and the attributes and classes the styles select on.
 // What those look like is checked in a real browser (the playground, tests/text-area.figma.spec.ts).
@@ -13,7 +13,13 @@ describe("TextArea", () => {
     const textarea = screen.getByRole("textbox", { name: "Injury description" });
     expect(textarea.tagName).toBe("TEXTAREA");
     expect(textarea).toHaveAttribute("placeholder", "What happened?");
-    expect(textarea).toHaveClass(textAreaClassName);
+    expect(textarea).toHaveClass("block", "min-h-24", "w-full", "resize-none", "rounded-md", "border");
+    expect(textarea).toHaveClass(
+      "data-disabled:bg-gray-100",
+      "not-data-invalid:data-hovered:border-gray-500",
+    );
+    // Theme utilities only: no arbitrary value (`w-[137px]`) in what renders.
+    expect(textarea.className).not.toMatch(/\[/);
   });
 
   it("describes the textarea with its description", () => {
@@ -133,7 +139,10 @@ describe("TextArea", () => {
   it("appends className to the field's own classes", () => {
     const { container } = render(<TextArea label="Notes" className="w-full" />);
     const field = container.firstElementChild!;
-    expect(field).toHaveAttribute("class", `${textAreaFieldClassName} w-full`);
+    expect(field).toHaveClass("flex", "flex-col", "gap-1.5", "text-sm", "font-medium");
+    // Last and as given, so it isn't scoped and a consumer's utilities override the field's.
+    expect(field.getAttribute("class")).toMatch(/ w-full$/);
+    expect(field.className).not.toMatch(/\[/);
     expect(field).toContainElement(screen.getByRole("textbox"));
   });
 });

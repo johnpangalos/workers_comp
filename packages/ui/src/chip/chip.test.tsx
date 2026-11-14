@@ -2,10 +2,23 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Chip, chipClassName } from "./chip";
+import { Chip } from "./chip";
 
 // These tests cover behaviour and the data attributes the styles select on.
 // What those attributes look like is checked in a real browser (the playground).
+
+// The classes a plain chip renders with: the Chip's own, with no className. They are the same
+// whatever its tone, which is the data-tone attribute.
+function ownClasses() {
+  const { container, unmount } = render(<Chip href="#own">Own</Chip>);
+  const classes = container.firstElementChild!.getAttribute("class")!;
+  unmount();
+  return classes;
+}
+
+// An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
+const arbitraryValues = (element: Element) =>
+  [...element.classList].filter((name) => /(?<!data)-\[/.test(name));
 
 // A router-style link: takes `to`, renders an anchor.
 function RouterLink({ to, children, ...props }: ComponentProps<"a"> & { to: string }) {
@@ -23,7 +36,9 @@ describe("Chip", () => {
     expect(chip.tagName).toBe("A");
     expect(chip).toHaveAttribute("href", "#mon");
     expect(chip).toHaveTextContent("Mon");
-    expect(chip).toHaveAttribute("class", chipClassName);
+    expect(chip).toHaveClass("inline-flex");
+    // No trace of the missing className: no empty, "undefined" or "false" entries.
+    expect(chip.getAttribute("class")).not.toMatch(/\bundefined\b|\bfalse\b|^\s|\s$|\s\s/);
     expect(chip).not.toHaveAttribute("data-muted");
     expect(chip).not.toHaveAttribute("data-current");
     expect(chip).not.toHaveAttribute("aria-current");
@@ -67,19 +82,23 @@ describe("Chip", () => {
       "data-[tone=muted-current]:not-data-pressed:data-hovered:bg-fuchsia-200",
     ],
     ["the muted current pressed fill", "data-[tone=muted-current]:data-pressed:bg-fuchsia-300"],
-  ])("chipClassName has %s", (_, expected) => {
-    expect(chipClassName.split(/\s+/)).toContain(expected);
+  ])("the rendered chip has %s", (_, expected) => {
+    render(<Chip href="#mon">Mon</Chip>);
+    expect(screen.getByRole("link", { name: "Mon" })).toHaveClass(expected);
   });
 
   it("is not uppercase or bold any more", () => {
-    const classes = chipClassName.split(/\s+/);
-    expect(classes).not.toContain("uppercase");
-    expect(classes).not.toContain("font-bold");
+    render(<Chip href="#mon">Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip).not.toHaveClass("uppercase");
+    expect(chip).not.toHaveClass("font-bold");
   });
 
   it("uses theme utilities only, never arbitrary values", () => {
-    // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
-    expect(chipClassName).not.toMatch(/(?<!data)-\[/);
+    render(<Chip href="#mon">Mon</Chip>);
+    const chip = screen.getByRole("link", { name: "Mon" });
+    expect(chip.classList.length).toBeGreaterThan(0);
+    expect(arbitraryValues(chip)).toEqual([]);
   });
 
   it.each([
@@ -156,11 +175,13 @@ describe("Chip", () => {
   });
 
   it("className is appended as is, after the Chip's classes", () => {
+    const own = ownClasses();
     render(<Chip className="w-full">Mon</Chip>);
-    expect(screen.getByText("Mon").getAttribute("class")).toBe(`${chipClassName} w-full`);
+    expect(screen.getByText("Mon").getAttribute("class")).toBe(`${own} w-full`);
   });
 
   it("as= renders through comp0's Link with the router's props and the same classes", () => {
+    const own = ownClasses();
     render(
       <Chip as={RouterLink} to="/sun" aria-current="location">
         Sun
@@ -168,7 +189,7 @@ describe("Chip", () => {
     );
     const link = screen.getByRole("link", { name: "Sun" });
     expect(link).toHaveAttribute("href", "/sun");
-    expect(link).toHaveClass(chipClassName);
+    expect(link).toHaveAttribute("class", own);
   });
 
   it("passes aria-current through to the anchor", () => {
@@ -197,9 +218,22 @@ describe("Chip", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("uses theme utilities only, never arbitrary values", () => {
-    // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
-    expect(chipClassName).not.toMatch(/(?<!data)-\[/);
+  it("uses theme utilities only, never arbitrary values, in every tone", () => {
+    render(
+      <>
+        <Chip href="#mon">Mon</Chip>
+        <Chip href="#tue" muted>
+          Tue
+        </Chip>
+        <Chip href="#wed" current>
+          Wed
+        </Chip>
+        <Chip href="#thu" muted current>
+          Thu
+        </Chip>
+      </>,
+    );
+    for (const chip of screen.getAllByRole("link")) expect(arbitraryValues(chip)).toEqual([]);
   });
 
   it("pressing with the pointer sets data-pressed until the button is released", async () => {
@@ -309,21 +343,23 @@ describe("Chip", () => {
   });
 
   it("className ends the class attribute, after the Chip's own classes", () => {
+    const own = ownClasses();
     render(
       <Chip href="#mon" className="text-red-500">
         Mon
       </Chip>,
     );
     const chip = screen.getByRole("link", { name: "Mon" });
-    expect(chip.getAttribute("class")).toBe(`${chipClassName} text-red-500`);
+    expect(chip.getAttribute("class")).toBe(`${own} text-red-500`);
   });
 
   it("with no href and no as, renders an anchor without crashing and without an href", () => {
+    const own = ownClasses();
     const { container } = render(<Chip>Mon</Chip>);
     const chip = container.querySelector("a")!;
     expect(chip).toHaveTextContent("Mon");
     expect(chip).not.toHaveAttribute("href");
-    expect(chip).toHaveClass(chipClassName);
+    expect(chip).toHaveAttribute("class", own);
   });
 
   it("a long label stays on one line", () => {
@@ -332,9 +368,10 @@ describe("Chip", () => {
   });
 
   it("empty children render without crashing", () => {
+    const own = ownClasses();
     const { container } = render(<Chip href="#mon" />);
     const chip = container.querySelector("a")!;
-    expect(chip).toHaveClass(chipClassName);
+    expect(chip).toHaveAttribute("class", own);
     expect(chip).toHaveAttribute("data-tone", "default");
   });
 });

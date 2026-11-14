@@ -2,17 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type MouseEvent, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import {
-  Tab,
-  TabList,
-  tabClassName,
-  TabPanel,
-  tabListClassName,
-  tabPanelClassName,
-  Tabs,
-  type TabsProps,
-  tabsClassName,
-} from "./tabs";
+import { Tab, TabList, TabPanel, Tabs, type TabsProps } from "./tabs";
 
 // These tests cover behaviour and the attributes and classes the styles select on.
 // What those look like is checked in a real browser (the playground, tests/tabs.figma.spec.ts).
@@ -37,16 +27,34 @@ function Example(props: Omit<TabsProps, "children">) {
 
 const tab = (name: string) => screen.getByRole("tab", { name });
 
+// The classes each part renders with when it is given no className.
+function ownClasses() {
+  const { container, unmount } = render(<Example defaultValue="overview" />);
+  const classes = {
+    tabs: container.firstElementChild!.getAttribute("class")!,
+    tabList: screen.getByRole("tablist").getAttribute("class")!,
+    tab: tab("Activity").getAttribute("class")!,
+    tabPanel: screen.getByText("Overview panel").getAttribute("class")!,
+  };
+  unmount();
+  return classes;
+}
+
+// No trace of a missing className: no empty, "undefined" or "false" entries.
+const noStrayClasses = /\bundefined\b|\bfalse\b|^\s|\s$|\s\s/;
+
 describe("Tabs", () => {
   it("renders a div with data-slot=tabs and its own classes by default", () => {
     const { container } = render(<Example defaultValue="overview" />);
     const root = container.firstElementChild!;
     expect(root.tagName).toBe("DIV");
     expect(root).toHaveAttribute("data-slot", "tabs");
-    expect(root).toHaveAttribute("class", tabsClassName);
+    expect(root).toHaveClass("flex", "flex-col", "items-start", "gap-3");
+    expect(root.getAttribute("class")).not.toMatch(noStrayClasses);
   });
 
   it("renders the element given as, not a div", () => {
+    const own = ownClasses();
     const { container } = render(
       <Tabs as="section" defaultValue="a">
         <TabList>
@@ -55,15 +63,16 @@ describe("Tabs", () => {
       </Tabs>,
     );
     expect(container.firstElementChild!.tagName).toBe("SECTION");
-    expect(container.firstElementChild).toHaveAttribute("class", tabsClassName);
+    expect(container.firstElementChild).toHaveAttribute("class", own.tabs);
   });
 
   it("appends className after its own classes and passes other props through", () => {
+    const own = ownClasses();
     const { container } = render(
       <Example defaultValue="overview" className="gap-6" id="account" data-testid="root" />,
     );
     const root = container.firstElementChild!;
-    expect(root).toHaveAttribute("class", `${tabsClassName} gap-6`);
+    expect(root).toHaveAttribute("class", `${own.tabs} gap-6`);
     expect(root).toHaveAttribute("id", "account");
     expect(root).toHaveAttribute("data-testid", "root");
   });
@@ -106,6 +115,8 @@ describe("Tabs", () => {
 
 describe("TabList", () => {
   it("is role=tablist with its own classes, and appends className", () => {
+    const own = ownClasses();
+    expect(own.tabList.split(" ")).toEqual(["inline-flex", "gap-1", "rounded-lg", "bg-gray-100", "p-1"]);
     render(
       <Tabs defaultValue="a">
         <TabList className="w-full" aria-label="Account">
@@ -114,7 +125,7 @@ describe("TabList", () => {
       </Tabs>,
     );
     const list = screen.getByRole("tablist", { name: "Account" });
-    expect(list).toHaveAttribute("class", `${tabListClassName} w-full`);
+    expect(list).toHaveAttribute("class", `${own.tabList} w-full`);
     expect(list).toHaveAttribute("aria-orientation", "horizontal");
   });
 });
@@ -133,10 +144,12 @@ describe("Tab", () => {
 
   it("carries only its own classes by default", () => {
     render(<Example defaultValue="overview" />);
-    expect(tab("Activity")).toHaveAttribute("class", tabClassName);
+    expect(tab("Activity")).toHaveClass("inline-flex");
+    expect(tab("Activity").getAttribute("class")).not.toMatch(noStrayClasses);
   });
 
   it("appends className after its own classes", () => {
+    const own = ownClasses();
     render(
       <Tabs defaultValue="a">
         <TabList>
@@ -146,7 +159,7 @@ describe("Tab", () => {
         </TabList>
       </Tabs>,
     );
-    expect(tab("A")).toHaveAttribute("class", `${tabClassName} w-full`);
+    expect(tab("A")).toHaveAttribute("class", `${own.tab} w-full`);
   });
 
   it("passes data-* and aria-* attributes through (its id pairs it with the panel, so it is comp0's)", () => {
@@ -298,8 +311,9 @@ describe("Tab", () => {
     ["the focus ring", "data-focus-visible:ring-2"],
     ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
-  ])("tabClassName has %s", (_, expected) => {
-    expect(tabClassName.split(/\s+/)).toContain(expected);
+  ])("the rendered tab has %s", (_, expected) => {
+    render(<Example defaultValue="overview" />);
+    expect(tab("Activity")).toHaveClass(expected);
   });
 
   // Hostile inputs
@@ -348,7 +362,8 @@ describe("TabPanel", () => {
     const panel = screen.getByRole("tabpanel", { name: "Overview" });
     expect(panel).toHaveTextContent("Overview panel");
     expect(panel).toHaveAttribute("aria-labelledby", tab("Overview").id);
-    expect(panel).toHaveAttribute("class", tabPanelClassName);
+    expect(panel).toHaveClass("flex", "flex-col");
+    expect(panel.getAttribute("class")).not.toMatch(noStrayClasses);
     expect(panel).toHaveAttribute("data-selected", "");
     expect(panel).not.toHaveAttribute("hidden");
   });
@@ -361,6 +376,7 @@ describe("TabPanel", () => {
   });
 
   it("appends className after its own classes", () => {
+    const own = ownClasses();
     render(
       <Tabs defaultValue="a">
         <TabList>
@@ -371,7 +387,7 @@ describe("TabPanel", () => {
         </TabPanel>
       </Tabs>,
     );
-    expect(screen.getByText("Body")).toHaveAttribute("class", `${tabPanelClassName} gap-2`);
+    expect(screen.getByText("Body")).toHaveAttribute("class", `${own.tabPanel} gap-2`);
   });
 
   it.each([
@@ -382,8 +398,9 @@ describe("TabPanel", () => {
     ["the regular weight", "font-normal"],
     ["the grey text", "text-gray-700"],
     ["the hidden rule that beats the flex class", "not-data-selected:hidden"],
-  ])("tabPanelClassName has %s", (_, expected) => {
-    expect(tabPanelClassName.split(/\s+/)).toContain(expected);
+  ])("the rendered panel has %s", (_, expected) => {
+    render(<Example defaultValue="overview" />);
+    expect(screen.getByText("Overview panel")).toHaveClass(expected);
   });
 
   // Hostile inputs
@@ -433,15 +450,15 @@ describe("TabPanel", () => {
 });
 
 describe("Tabs classes", () => {
-  it.each([
-    ["tabsClassName", tabsClassName],
-    ["tabListClassName", tabListClassName],
-    ["tabClassName", tabClassName],
-    ["tabPanelClassName", tabPanelClassName],
-  ])("%s uses theme utilities only, never arbitrary values", (_, classes) => {
-    // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
-    expect(classes).not.toMatch(/(?<!data)-\[/);
-  });
+  it.each(["tabs", "tabList", "tab", "tabPanel"] as const)(
+    "the %s uses theme utilities only, never arbitrary values",
+    (part) => {
+      const classes = ownClasses()[part].split(" ");
+      expect(classes.length).toBeGreaterThan(0);
+      // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
+      expect(classes.filter((name) => /(?<!data)-\[/.test(name))).toEqual([]);
+    },
+  );
 });
 
 describe("Tabs keyboard navigation", () => {

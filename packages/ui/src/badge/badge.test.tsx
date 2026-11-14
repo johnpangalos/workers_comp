@@ -2,12 +2,20 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Badge, badgeClassName, dotClassName, type BadgeColor } from "./badge";
+import { Badge, type BadgeColor } from "./badge";
 
 // These tests cover behaviour and the data attributes the styles select on.
 // What those attributes look like is checked in a real browser (the playground).
 
 const colors: BadgeColor[] = ["gray", "fuchsia", "red", "amber", "green", "teal", "blue", "violet", "pink"];
+
+// The classes a plain gray badge renders with: the Badge's own, with no className.
+function ownClasses() {
+  const { container, unmount } = render(<Badge>Own</Badge>);
+  const classes = container.firstElementChild!.getAttribute("class")!;
+  unmount();
+  return classes;
+}
 
 // A router-style link: takes `to`, renders an anchor.
 function RouterLink({ to, children, ...props }: ComponentProps<"a"> & { to: string }) {
@@ -37,8 +45,11 @@ describe("Badge", () => {
   it("defaults to color=gray and carries only its own classes by default", () => {
     render(<Badge>Label</Badge>);
     expect(screen.getByText("Label")).toHaveAttribute("data-color", "gray");
-    expect(screen.getByText("Label")).toHaveAttribute("class", badgeClassName);
-    expect(badgeClassName).toMatch(/\binline-flex\b/);
+    expect(screen.getByText("Label")).toHaveClass("inline-flex");
+    // No trace of the missing className: no empty, "undefined" or "false" entries.
+    expect(screen.getByText("Label").getAttribute("class")).not.toMatch(
+      /\bundefined\b|\bfalse\b|^\s|\s$|\s\s/,
+    );
   });
 
   it.each(colors)("color=%s sets data-color on the badge and its dot", (color) => {
@@ -49,15 +60,22 @@ describe("Badge", () => {
   });
 
   it.each(colors)("color=%s is the theme's 100/800 background and text, and 500 dot", (color) => {
-    expect(badgeClassName).toContain(`data-[color=${color}]:bg-${color}-100`);
-    expect(badgeClassName).toContain(`data-[color=${color}]:text-${color}-800`);
-    expect(dotClassName).toContain(`data-[color=${color}]:bg-${color}-500`);
+    const { container } = render(<Badge color={color}>Label</Badge>);
+    const badge = container.firstElementChild!;
+    expect(badge).toHaveClass(
+      `data-[color=${color}]:bg-${color}-100`,
+      `data-[color=${color}]:text-${color}-800`,
+    );
+    expect(badge.firstElementChild).toHaveClass(`data-[color=${color}]:bg-${color}-500`);
   });
 
   it("uses theme utilities only, never arbitrary values", () => {
+    const { container } = render(<Badge href="/recipes">Label</Badge>);
+    const badge = container.firstElementChild!;
+    const classes = [...badge.classList, ...badge.firstElementChild!.classList];
+    expect(classes.length).toBeGreaterThan(0);
     // `data-[color=…]` selects on an attribute; an arbitrary value is `w-[137px]`, `text-[#…]`.
-    expect(badgeClassName).not.toMatch(/(?<!data)-\[/);
-    expect(dotClassName).not.toMatch(/(?<!data)-\[/);
+    expect(classes.filter((name) => /(?<!data)-\[/.test(name))).toEqual([]);
   });
 
   it("dot={false} renders no dot", () => {
@@ -94,6 +112,8 @@ describe("Badge", () => {
   });
 
   it("as= renders through comp0's Link with the same classes and the router's props", () => {
+    // The colour is the data-color attribute; the classes are the same for every colour.
+    const own = ownClasses();
     render(
       <Badge as={RouterLink} to="/recipes" color="teal">
         Label
@@ -102,7 +122,7 @@ describe("Badge", () => {
     const link = screen.getByRole("link", { name: "Label" });
     expect(link).toHaveAttribute("href", "/recipes");
     expect(link).toHaveAttribute("data-color", "teal");
-    expect(link).toHaveClass(badgeClassName);
+    expect(link).toHaveAttribute("class", own);
   });
 
   it("disabled link has no href, is not tabbable, and does not fire onClick", async () => {
@@ -128,18 +148,20 @@ describe("Badge", () => {
   });
 
   it("appends className after its own classes", () => {
+    const own = ownClasses();
     render(<Badge className="w-full">Label</Badge>);
     const badge = screen.getByText("Label");
-    expect(badge.getAttribute("class")).toBe(`${badgeClassName} w-full`);
+    expect(badge.getAttribute("class")).toBe(`${own} w-full`);
   });
 
   // Hostile inputs
 
   it("href='' still renders an anchor, still styled", () => {
+    const own = ownClasses();
     const { container } = render(<Badge href="">Label</Badge>);
     const link = container.querySelector("a")!;
     expect(link).toHaveAttribute("href", "");
-    expect(link).toHaveClass(badgeClassName);
+    expect(link).toHaveAttribute("class", own);
     expect(link).toHaveAttribute("data-color", "gray");
   });
 
@@ -154,10 +176,11 @@ describe("Badge", () => {
   });
 
   it("className='bg-red-500' is appended after the Badge's classes and ends the class attribute", () => {
+    const own = ownClasses();
     const { container } = render(<Badge className="bg-red-500">Label</Badge>);
     const badge = container.firstElementChild!;
     expect(badge.getAttribute("class")!.endsWith("bg-red-500")).toBe(true);
-    expect(badge.getAttribute("class")!.startsWith(badgeClassName)).toBe(true);
+    expect(badge.getAttribute("class")!.startsWith(own)).toBe(true);
   });
 
   it("empty children render without crashing", () => {

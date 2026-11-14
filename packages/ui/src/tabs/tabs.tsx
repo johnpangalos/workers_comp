@@ -24,35 +24,6 @@ import styles from "../tailwind.module.css";
 // Names in the module resolve to their scoped class.
 const cx = bindClassNames(styles);
 
-/** The Tabs' scoped classes: a column of the list and its panel, hugging their content. */
-export const tabsClassName = cx(`flex flex-col items-start gap-3`);
-
-/** The TabList's scoped classes: the grey track the tabs sit in. */
-export const tabListClassName = cx(`inline-flex gap-1 rounded-lg bg-gray-100 p-1`);
-
-/**
- * The Tab's scoped classes. The reset classes are Button's, for the native button. A disabled tab
- * is gray-400 and never reports hover, even when selected.
- */
-export const tabClassName = cx(`
-  m-0 inline-flex appearance-none items-center justify-center rounded-md border-0 border-solid px-3 py-1.5
-  font-sans text-sm font-medium text-gray-600 transition-colors outline-none
-  data-disabled:pointer-events-none data-disabled:text-gray-400
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  data-hovered:text-gray-900
-  data-selected:bg-white data-selected:text-gray-900
-  data-selected:data-disabled:text-gray-400
-`);
-
-/**
- * The TabPanel's scoped classes. The `hidden` attribute is `display: none`, but the `flex` class
- * beats it, so an unselected panel hides itself with `not-data-selected:hidden`.
- */
-export const tabPanelClassName = cx(`
-  flex flex-col items-start p-4 text-sm font-normal text-gray-700
-  not-data-selected:hidden
-`);
-
 export type TabsProps<TElement extends ElementType = "div"> = Omit<
   ComponentProps<TElement>,
   "defaultValue" | "onChange"
@@ -82,13 +53,20 @@ export function Tabs<TElement extends ElementType = "div">({
       {...(props as Comp0TabsProps)}
       as={as ?? "div"}
       onChange={onValueChange}
-      className={[tabsClassName, className].filter(Boolean).join(" ")}
+      // A column of the list and its panel, hugging their content.
+      className={[cx(`flex flex-col items-start gap-3`), className].filter(Boolean).join(" ")}
     />
   );
 }
 
 export function TabList({ className, ...props }: TabListProps) {
-  return <Comp0TabList {...props} className={[tabListClassName, className].filter(Boolean).join(" ")} />;
+  return (
+    <Comp0TabList
+      {...props}
+      // The grey track the tabs sit in.
+      className={[cx(`inline-flex gap-1 rounded-lg bg-gray-100 p-1`), className].filter(Boolean).join(" ")}
+    />
+  );
 }
 
 /**
@@ -105,11 +83,41 @@ export function Tab({ className, disabled, ...props }: TabProps) {
       disabled={disabled}
       data-hovered={dataAttr(isHovered && !disabled)}
       data-focus-visible={dataAttr(isFocusVisible)}
-      className={[tabClassName, className].filter(Boolean).join(" ")}
+      // The reset classes are Button's, for the native button. A disabled tab is gray-400 and
+      // never reports hover, even when selected.
+      className={[
+        cx(`
+          m-0 inline-flex appearance-none items-center justify-center rounded-md border-0 border-solid px-3
+          py-1.5 font-sans text-sm font-medium text-gray-600 transition-colors outline-none
+          data-disabled:pointer-events-none data-disabled:text-gray-400
+          data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+          data-hovered:text-gray-900
+          data-selected:bg-white data-selected:text-gray-900
+          data-selected:data-disabled:text-gray-400
+        `),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     />
   );
 }
 
 export function TabPanel({ className, ...props }: TabPanelProps) {
-  return <Comp0TabPanel {...props} className={[tabPanelClassName, className].filter(Boolean).join(" ")} />;
+  return (
+    <Comp0TabPanel
+      {...props}
+      // The `hidden` attribute is `display: none`, but the `flex` class beats it, so an unselected
+      // panel hides itself with `not-data-selected:hidden`.
+      className={[
+        cx(`
+          flex flex-col items-start p-4 text-sm font-normal text-gray-700
+          not-data-selected:hidden
+        `),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    />
+  );
 }

@@ -23,36 +23,6 @@ export type BadgeProps<TElement extends ElementType = "a"> = Omit<LinkProps<TEle
 // Names in the module resolve to their scoped class.
 const cx = bindClassNames(styles);
 
-/** The Badge's scoped classes, for styling another element the same way. */
-export const badgeClassName = cx(`
-  inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-semibold no-underline
-  outline-none
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  data-[color=amber]:bg-amber-100 data-[color=amber]:text-amber-800
-  data-[color=blue]:bg-blue-100 data-[color=blue]:text-blue-800
-  data-[color=fuchsia]:bg-fuchsia-100 data-[color=fuchsia]:text-fuchsia-800
-  data-[color=gray]:bg-gray-100 data-[color=gray]:text-gray-800
-  data-[color=green]:bg-green-100 data-[color=green]:text-green-800
-  data-[color=pink]:bg-pink-100 data-[color=pink]:text-pink-800
-  data-[color=red]:bg-red-100 data-[color=red]:text-red-800
-  data-[color=teal]:bg-teal-100 data-[color=teal]:text-teal-800
-  data-[color=violet]:bg-violet-100 data-[color=violet]:text-violet-800
-`);
-
-/** The dot's scoped classes: the colour of the badge it sits in. */
-export const dotClassName = cx(`
-  size-2 shrink-0 rounded-full
-  data-[color=amber]:bg-amber-500
-  data-[color=blue]:bg-blue-500
-  data-[color=fuchsia]:bg-fuchsia-500
-  data-[color=gray]:bg-gray-500
-  data-[color=green]:bg-green-500
-  data-[color=pink]:bg-pink-500
-  data-[color=red]:bg-red-500
-  data-[color=teal]:bg-teal-500
-  data-[color=violet]:bg-violet-500
-`);
-
 /**
  * `className` is appended as is, after the Badge's own classes, so a consumer's Tailwind
  * utilities or plain CSS override them.
@@ -66,29 +36,63 @@ export function Badge<TElement extends ElementType = "a">({
   children,
   ...props
 }: BadgeProps<TElement>) {
-  let classes = badgeClassName;
-  if (className) classes = `${badgeClassName} ${className}`;
-  const dotElement = dot && (
-    <span aria-hidden="true" data-slot="dot" data-color={color} className={dotClassName} />
-  );
-
+  // A link through comp0's Link; with neither `href` nor `as`, a plain span.
+  let Root: ElementType = Link;
+  let rootProps: Record<string, unknown> = { ...props, as, href };
   if (as === undefined && href === undefined) {
     // `disabled` only means something on a link; a span would carry it as a stray attribute.
     const { disabled: _disabled, ...spanProps } = props as ComponentPropsWithoutRef<"span"> & {
       disabled?: boolean;
     };
-    return (
-      <span {...spanProps} data-color={color} className={classes}>
-        {dotElement}
-        {children}
-      </span>
-    );
+    Root = "span";
+    rootProps = spanProps;
   }
 
   return (
-    <Link {...(props as LinkProps<TElement>)} as={as} href={href} data-color={color} className={classes}>
-      {dotElement}
+    <Root
+      {...rootProps}
+      data-color={color}
+      className={[
+        cx(`
+          inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-semibold
+          no-underline outline-none
+          data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+          data-[color=amber]:bg-amber-100 data-[color=amber]:text-amber-800
+          data-[color=blue]:bg-blue-100 data-[color=blue]:text-blue-800
+          data-[color=fuchsia]:bg-fuchsia-100 data-[color=fuchsia]:text-fuchsia-800
+          data-[color=gray]:bg-gray-100 data-[color=gray]:text-gray-800
+          data-[color=green]:bg-green-100 data-[color=green]:text-green-800
+          data-[color=pink]:bg-pink-100 data-[color=pink]:text-pink-800
+          data-[color=red]:bg-red-100 data-[color=red]:text-red-800
+          data-[color=teal]:bg-teal-100 data-[color=teal]:text-teal-800
+          data-[color=violet]:bg-violet-100 data-[color=violet]:text-violet-800
+        `),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {dot && (
+        // The dot: the colour of the badge it sits in.
+        <span
+          aria-hidden="true"
+          data-slot="dot"
+          data-color={color}
+          className={cx(`
+            size-2 shrink-0 rounded-full
+            data-[color=amber]:bg-amber-500
+            data-[color=blue]:bg-blue-500
+            data-[color=fuchsia]:bg-fuchsia-500
+            data-[color=gray]:bg-gray-500
+            data-[color=green]:bg-green-500
+            data-[color=pink]:bg-pink-500
+            data-[color=red]:bg-red-500
+            data-[color=teal]:bg-teal-500
+            data-[color=violet]:bg-violet-500
+          `)}
+        />
+      )}
       {children}
-    </Link>
+    </Root>
   );
 }

@@ -17,7 +17,7 @@ function RouterLink({ to, children, ...props }: ComponentProps<"a"> & { to: stri
 }
 
 describe("Chip", () => {
-  it("renders an anchor with the label, href, its own classes and an underline by default", () => {
+  it("renders an anchor with the label, href, its own classes and nothing but the label inside", () => {
     render(<Chip href="#mon">Mon</Chip>);
     const chip = screen.getByRole("link", { name: "Mon" });
     expect(chip.tagName).toBe("A");
@@ -27,10 +27,73 @@ describe("Chip", () => {
     expect(chip).not.toHaveAttribute("data-muted");
     expect(chip).not.toHaveAttribute("data-current");
     expect(chip).not.toHaveAttribute("aria-current");
-    const underline = chip.querySelector('[data-slot="underline"]');
-    expect(underline).toBeInTheDocument();
-    expect(underline).toHaveAttribute("aria-hidden", "true");
-    expect(underline?.tagName).toBe("SPAN");
+    expect(chip).toHaveAttribute("data-tone", "default");
+    // A pill: no underline, dots or other parts.
+    expect(chip.children).toHaveLength(0);
+  });
+
+  it.each([
+    ["the inline-flex row", "inline-flex"],
+    ["the centred label", "items-center"],
+    ["the full radius", "rounded-full"],
+    ["the 12px horizontal padding", "px-3"],
+    ["the 4px vertical padding", "py-1"],
+    ["the label size", "text-sm"],
+    ["the medium label", "font-medium"],
+    ["the focus ring", "data-focus-visible:ring-2"],
+    ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
+    ["the focus ring offset", "data-focus-visible:ring-offset-2"],
+    ["the reset of native appearance", "appearance-none"],
+    ["no wrapping of the label", "whitespace-nowrap"],
+    ["the fill's transition", "transition-colors"],
+    ["the transition's 150ms", "duration-150"],
+    ["the transition's curve", "ease-in-out"],
+    ["the default fill", "data-[tone=default]:bg-gray-100"],
+    ["the default label", "data-[tone=default]:text-gray-900"],
+    ["the default hover fill", "data-[tone=default]:not-data-pressed:data-hovered:bg-gray-200"],
+    ["the default pressed fill", "data-[tone=default]:data-pressed:bg-gray-300"],
+    ["the current fill", "data-[tone=current]:bg-fuchsia-700"],
+    ["the current label", "data-[tone=current]:text-white"],
+    ["the current hover fill", "data-[tone=current]:not-data-pressed:data-hovered:bg-fuchsia-800"],
+    ["the current pressed fill", "data-[tone=current]:data-pressed:bg-fuchsia-900"],
+    ["the muted fill", "data-[tone=muted]:bg-gray-50"],
+    ["the muted label", "data-[tone=muted]:text-gray-500"],
+    ["the muted hover fill", "data-[tone=muted]:not-data-pressed:data-hovered:bg-gray-100"],
+    ["the muted pressed fill", "data-[tone=muted]:data-pressed:bg-gray-200"],
+    ["the muted current fill", "data-[tone=muted-current]:bg-fuchsia-100"],
+    ["the muted current label", "data-[tone=muted-current]:text-fuchsia-900"],
+    [
+      "the muted current hover fill",
+      "data-[tone=muted-current]:not-data-pressed:data-hovered:bg-fuchsia-200",
+    ],
+    ["the muted current pressed fill", "data-[tone=muted-current]:data-pressed:bg-fuchsia-300"],
+  ])("chipClassName has %s", (_, expected) => {
+    expect(chipClassName.split(/\s+/)).toContain(expected);
+  });
+
+  it("is not uppercase or bold any more", () => {
+    const classes = chipClassName.split(/\s+/);
+    expect(classes).not.toContain("uppercase");
+    expect(classes).not.toContain("font-bold");
+  });
+
+  it("uses theme utilities only, never arbitrary values", () => {
+    // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
+    expect(chipClassName).not.toMatch(/(?<!data)-\[/);
+  });
+
+  it.each([
+    ["default", {}, "default"],
+    ["muted", { muted: true }, "muted"],
+    ["current", { current: true }, "current"],
+    ["muted and current", { muted: true, current: true }, "muted-current"],
+  ])("the tone of a %s chip is on data-tone", (_, props, tone) => {
+    render(
+      <Chip href="#mon" {...props}>
+        Mon
+      </Chip>,
+    );
+    expect(screen.getByRole("link", { name: "Mon" })).toHaveAttribute("data-tone", tone);
   });
 
   it("is reached by Tab, followed by Enter, and shows a focus ring only for keyboard focus", async () => {
@@ -134,107 +197,9 @@ describe("Chip", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ["the inline-flex column", "inline-flex"],
-    ["the column layout", "flex-col"],
-    ["the 6px gap", "gap-1.5"],
-    ["the 6px top padding", "pt-1.5"],
-    ["no radius", "rounded-none"],
-    ["the label size", "text-sm"],
-    ["the bold label", "font-bold"],
-    ["the uppercase label", "uppercase"],
-    ["the gray-900 label", "text-gray-900"],
-    ["the muted label", "data-muted:text-gray-500"],
-    ["the hover underline", "data-hovered:*:data-[slot=underline]:text-fuchsia-700"],
-    ["the focus ring", "data-focus-visible:ring-2"],
-    ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
-    ["the focus ring offset", "data-focus-visible:ring-offset-2"],
-    ["the reset of native appearance", "appearance-none"],
-    ["no wrapping of the label", "whitespace-nowrap"],
-    ["the 4px horizontal padding", "px-1"],
-    ["the fuchsia pressed underline", "data-pressed:*:data-[slot=underline]:text-fuchsia-700"],
-  ])("chipClassName has %s", (_, expected) => {
-    expect(chipClassName.split(/\s+/)).toContain(expected);
-  });
-
   it("uses theme utilities only, never arbitrary values", () => {
     // An arbitrary value is `w-[137px]` or `text-[#…]`; a data attribute selector is `data-[…]`.
     expect(chipClassName).not.toMatch(/(?<!data)-\[/);
-  });
-
-  it.each([
-    ["default", {}, "text-gray-200", null],
-    ["muted", { muted: true }, "data-[tone=muted]:text-gray-100", "muted"],
-    ["current", { current: true }, "data-[tone=current]:text-gray-900", "current"],
-    [
-      "current and muted, current wins",
-      { muted: true, current: true },
-      "data-[tone=current]:text-gray-900",
-      "current",
-    ],
-  ])("the underline is %s", (_, props, colour, tone) => {
-    const { container } = render(
-      <Chip href="#mon" {...props}>
-        Mon
-      </Chip>,
-    );
-    const underline = container.querySelector('[data-slot="underline"]')!;
-    expect(underline.getAttribute("class")!.split(/\s+/)).toContain(colour);
-    // `getAttribute` is null when there is no `data-tone`.
-    expect(underline.getAttribute("data-tone")).toBe(tone);
-  });
-
-  it("the underline is a dotted row, not a bar: no background on it, its colour is its text colour", () => {
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const underline = container.querySelector('[data-slot="underline"]')!;
-    const classes = underline.getAttribute("class")!.split(/\s+/);
-    expect(classes.some((name) => /^(data-\[[^\]]+\]:)?bg-/.test(name))).toBe(false);
-    expect(classes).toEqual(expect.arrayContaining(["flex", "h-1", "w-full", "justify-center"]));
-  });
-
-  it("the underline holds one dots row, aria-hidden with it, centred", () => {
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const underline = container.querySelector('[data-slot="underline"]')!;
-    const dots = underline.querySelector(':scope > [data-slot="dots"]');
-    expect(dots).toBeInTheDocument();
-    expect(dots?.tagName).toBe("SPAN");
-    expect(dots?.getAttribute("class")!.split(/\s+/)).toEqual(expect.arrayContaining(["flex", "gap-1"]));
-    // The underline is aria-hidden, so the dots inside it are hidden from assistive technology too.
-    expect(underline.closest('[aria-hidden="true"]')).toBe(underline);
-    expect(dots?.closest('[aria-hidden="true"]')).toBe(underline);
-  });
-
-  it("the dots row holds three round dots, the 4px dots Figma draws", () => {
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const dots = container.querySelectorAll('[data-slot="dots"] > [data-slot="dot"]');
-    expect(dots).toHaveLength(3);
-    for (const dot of dots) {
-      expect(dot.tagName).toBe("SPAN");
-      expect(dot.getAttribute("class")!.split(/\s+/)).toEqual(
-        expect.arrayContaining(["block", "size-1", "shrink-0", "rounded-full", "bg-current"]),
-      );
-    }
-  });
-
-  it("the dots sit inside the underline that carries the tone (their colour is measured in the browser)", () => {
-    const { container } = render(
-      <Chip href="#mon" muted current>
-        Mon
-      </Chip>,
-    );
-    const underline = container.querySelector('[data-slot="underline"]')!;
-    expect(underline).toHaveAttribute("data-tone", "current");
-    for (const dot of container.querySelectorAll('[data-slot="dot"]')) {
-      expect(dot.parentElement?.parentElement).toBe(underline);
-    }
-  });
-
-  it("the dotted underline and its dots never use arbitrary values", () => {
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    for (const selector of ['[data-slot="underline"]', '[data-slot="dots"]', '[data-slot="dot"]']) {
-      const element = container.querySelector(selector)!;
-      expect(element.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
-    }
   });
 
   it("pressing with the pointer sets data-pressed until the button is released", async () => {
@@ -316,32 +281,6 @@ describe("Chip", () => {
     expect(chip).not.toHaveAttribute("data-pressed");
   });
 
-  it("pressing merges the dots: the row and its dots carry data-pressed while held", async () => {
-    const user = userEvent.setup();
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    const chip = screen.getByRole("link", { name: "Mon" });
-    const dots = container.querySelector('[data-slot="dots"]')!;
-    expect(dots).not.toHaveAttribute("data-pressed");
-    expect(dots.getAttribute("class")!.split(/\s+/)).toEqual(
-      expect.arrayContaining([
-        "data-pressed:gap-0",
-        "data-pressed:*:w-2",
-        "data-pressed:*:rounded-none",
-        "transition-all",
-      ]),
-    );
-    await user.pointer({ keys: "[MouseLeft>]", target: chip });
-    expect(dots).toHaveAttribute("data-pressed", "");
-    await user.pointer({ keys: "[/MouseLeft]", target: chip });
-    expect(dots).not.toHaveAttribute("data-pressed");
-  });
-
-  it("there is no fill slab, and the pressed classes never use arbitrary values", () => {
-    const { container } = render(<Chip href="#mon">Mon</Chip>);
-    expect(container.querySelector('[data-slot="fill"]')).toBeNull();
-    expect(container.querySelector('[data-slot="dots"]')!.getAttribute("class")).not.toMatch(/(?<!data)-\[/);
-  });
-
   // Hostile inputs
 
   it('muted={false} renders no data-muted attribute at all, not data-muted="false"', () => {
@@ -387,18 +326,15 @@ describe("Chip", () => {
     expect(chip).toHaveClass(chipClassName);
   });
 
-  it("a long label stays on one line, and its underline is full width", () => {
+  it("a long label stays on one line", () => {
     render(<Chip href="#thu">Thursday leftovers</Chip>);
-    const chip = screen.getByRole("link", { name: "Thursday leftovers" });
-    expect(chip).toHaveClass("whitespace-nowrap");
-    const underline = chip.querySelector('[data-slot="underline"]')!;
-    expect(underline.getAttribute("class")!.split(/\s+/)).toContain("w-full");
+    expect(screen.getByRole("link", { name: "Thursday leftovers" })).toHaveClass("whitespace-nowrap");
   });
 
-  it("empty children render without crashing, with the underline still there", () => {
+  it("empty children render without crashing", () => {
     const { container } = render(<Chip href="#mon" />);
     const chip = container.querySelector("a")!;
     expect(chip).toHaveClass(chipClassName);
-    expect(chip.querySelector('[data-slot="underline"]')).toBeInTheDocument();
+    expect(chip).toHaveAttribute("data-tone", "default");
   });
 });

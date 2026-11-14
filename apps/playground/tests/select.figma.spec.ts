@@ -25,7 +25,6 @@ for (const [name, node] of Object.entries(nodes)) {
 
     let element: Locator;
     let parent: Locator | null = null;
-    let width = true;
 
     if (key!.startsWith("SelectTrigger/")) {
       // "SelectTrigger/state=hover, invalid=true" → the trigger in the wrapper "hover-true".
@@ -57,9 +56,6 @@ for (const [name, node] of Object.entries(nodes)) {
       element = listbox.locator(`[data-value="${state}"]`);
       if (state === "selected") await expect(element).toHaveAttribute("aria-selected", "true");
       if (state === "disabled") await expect(element).toHaveAttribute("aria-disabled", "true");
-      // Figma's variants hug their label; in a listbox an option fills it, as the Listbox's own
-      // options do in Figma, whose width the "Options > …" entries compare.
-      width = false;
     } else if (key === "Listbox" || key === "Options") {
       // Back is selected and the pointer is on Shoulder, as in Figma.
       const listbox = await open(page, "listbox");
@@ -84,7 +80,7 @@ for (const [name, node] of Object.entries(nodes)) {
       }
     }
 
-    await expectToMatchFigma(element, node, { width });
+    await expectToMatchFigma(element, node);
     if (parent) {
       // A child's place in its parent, from the parent's edge (the parent's padding counts).
       const [box, parentBox] = [await element.boundingBox(), await parent.boundingBox()];

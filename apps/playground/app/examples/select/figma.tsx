@@ -1,4 +1,4 @@
-import { Select } from "@workers-comp/ui";
+import { Select, SelectOption } from "@workers-comp/ui";
 
 const states = ["default", "hover", "focus", "disabled", "open"] as const;
 
@@ -12,7 +12,7 @@ const bodyParts = [
 
 // The page the Figma comparison drives (tests/select.figma.spec.ts), on white with the Figma text,
 // each Select in a wrapper the spec can find: a trigger per SelectTrigger variant (state and invalid),
-// a Select whose options are the four SelectOption states, the Listbox's Select, and the field in
+// a Select whose options are the four SelectOption states (hugging their label, as in Figma), the Listbox's Select, and the field in
 // both Select variants. The spec puts each in its Figma state the way a person would.
 export default function Figma() {
   return (
@@ -34,16 +34,22 @@ export default function Figma() {
         )),
       )}
       <div data-figma="options">
-        <Select
-          aria-label="Option states"
-          defaultValue="selected"
-          items={[
-            { value: "default", label: "Option" },
-            { value: "highlighted", label: "Option" },
-            { value: "selected", label: "Option" },
-            { value: "disabled", label: "Option", disabled: true },
-          ]}
-        />
+        {/* Figma's SelectOption variants hug their label; in a listbox an option fills it. These
+            hug, so the spec compares their width as well. */}
+        <Select aria-label="Option states" defaultValue="selected">
+          <SelectOption value="default" className="self-start">
+            Option
+          </SelectOption>
+          <SelectOption value="highlighted" className="self-start">
+            Option
+          </SelectOption>
+          <SelectOption value="selected" className="self-start">
+            Option
+          </SelectOption>
+          <SelectOption value="disabled" disabled className="self-start">
+            Option
+          </SelectOption>
+        </Select>
       </div>
       <div data-figma="listbox">
         <Select label="Body part" defaultValue="back" items={bodyParts} />

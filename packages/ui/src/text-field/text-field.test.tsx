@@ -2,7 +2,7 @@ import { createRef, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { TextField, textFieldClassName, textFieldInputClassName } from "./text-field";
+import { TextField } from "./text-field";
 
 // These tests cover behaviour and the data attributes the styles select on.
 // What those attributes look like is checked in a real browser (the playground's Figma spec).
@@ -181,19 +181,21 @@ describe("TextField", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("appends className to the outer column, after its own", () => {
-    const { container } = render(<TextField label="Email" className="w-full" />);
-    const root = container.firstElementChild!;
-    expect(root).toHaveAttribute("class", `${textFieldClassName} w-full`);
-    expect(screen.getByRole("textbox")).toHaveAttribute("class", textFieldInputClassName);
+  it("appends className to the outer column, after its own, and leaves the input's classes alone", () => {
+    const plain = render(<TextField label="Email" />).container;
+    const custom = render(<TextField label="Email" className="w-full" />).container;
+    const classes = (element: Element | null) => element!.getAttribute("class")!;
+    expect(classes(custom.firstElementChild)).toBe(`${classes(plain.firstElementChild)} w-full`);
+    expect(classes(custom.querySelector("input"))).toBe(classes(plain.querySelector("input")));
   });
 
   it.each([
     ["the column", "flex-col"],
     ["the Figma width", "w-80"],
     ["the gap between label, input and messages", "gap-1.5"],
-  ])("textFieldClassName has %s", (_, expected) => {
-    expect(textFieldClassName.split(/\s+/)).toContain(expected);
+  ])("the outer column has %s", (_, expected) => {
+    const { container } = render(<TextField label="Email" />);
+    expect(container.firstElementChild).toHaveClass(expected);
   });
 
   it.each([
@@ -210,11 +212,24 @@ describe("TextField", () => {
     ["the focus ring", "data-focus-visible:ring-2"],
     ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
-  ])("textFieldInputClassName has %s", (_, expected) => {
-    expect(textFieldInputClassName.split(/\s+/)).toContain(expected);
+  ])("the input has %s", (_, expected) => {
+    render(<TextField label="Email" />);
+    expect(screen.getByRole("textbox")).toHaveClass(expected);
   });
 
-  it("does not have Button's border-0 reset, which would zero its border", () => {
-    expect(textFieldInputClassName.split(/\s+/)).not.toContain("border-0");
+  it("the input does not have Button's border-0 reset, which would zero its border", () => {
+    render(<TextField label="Email" />);
+    expect(screen.getByRole("textbox")).not.toHaveClass("border-0");
+  });
+
+  it("styles the label, description and error message, with no arbitrary values anywhere", () => {
+    const { container } = render(<TextField label="Email" description="Help" errorMessage="Wrong" invalid />);
+    expect(screen.getByText("Email")).toHaveClass("text-sm", "font-medium", "text-gray-900");
+    expect(screen.getByText("Help")).toHaveClass("text-sm", "font-normal", "text-gray-600");
+    expect(screen.getByRole("alert")).toHaveClass("text-sm", "font-normal", "text-red-600");
+    const classes = [container, ...container.querySelectorAll("*")].flatMap((element) =>
+      (element.getAttribute("class") ?? "").split(/\s+/),
+    );
+    expect(classes.filter((name) => name.includes("["))).toEqual([]);
   });
 });

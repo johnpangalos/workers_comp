@@ -1,10 +1,10 @@
 {
   "name": "@workers-comp/ci-scripts",
   "private": true,
-  "description": "The steps of .github/workflows/claude-risk.yml, run by Node's own TypeScript support with no dependencies.",
+  "description": "The steps of .github/workflows/claude-risk.yml and release.yml, run by Node's own TypeScript support with no dependencies.",
   "type": "module",
   "scripts": {
-    "test": "node --test \"claude-risk/*.test.ts\"",
+    "test": "node --test \"claude-risk/*.test.ts\" \"release/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

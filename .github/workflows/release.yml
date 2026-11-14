@@ -1,21 +1,32 @@
 name: Release
 
-# Changesets: while there are changeset files on main, this keeps a "Version Packages" PR
-# open that applies them (version bump and CHANGELOG). Merging that PR publishes
-# @workers-comp/ui to npm.
+# Changesets, in two jobs. `version` runs on every push to main: while there are changeset files,
+# it keeps a "Version Packages" PR open that applies them (version bump and CHANGELOG). It holds no
+# npm credentials. Once that PR is merged, the version on main isn't on npm yet, so `publish` runs:
+# it waits for a person to approve the `npm` environment, checks what the tarball holds, and
+# publishes @workers-comp/ui with npm trusted publishing (no token, provenance attached).
+# docs/tooling-decisions.md, "Publishing", has the setup and why.
 on:
   push:
     branches: [main]
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+# One release at a time, and never cancelled halfway.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
-  release:
+  version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # the changeset-release/main branch
+      pull-requests: write # the "Version Packages" PR
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+      unpublished: ${{ steps.npm.outputs.unpublished }}
+      version: ${{ steps.npm.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
@@ -23,13 +34,76 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
-        with:
-          publish: pnpm changeset publish
+      # Whether main's version of the package is on npm. Only a 404 counts as "not there": any other
+      # failure fails the job rather than asking for a release.
+      - id: npm
+        run: |
+          version=$(node -p 'require("./packages/ui/package.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "@workers-comp/ui@$version" version --json > "$RUNNER_TEMP/view.json" 2> "$RUNNER_TEMP/view.err"; then
+            if [ -s "$RUNNER_TEMP/view.json" ]; then unpublished=false; else unpublished=true; fi
+          elif grep -q E404 "$RUNNER_TEMP/view.err"; then
+            unpublished=true
+          else
+            cat "$RUNNER_TEMP/view.err"
+            exit 1
+          fi
+          echo "@workers-comp/ui@$version on npm: $([ "$unpublished" = true ] && echo no || echo yes)"
+          echo "unpublished=$unpublished" >> "$GITHUB_OUTPUT"
+      - id: changesets
+        uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: version
+    # Only after the "Version Packages" PR is merged (no changesets left), for a version npm
+    # doesn't have, and never the 0.0.0 placeholder.
+    if: >-
+      needs.version.outputs.has-changesets == 'false' &&
+      needs.version.outputs.unpublished == 'true' &&
+      needs.version.outputs.version != '0.0.0'
+    runs-on: ubuntu-latest
+    # Required reviewers and main-only deployments are set on this environment, and npm's trusted
+    # publisher accepts this workflow only in it.
+    environment: npm
+    permissions:
+      contents: write # push the release tag
+      id-token: write # trusted publishing and provenance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      # Trusted publishing needs npm 11.5.1 or later; Node 22 ships npm 10.
+      - run: npm install --global npm@11.21.1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @workers-comp/ui build
+      - run: node .github/scripts/release/check-pack.ts packages/ui
+      # npm itself publishes, not `changeset publish`: npm's trusted publishing is documented for
+      # the npm CLI. NPM_TOKEN is an `npm` environment secret for the first release only, before the
+      # package exists and a trusted publisher can be set on it; after that it is deleted, and npm
+      # exchanges this job's OIDC token instead.
+      - name: Publish
+        working-directory: packages/ui
+        env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if grep -q '"workspace:' package.json; then
+            echo "::error::package.json has a workspace: dependency, which npm publish would ship as is"
+            exit 1
+          fi
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "::warning::Publishing with NPM_TOKEN. After this release, set up trusted publishing and delete the secret."
+            npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN" --location=user
+          fi
+          npm publish --provenance --access public
+      - name: Tag the release
+        env:
+          TAG: "@workers-comp/ui@${{ needs.version.outputs.version }}"
+        run: |
+          git tag "$TAG"
+          git push origin "refs/tags/$TAG"

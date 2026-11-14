@@ -14,9 +14,13 @@ describe("TextArea", () => {
     expect(textarea.tagName).toBe("TEXTAREA");
     expect(textarea).toHaveAttribute("placeholder", "What happened?");
     expect(textarea).toHaveClass("block", "min-h-24", "w-full", "resize-none", "rounded-md", "border");
+    // Every state selects on comp0's data attributes, and the placeholder colours the control.
     expect(textarea).toHaveClass(
       "data-disabled:bg-gray-100",
       "not-data-invalid:data-hovered:border-gray-500",
+      "not-data-disabled:data-invalid:border-red-600",
+      "data-focus-visible:ring-fuchsia-600",
+      "not-data-disabled:placeholder-shown:text-gray-500",
     );
     // Theme utilities only: no arbitrary value (`w-[137px]`) in what renders.
     expect(textarea.className).not.toMatch(/\[/);

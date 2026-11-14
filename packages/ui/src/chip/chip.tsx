@@ -5,15 +5,15 @@ import { bindClassNames } from "../class-names";
 import styles from "../tailwind.module.css";
 
 /**
- * Mirrors the Figma "Chip" component (Workers Comp Design System, page "Chip", node 39:15): a
- * tab-bar item for a section link, as in a day strip. An uppercase bold label sits over a dotted
- * underline, three 4px round dots centred under the label; there is no box. `muted` is Figma's
- * `muted=true`, the day you're out: the label is gray-500 and the dots gray-100. `current` is `current=true`, the section you're in: the dots are gray-900 and the
- * link carries `aria-current`.
+ * Mirrors the Figma "Chip" component (Workers Comp Design System, page "Chip", node 39:15): a pill
+ * for a section link, as in a day strip. A medium label sits on a filled, fully rounded container.
+ * `muted` is Figma's `muted=true`, the day you're out: a gray-50 fill and a gray-500 label.
+ * `current` is `current=true`, the section you're in: a fuchsia-700 fill, a white label, and
+ * `aria-current` on the link. Both together are a fuchsia-100 fill and a fuchsia-900 label.
  *
- * Pressed (Figma's `state=pressed`) merges the dots: they turn fuchsia, close the gap and widen
- * into one square-ended 24px dash, and part again on release. comp0's Link has no pressed state, so the
- * Chip takes `usePress` from `@comp0/core` and reports `data-pressed` for the styles to select on.
+ * Hover and pressed (Figma's `state=hover` and `state=pressed`) each darken the fill a step.
+ * comp0's Link has no pressed state, so the Chip takes `usePress` from `@comp0/core` and reports
+ * `data-pressed` for the styles to select on.
  *
  * Behaviour comes from comp0's headless Link, which reports `data-hovered` and
  * `data-focus-visible` for the styles to select on. Give it `href` or `as` to make it a link a
@@ -22,9 +22,9 @@ import styles from "../tailwind.module.css";
  * the Chip out of the tab order, stops clicks from firing `onClick` and never shows pressed.
  */
 export type ChipProps<TElement extends ElementType = "a"> = LinkProps<TElement> & {
-  /** The day you're out: the muted label and dot colours. Off by default, as in Figma. */
+  /** The day you're out: the muted fill and label colours. Off by default, as in Figma. */
   muted?: boolean;
-  /** The section you're in: gray-900 dots and `aria-current="true"`. Off by default. */
+  /** The section you're in: the fuchsia fill and `aria-current="true"`. Off by default. */
   current?: boolean;
 };
 
@@ -32,43 +32,31 @@ export type ChipProps<TElement extends ElementType = "a"> = LinkProps<TElement> 
 const cx = bindClassNames(styles);
 
 /**
- * The Chip's scoped classes, for styling another element the same way. The dotted underline is
- * the Chip's child marked `data-slot="underline"`. Its colour is its text colour, set by its own
- * `data-tone` (current over muted over default); the dots take it as `currentColor`. The Chip's
- * hover and pressed states, which are on the link, reach the underline through the `*:` child
- * variant. That rule is more specific than any tone, so hover and press win whatever the tone,
- * without depending on the order of the stylesheet.
+ * The Chip's scoped classes, for styling another element the same way. Its colours select on
+ * `data-tone`, which is always one of four values, and on the state within it: pressed, or
+ * hovered and not pressed. So no two rules that set the same property match at once, except a
+ * tone and its own state, where the state's rule is the more specific. Nothing depends on the
+ * order of the stylesheet. The fill changes over Figma's Smart Animate from default to pressed:
+ * 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve, Tailwind's ease-in-out.
  */
 export const chipClassName = cx(`
-  m-0 inline-flex appearance-none flex-col gap-1.5 rounded-none border-0 border-solid px-1 pt-1.5 font-sans
-  text-sm font-bold whitespace-nowrap text-gray-900 uppercase no-underline outline-none
+  m-0 inline-flex appearance-none items-center justify-center rounded-full border-0 border-solid px-3 py-1
+  font-sans text-sm font-medium whitespace-nowrap no-underline transition-colors duration-150 ease-in-out
+  outline-none
   data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  data-muted:text-gray-500
-  data-hovered:*:data-[slot=underline]:text-fuchsia-700
-  data-pressed:*:data-[slot=underline]:text-fuchsia-700
+  data-[tone=current]:bg-fuchsia-700 data-[tone=current]:text-white
+  data-[tone=current]:not-data-pressed:data-hovered:bg-fuchsia-800
+  data-[tone=current]:data-pressed:bg-fuchsia-900
+  data-[tone=default]:bg-gray-100 data-[tone=default]:text-gray-900
+  data-[tone=default]:not-data-pressed:data-hovered:bg-gray-200
+  data-[tone=default]:data-pressed:bg-gray-300
+  data-[tone=muted]:bg-gray-50 data-[tone=muted]:text-gray-500
+  data-[tone=muted]:not-data-pressed:data-hovered:bg-gray-100
+  data-[tone=muted]:data-pressed:bg-gray-200
+  data-[tone=muted-current]:bg-fuchsia-100 data-[tone=muted-current]:text-fuchsia-900
+  data-[tone=muted-current]:not-data-pressed:data-hovered:bg-fuchsia-200
+  data-[tone=muted-current]:data-pressed:bg-fuchsia-300
 `);
-
-// The dotted underline: a 4px-high row as wide as the label, centring the dots. Its text colour is
-// the dots' colour.
-const underlineClassName = cx(`
-  flex h-1 w-full shrink-0 justify-center text-gray-200 transition-colors
-  data-[tone=current]:text-gray-900
-  data-[tone=muted]:text-gray-100
-`);
-
-// Three dots, 4px apart (20px across), centred in the underline whatever the label's width.
-// Pressed (`data-pressed` on the row too), the gap closes and each dot widens to a square-ended
-// 8px, so they merge into one 24px dash. The transition, both ways, is Figma's Smart Animate from
-// default to pressed: 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve, Tailwind's ease-in-out.
-const dotsClassName = cx(`
-  flex gap-1 transition-all duration-150 ease-in-out
-  data-pressed:gap-0
-  data-pressed:*:w-2 data-pressed:*:rounded-none
-`);
-
-const dotClassName = cx(
-  `block size-1 shrink-0 rounded-full bg-current transition-all duration-150 ease-in-out`,
-);
 
 /**
  * `className` is appended as is, after the Chip's own classes, so a consumer's Tailwind
@@ -90,10 +78,11 @@ export function Chip<TElement extends ElementType = "a">({
     if (event.key === " ") return;
     pressProps.onKeyDown?.(event);
   };
-  // The underline's tone: current wins over muted.
-  let tone: "current" | "muted" | undefined;
+  // The colours' tone: Figma's four combinations of muted and current.
+  let tone = "default";
   if (muted) tone = "muted";
   if (current) tone = "current";
+  if (muted && current) tone = "muted-current";
   return (
     <Link
       // A consumer's handlers run first; the press handlers chain after them.
@@ -103,19 +92,12 @@ export function Chip<TElement extends ElementType = "a">({
       data-muted={dataAttr(muted)}
       data-current={dataAttr(current)}
       data-pressed={dataAttr(isPressed)}
+      data-tone={tone}
       // A consumer's own aria-current (e.g. "location") wins over the one `current` sets.
       aria-current={ariaCurrent ?? ((current && "true") || undefined)}
       className={[chipClassName, className].filter(Boolean).join(" ")}
     >
       {children}
-      <span aria-hidden="true" data-slot="underline" data-tone={tone} className={underlineClassName}>
-        <span data-slot="dots" data-pressed={dataAttr(isPressed)} className={dotsClassName}>
-          {/* Three dots, as Figma draws; the underline is aria-hidden, so so are they. */}
-          {Array.from({ length: 3 }, (_, index) => (
-            <span key={index} data-slot="dot" className={dotClassName} />
-          ))}
-        </span>
-      </span>
     </Link>
   );
 }

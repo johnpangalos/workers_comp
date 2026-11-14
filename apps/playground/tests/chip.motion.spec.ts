@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test";
 import { loadFigmaNodes } from "./figma";
 
 // The Figma Chip's prototype transitions against the rendered Chip's CSS transitions: each
-// default variant changes to its pressed one with Smart Animate, and the dots that change (the
-// row's gap, each dot's width, corners and colour) must animate with the same duration and curve.
+// default variant changes to its pressed one with Smart Animate, and the fill that changes must
+// animate with the same duration and curve.
 // The values come from figma/chip-motion.json, written by figma/export-motion.js.
 type Motion = { trigger: string; transition: string; durationMs: number; easing: number[] | string };
 const transitions = loadFigmaNodes(
@@ -27,19 +27,16 @@ for (const [name, motion] of Object.entries(transitions)) {
 
     await page.goto("/chip/figma");
     const chip = page.locator(`[data-figma-chip="${chipState}"] > a`);
-    const parts = [chip.locator('[data-slot="dots"]'), ...(await chip.locator('[data-slot="dot"]').all())];
-    for (const part of parts) {
-      const css = await part.evaluate((el) => {
-        const style = getComputedStyle(el);
-        return {
-          property: style.transitionProperty,
-          duration: style.transitionDuration,
-          timing: style.transitionTimingFunction,
-        };
-      });
-      expect.soft(css.property, "transitioned properties").toBe("all");
-      expect.soft(css.duration, "transition duration").toBe(`${motion.durationMs / 1000}s`);
-      expect.soft(css.timing, "transition curve").toBe(curve);
-    }
+    const css = await chip.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return {
+        property: style.transitionProperty,
+        duration: style.transitionDuration,
+        timing: style.transitionTimingFunction,
+      };
+    });
+    expect.soft(css.property.split(", "), "transitioned properties").toContain("background-color");
+    expect.soft(css.duration, "transition duration").toBe(`${motion.durationMs / 1000}s`);
+    expect.soft(css.timing, "transition curve").toBe(curve);
   });
 }

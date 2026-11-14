@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Button, buttonClassName } from "./button";
+import { Button } from "./button";
 
 // These tests cover behaviour and the data attributes the styles select on.
 // What those attributes look like is checked in a real browser (the playground).
@@ -34,14 +34,17 @@ describe("Button", () => {
 
   it("carries only its own classes by default", () => {
     render(<Button>Label</Button>);
-    expect(buttonClassName).toMatch(/\binline-flex\b/);
-    expect(screen.getByRole("button")).toHaveAttribute("class", buttonClassName);
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass("inline-flex", "data-[variant=default]:bg-fuchsia-700");
+    // No trace of the missing className: no empty, "undefined" or "false" entries.
+    expect(button.getAttribute("class")).not.toMatch(/\bundefined\b|\bfalse\b|^\s|\s$|\s\s/);
   });
 
   it("appends className after its own", () => {
-    render(<Button className="w-full">Label</Button>);
-    const button = screen.getByRole("button");
-    expect(button).toHaveClass(buttonClassName, "w-full");
+    const { rerender } = render(<Button>Label</Button>);
+    const own = screen.getByRole("button").getAttribute("class");
+    rerender(<Button className="w-full">Label</Button>);
+    expect(screen.getByRole("button")).toHaveAttribute("class", `${own} w-full`);
   });
 
   it("calls onClick when clicked and is reachable with Tab", async () => {

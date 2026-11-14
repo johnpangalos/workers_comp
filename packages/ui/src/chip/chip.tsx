@@ -32,33 +32,6 @@ export type ChipProps<TElement extends ElementType = "a"> = LinkProps<TElement> 
 const cx = bindClassNames(styles);
 
 /**
- * The Chip's scoped classes, for styling another element the same way. Its colours select on
- * `data-tone`, which is always one of four values, and on the state within it: pressed, or
- * hovered and not pressed. So no two rules that set the same property match at once, except a
- * tone and its own state, where the state's rule is the more specific. Nothing depends on the
- * order of the stylesheet. The fill changes over Figma's Smart Animate from default to pressed:
- * 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve, Tailwind's ease-in-out.
- */
-export const chipClassName = cx(`
-  m-0 inline-flex appearance-none items-center justify-center rounded-full border-0 border-solid px-3 py-1
-  font-sans text-sm font-medium whitespace-nowrap no-underline transition-colors duration-150 ease-in-out
-  outline-none
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  data-[tone=current]:bg-fuchsia-700 data-[tone=current]:text-white
-  data-[tone=current]:not-data-pressed:data-hovered:bg-fuchsia-800
-  data-[tone=current]:data-pressed:bg-fuchsia-900
-  data-[tone=default]:bg-gray-100 data-[tone=default]:text-gray-900
-  data-[tone=default]:not-data-pressed:data-hovered:bg-gray-200
-  data-[tone=default]:data-pressed:bg-gray-300
-  data-[tone=muted]:bg-gray-50 data-[tone=muted]:text-gray-500
-  data-[tone=muted]:not-data-pressed:data-hovered:bg-gray-100
-  data-[tone=muted]:data-pressed:bg-gray-200
-  data-[tone=muted-current]:bg-fuchsia-100 data-[tone=muted-current]:text-fuchsia-900
-  data-[tone=muted-current]:not-data-pressed:data-hovered:bg-fuchsia-200
-  data-[tone=muted-current]:data-pressed:bg-fuchsia-300
-`);
-
-/**
  * `className` is appended as is, after the Chip's own classes, so a consumer's Tailwind
  * utilities or plain CSS override them.
  */
@@ -95,7 +68,35 @@ export function Chip<TElement extends ElementType = "a">({
       data-tone={tone}
       // A consumer's own aria-current (e.g. "location") wins over the one `current` sets.
       aria-current={ariaCurrent ?? ((current && "true") || undefined)}
-      className={[chipClassName, className].filter(Boolean).join(" ")}
+      // The colours select on `data-tone`, which is always one of four values, and on the state
+      // within it: pressed, or hovered and not pressed. So no two rules that set the same property
+      // match at once, except a tone and its own state, where the state's rule is the more
+      // specific. Nothing depends on the order of the stylesheet. The fill changes over Figma's
+      // Smart Animate from default to pressed: 150ms on the cubic-bezier(0.4, 0, 0.2, 1) curve,
+      // Tailwind's ease-in-out.
+      className={[
+        cx(`
+          m-0 inline-flex appearance-none items-center justify-center rounded-full border-0 border-solid px-3
+          py-1 font-sans text-sm font-medium whitespace-nowrap no-underline transition-colors duration-150
+          ease-in-out outline-none
+          data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+          data-[tone=current]:bg-fuchsia-700 data-[tone=current]:text-white
+          data-[tone=current]:not-data-pressed:data-hovered:bg-fuchsia-800
+          data-[tone=current]:data-pressed:bg-fuchsia-900
+          data-[tone=default]:bg-gray-100 data-[tone=default]:text-gray-900
+          data-[tone=default]:not-data-pressed:data-hovered:bg-gray-200
+          data-[tone=default]:data-pressed:bg-gray-300
+          data-[tone=muted]:bg-gray-50 data-[tone=muted]:text-gray-500
+          data-[tone=muted]:not-data-pressed:data-hovered:bg-gray-100
+          data-[tone=muted]:data-pressed:bg-gray-200
+          data-[tone=muted-current]:bg-fuchsia-100 data-[tone=muted-current]:text-fuchsia-900
+          data-[tone=muted-current]:not-data-pressed:data-hovered:bg-fuchsia-200
+          data-[tone=muted-current]:data-pressed:bg-fuchsia-300
+        `),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {children}
     </Link>

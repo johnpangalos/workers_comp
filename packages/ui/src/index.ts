@@ -1,12 +1,6 @@
-export { Badge, badgeClassName, type BadgeColor, type BadgeProps } from "./badge/badge";
-export {
-  Button,
-  buttonClassName,
-  type ButtonProps,
-  type ButtonSize,
-  type ButtonVariant,
-} from "./button/button";
-export { Chip, type ChipProps, chipClassName } from "./chip/chip";
+export { Badge, type BadgeColor, type BadgeProps } from "./badge/badge";
+export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "./button/button";
+export { Chip, type ChipProps } from "./chip/chip";
 export {
   Tab,
   TabList,
@@ -16,9 +10,5 @@ export {
   type TabProps,
   Tabs,
   type TabsProps,
-  tabClassName,
-  tabListClassName,
-  tabPanelClassName,
-  tabsClassName,
 } from "./tabs/tabs";
 export { bindClassNames, type ClassValue } from "./class-names";

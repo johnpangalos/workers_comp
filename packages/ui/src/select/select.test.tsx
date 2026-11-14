@@ -2,15 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import {
-  Select,
-  selectClassName,
-  SelectOption,
-  selectOptionClassName,
-  selectPopoverClassName,
-  type SelectProps,
-  selectTriggerClassName,
-} from "./select";
+import { Select, SelectOption, type SelectProps } from "./select";
 
 // These tests cover behaviour and the attributes and classes the styles select on.
 // What those look like is checked in a real browser (the playground, tests/select.figma.spec.ts).
@@ -45,6 +37,9 @@ function Example(props: Partial<SelectProps>) {
   );
 }
 
+// No class in an element's list is an arbitrary value (`w-[137px]`).
+const arbitraryClasses = (element: Element) => [...element.classList].filter((name) => name.includes("["));
+
 const trigger = () => screen.getByRole("button", { name: /Body part/ });
 const listbox = () => screen.getByRole("listbox", { hidden: true });
 const option = (name: string) => screen.getByRole("option", { name, hidden: true });
@@ -66,13 +61,33 @@ describe("Select", () => {
   });
 
   it("carries its own classes and appends className last", () => {
-    const { container } = render(<Example className="w-full" id="body-part" />);
+    const { container } = render(<Example className="max-w-full" id="body-part" />);
     const root = container.querySelector('[data-slot="select"]')!;
-    expect(root).toHaveAttribute("class", `${selectClassName} w-full`);
+    expect(root).toHaveClass("flex", "w-80", "flex-col", "gap-1.5", "text-sm", "font-medium");
+    expect(root.getAttribute("class")).toMatch(/^flex .* max-w-full$/);
     expect(root).toHaveAttribute("data-placeholder", "");
-    expect(trigger()).toHaveAttribute("class", selectTriggerClassName);
-    expect(listbox()).toHaveAttribute("class", selectPopoverClassName);
-    expect(option("Head")).toHaveAttribute("class", selectOptionClassName);
+    expect(trigger()).toHaveClass(
+      "relative",
+      "border-gray-400",
+      "pr-9",
+      "in-data-placeholder:text-gray-500",
+      "data-disabled:border-gray-200",
+      "data-focus-visible:ring-fuchsia-600",
+      "not-data-invalid:data-open:border-fuchsia-600",
+      "data-invalid:not-data-disabled:border-red-600",
+    );
+    expect(trigger()).not.toHaveClass("max-w-full");
+    expect(listbox()).toHaveClass("w-80", "rounded-md", "border-gray-200", "shadow-md");
+    expect(listbox()).not.toHaveClass("max-w-full");
+    expect(option("Head")).toHaveClass(
+      "px-2",
+      "py-1.5",
+      "data-highlighted:bg-gray-100",
+      "not-data-disabled:data-selected:text-fuchsia-700",
+    );
+    for (const element of [root, trigger(), listbox(), option("Head")]) {
+      expect(arbitraryClasses(element)).toEqual([]);
+    }
   });
 
   it("opens on click, picks the option clicked, reports it and closes", async () => {
@@ -233,7 +248,9 @@ describe("Select", () => {
     }
     render(<Controlled />);
     expect(trigger()).toHaveTextContent("Strain or sprain");
-    expect(option("Cut")).toHaveAttribute("class", `${selectOptionClassName} italic`);
+    expect(option("Cut")).toHaveClass("px-2", "data-highlighted:bg-gray-100");
+    expect(option("Cut").getAttribute("class")).toMatch(/^flex .* italic$/);
+    expect(option("Strain or sprain")).not.toHaveClass("italic");
     await user.click(trigger());
     await user.click(option("Cut"));
     expect(screen.getByText("Selected: cut")).toBeInTheDocument();

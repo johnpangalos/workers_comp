@@ -9,14 +9,10 @@ export {
 export { Chip, type ChipProps, chipClassName } from "./chip/chip";
 export {
   Select,
-  selectClassName,
   type SelectItem,
   SelectOption,
-  selectOptionClassName,
   type SelectOptionProps,
-  selectPopoverClassName,
   type SelectProps,
-  selectTriggerClassName,
 } from "./select/select";
 export {
   Tab,

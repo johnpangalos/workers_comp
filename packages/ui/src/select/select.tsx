@@ -36,71 +36,6 @@ import styles from "../tailwind.module.css";
 // Names in the module resolve to their scoped class.
 const cx = bindClassNames(styles);
 
-/**
- * The Select's scoped classes: a column of the label, the trigger and the description or error
- * message, 320px wide (`spacing/80`) like the Figma field. The label's type is set here: the label
- * inherits it, and the description and error message set their own.
- */
-export const selectClassName = cx(
-  `flex w-80 flex-col items-stretch gap-1.5 font-sans text-sm font-medium text-gray-900`,
-);
-
-/**
- * The trigger's scoped classes. The reset classes are Button's, keeping the border, which is always
- * on. Figma draws the chevron outside the auto layout, right-aligned, with `spacing/9` of right
- * padding to keep the value clear of it; so does this. The border colour rules never match at the
- * same time: disabled wins over invalid, invalid over open, open over hover, so no rule depends on
- * the order of the stylesheet. The placeholder is gray-500, from the Select's `data-placeholder`.
- */
-export const selectTriggerClassName = cx(`
-  relative m-0 flex w-full appearance-none items-center rounded-md border border-solid border-gray-400
-  bg-white py-2 pr-9 pl-3 font-sans text-sm font-normal text-gray-900 transition-colors outline-none
-  in-data-placeholder:text-gray-500
-  data-disabled:pointer-events-none data-disabled:border-gray-200 data-disabled:bg-gray-100
-  data-disabled:text-gray-400
-  data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
-  not-data-invalid:not-data-open:data-hovered:border-gray-500
-  not-data-invalid:data-open:border-fuchsia-600
-  data-invalid:not-data-disabled:border-red-600
-`);
-
-/** The value or placeholder in the trigger: it fills the trigger and truncates, as in Figma. */
-const selectValueClassName = cx(`min-w-0 flex-1 truncate text-left`);
-
-/** The chevron: a 16px frame (`spacing/4`) right-aligned in the trigger, gray-500, gray-400 disabled. */
-const selectChevronClassName = cx(`
-  absolute top-1/2 right-3 size-4 -translate-y-1/2 text-gray-500
-  in-data-disabled:text-gray-400
-`);
-
-/**
- * The listbox's scoped classes, Figma's "Listbox": white, a gray-200 border, `radius/md` and
- * `shadow-md`, as wide as the Select. The UA popover styles (padding, border, colours) are reset.
- */
-export const selectPopoverClassName = cx(`
-  m-0 w-80 rounded-md border border-solid border-gray-200 bg-white p-0 font-sans
-  text-gray-900 shadow-md
-`);
-
-/** The description, gray-600, and the error message, red-600: both text-sm/normal. */
-const selectDescriptionClassName = cx(`text-sm font-normal text-gray-600`);
-const selectErrorClassName = cx(`text-sm font-normal text-red-600`);
-
-/** The column the options sit in, Figma's "Options": `spacing/1` of padding. */
-const selectOptionsClassName = cx(`flex flex-col p-1`);
-
-/**
- * An option's scoped classes. Highlighted is the option with focus; selected is fuchsia-700 and
- * disabled gray-400, which never match together (a disabled option shows as disabled).
- */
-export const selectOptionClassName = cx(`
-  flex cursor-default items-center rounded-sm px-2 py-1.5 font-sans text-sm font-normal text-gray-900
-  outline-none
-  data-disabled:text-gray-400
-  data-highlighted:bg-gray-100
-  not-data-disabled:data-selected:text-fuchsia-700
-`);
-
 /** One option of `items`: its value, the label shown for it, and whether it can be chosen. */
 export type SelectItem = { value: string; label: string; disabled?: boolean };
 
@@ -187,7 +122,15 @@ export function Select({
       disabled={disabled}
       invalid={invalid}
       onChange={onValueChange}
-      className={[selectClassName, className].filter(Boolean).join(" ")}
+      // A column of the label, the trigger and the description or error message, 320px wide
+      // (`spacing/80`) like the Figma field. The label's type is set here: the label inherits it,
+      // and the description and error message set their own.
+      className={[
+        cx(`flex w-80 flex-col items-stretch gap-1.5 font-sans text-sm font-medium text-gray-900`),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {label !== undefined && <Label>{label}</Label>}
       <SelectTrigger
@@ -195,26 +138,61 @@ export function Select({
         aria-labelledby={ariaLabelledBy}
         data-invalid={dataAttr(Boolean(invalid))}
         onKeyDown={preventWhenDisabled}
-        className={selectTriggerClassName}
+        // The reset classes are Button's, keeping the border, which is always on. Figma draws the
+        // chevron outside the auto layout, right-aligned, with `spacing/9` of right padding to keep
+        // the value clear of it; so does this. The border colour rules never match at the same
+        // time: disabled wins over invalid, invalid over open, open over hover, so no rule depends
+        // on the order of the stylesheet. The placeholder is gray-500, from the Select's
+        // `data-placeholder`.
+        className={cx(`
+          relative m-0 flex w-full appearance-none items-center rounded-md border border-solid border-gray-400
+          bg-white py-2 pr-9 pl-3 font-sans text-sm font-normal text-gray-900 transition-colors outline-none
+          in-data-placeholder:text-gray-500
+          data-disabled:pointer-events-none data-disabled:border-gray-200 data-disabled:bg-gray-100
+          data-disabled:text-gray-400
+          data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
+          not-data-invalid:not-data-open:data-hovered:border-gray-500
+          not-data-invalid:data-open:border-fuchsia-600
+          data-invalid:not-data-disabled:border-red-600
+        `)}
       >
-        <SelectValue placeholder={placeholder} className={selectValueClassName} />
-        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={selectChevronClassName}>
+        {/* The value or placeholder fills the trigger and truncates, as in Figma. */}
+        <SelectValue placeholder={placeholder} className={cx(`min-w-0 flex-1 truncate text-left`)} />
+        {/* The chevron: a 16px frame (`spacing/4`) right-aligned in the trigger, gray-500, gray-400 disabled. */}
+        <svg
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+          className={cx(`
+            absolute top-1/2 right-3 size-4 -translate-y-1/2 text-gray-500
+            in-data-disabled:text-gray-400
+          `)}
+        >
           <path d="M3 6.06 4.06 5 8 8.94 11.94 5 13 6.06 8 11Z" />
         </svg>
       </SelectTrigger>
+      {/* The description, gray-600, and the error message, red-600: both text-sm/normal. */}
       {description !== undefined && !invalid && (
-        <Description className={selectDescriptionClassName}>{description}</Description>
+        <Description className={cx(`text-sm font-normal text-gray-600`)}>{description}</Description>
       )}
-      {errorMessage !== undefined && <FieldError className={selectErrorClassName}>{errorMessage}</FieldError>}
+      {errorMessage !== undefined && (
+        <FieldError className={cx(`text-sm font-normal text-red-600`)}>{errorMessage}</FieldError>
+      )}
       <SelectPopover
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         placement="bottom start"
         offset={4}
         onKeyDown={closeOnTab}
-        className={selectPopoverClassName}
+        // Figma's "Listbox": white, a gray-200 border, `radius/md` and `shadow-md`, as wide as the
+        // Select. The UA popover styles (padding, border, colours) are reset.
+        className={cx(`
+          m-0 w-80 rounded-md border border-solid border-gray-200 bg-white p-0 font-sans text-gray-900
+          shadow-md
+        `)}
       >
-        <div className={selectOptionsClassName}>{options}</div>
+        {/* The column the options sit in, Figma's "Options": `spacing/1` of padding. */}
+        <div className={cx(`flex flex-col p-1`)}>{options}</div>
       </SelectPopover>
     </Comp0Select>
   );
@@ -241,7 +219,20 @@ export function SelectOption({ className, disabled, ...props }: SelectOptionProp
       {...(mergeProps(focusProps, pointerProps, props) as SelectOptionProps)}
       disabled={disabled}
       data-highlighted={dataAttr(isFocused && !disabled)}
-      className={[selectOptionClassName, className].filter(Boolean).join(" ")}
+      // Highlighted is the option with focus; selected is fuchsia-700 and disabled gray-400, which
+      // never match together (a disabled option shows as disabled).
+      className={[
+        cx(`
+          flex cursor-default items-center rounded-sm px-2 py-1.5 font-sans text-sm font-normal text-gray-900
+          outline-none
+          data-disabled:text-gray-400
+          data-highlighted:bg-gray-100
+          not-data-disabled:data-selected:text-fuchsia-700
+        `),
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     />
   );
 }

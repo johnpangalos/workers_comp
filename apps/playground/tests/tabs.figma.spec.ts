@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { expectToMatchFigma, loadFigmaNodes } from "./figma";
+import { expectToMatchFigma, loadFigmaNodes, waitForInter } from "./figma";
 
 // Every entry of the Figma "Tabs" node set (Tab, TabList, TabPanel and Tabs) against the rendered
 // tabs on the figma page: the values each is drawn with, exactly. A `> child` entry is the child
@@ -21,10 +21,7 @@ for (const [name, node] of Object.entries(variants)) {
   test(name, async ({ page }) => {
     await page.goto("/tabs/figma");
     await page.addStyleTag({ content: "* { transition: none !important; }" });
-    // Wait for the labels' fonts; before they load the tabs have the fallback font's width.
-    await page.evaluate(() =>
-      Promise.all([document.fonts.load("500 14px Inter"), document.fonts.load("400 14px Inter")]),
-    );
+    await waitForInter(page);
 
     const tablist = page.locator('[data-figma="tablist"] [role="tablist"]');
     const tabsRoot = page.locator('[data-figma="tabs"] > [data-slot="tabs"]');

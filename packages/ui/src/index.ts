@@ -21,4 +21,5 @@ export {
   tabPanelClassName,
   tabsClassName,
 } from "./tabs/tabs";
+export { TextField, type TextFieldProps } from "./text-field/text-field";
 export { bindClassNames, type ClassValue } from "./class-names";

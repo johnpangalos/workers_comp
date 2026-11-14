@@ -89,6 +89,7 @@ Components so far:
 | Badge | `36:112` | `Badge` from `@workers-comp/ui` (`packages/ui/src/badge/badge.tsx`) |
 | Chip | `39:15` | `Chip` from `@workers-comp/ui` (`packages/ui/src/chip/chip.tsx`) |
 | Tabs | `18:23` | `Tabs`, `TabList`, `Tab`, `TabPanel` from `@workers-comp/ui` (`packages/ui/src/tabs/tabs.tsx`); Figma's parts are TabList `18:14`, Tab `18:13`, TabPanel `18:21` |
+| TextField | `98:232` | `TextField` from `@workers-comp/ui` (`packages/ui/src/text-field/text-field.tsx`); Figma's text properties `label`, `placeholder`, `value`, `description`, `errorMessage` are the props of the same name |
 
 Rules:
 

@@ -59,9 +59,9 @@ hold the code PR back. A convention a component taught you is that follow-up PR.
 - `packages/ui/src/figma-tokens.json` — a snapshot of the Figma file's variables, text styles
   and effect styles, which `theme.test.ts` checks against the theme.
 - `apps/playground/figma/` — what Figma says each node is drawn with (size, colours, type),
-  which the tests in `apps/playground/tests/` compare the rendered page against; and
-  `lint-node.js`, which lints a design's nodes in Figma before they are exported, with its results
-  (`<name>-lint.json`) and the findings accepted on purpose (`lint-ignore.json`).
+  which the tests in `apps/playground/tests/` compare the rendered page against; the results of
+  linting those nodes in Figma before they are exported (`<name>-lint.json`); and the findings
+  accepted on purpose (`lint-ignore.json`).
 - `.github/scripts/claude-risk/` — the steps of the merge-risk workflow, TypeScript that Node
   runs as is (no dependencies), with `node --test` tests that `pnpm test` runs.
 
@@ -118,9 +118,8 @@ conventions and where the Figma pieces live. What follows is what to do by hand 
 A component or page isn't done until its measurement passes. Measure to finish; look to find
 what the measurement can't read.
 
-1. **Lint.** Run `apps/playground/figma/lint-node.js` through the MCP's `use_figma` on the
-   ids you will export, in the same order (paste the file, end with
-   `return await lintNode("<id>", …);`), and save the result exactly as returned to
+1. **Lint.** Run the figma-flow skill's `lint-node` on the ids you will export, in the same
+   order, and save its output exactly as returned to
    `apps/playground/figma/<name>-lint.json`. It lists everything code would have to guess at:
    values not bound to a variable or style, text not linked to its property, detached frames.
    Findings are fixed in Figma, by the designer, then linted again; don't export or build
@@ -141,6 +140,6 @@ what the measurement can't read.
    "I see no difference" is not a pass: in a trial a model looking at screenshots reported
    differences on a correct Button, so only the measurement can say something matches.
 
-The export scripts live in the figma-flow skill, not in this repo, because they only run
-inside Figma through the MCP's `use_figma`. The skill says how to run them; its `export-tokens`
+The lint and export scripts live in the figma-flow skill, not in this repo, because they only
+run inside Figma through the MCP's `use_figma`. The skill says how to run them; its `export-tokens`
 refreshes `packages/ui/src/figma-tokens.json`.

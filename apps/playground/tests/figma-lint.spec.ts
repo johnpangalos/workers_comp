@@ -3,8 +3,8 @@ import { expect, test } from "@playwright/test";
 import { loadFigmaExport } from "./figma";
 
 // Every exported component was linted in Figma first, and the lint found nothing that isn't
-// accepted on purpose. The lint files are written by figma/lint-node.js; the accepted findings, each
-// with its reason, are in figma/lint-ignore.json. A finding is fixed in Figma, never in code.
+// accepted on purpose. The lint files are written by the figma-flow skill's lint-node; the accepted
+// findings, each with its reason, are in figma/lint-ignore.json. A finding is fixed in Figma, never in code.
 type Finding = { variant: string; layer: string; node: string; rule: string; field: string; value: unknown };
 type Ignore = { node: string; rule: string; layer: string; field: string; reason: string };
 
@@ -27,9 +27,10 @@ for (const file of exports) {
   test(`${name} passes the Figma lint`, () => {
     const exported = loadFigmaExport(new URL(file, folder));
     const lintFile = new URL(`${name}-lint.json`, folder);
-    expect(readdirSync(folder), `figma/${name}-lint.json: lint the nodes with figma/lint-node.js`).toContain(
-      `${name}-lint.json`,
-    );
+    expect(
+      readdirSync(folder),
+      `figma/${name}-lint.json: lint the nodes with the figma-flow skill's lint-node`,
+    ).toContain(`${name}-lint.json`);
     const lint = loadFigmaExport(lintFile);
     // The export's ids, space-separated in its order; the lint takes the same ones.
     const nodes = String(exported.node);

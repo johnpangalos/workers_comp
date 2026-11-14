@@ -34,7 +34,7 @@ can see without reading the change, with tests:
   measuring code (`apps/playground/tests/figma.ts`).
 - **Existing Figma measurement:** a new spec, export or measured page is fine. Removing or renaming
   any of it is you, and so is changing the shared measuring code and snapshots (`figma-lint.spec.ts`,
-  `lint-node.js`, `export-motion.js`, `lint-ignore.json`, the token snapshot and its test), since
+  `export-motion.js`, `lint-ignore.json`, the token snapshot and its test), since
   that is how a check gets loosened. A component's own export, lint file, specs and measured page
   (`<c>.json`, `<c>-lint.json`, `<c>-motion.json`, `tests/<c>.*.spec.ts`, `examples/<c>/figma.tsx`
   and `overrides.tsx`) may change in the same PR as that component's shipped code, a redesign; then

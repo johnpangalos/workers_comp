@@ -2,6 +2,13 @@ export { Badge, type BadgeColor, type BadgeProps } from "./badge/badge";
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from "./button/button";
 export { Chip, type ChipProps } from "./chip/chip";
 export {
+  Select,
+  type SelectItem,
+  SelectOption,
+  type SelectOptionProps,
+  type SelectProps,
+} from "./select/select";
+export {
   Tab,
   TabList,
   type TabListProps,

@@ -1,0 +1,32 @@
+{
+  "file": "5OcRRw5a7qZGsgC43FjCp9",
+  "node": "100:43 100:52 100:53 100:54 100:79",
+  "variants": {
+    "SelectTrigger/state=default, invalid=false": {"x":32,"y":32,"width":320,"height":38,"fill":"#ffffff","stroke":"#99a1af","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=hover, invalid=false": {"x":392,"y":32,"width":320,"height":38,"fill":"#ffffff","stroke":"#6a7282","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=focus, invalid=false": {"x":752,"y":32,"width":320,"height":38,"fill":"#ffffff","stroke":"#99a1af","strokeWeight":1,"radius":6,"rings":[["#c800de",4],["#ffffff",2]],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=disabled, invalid=false": {"x":1112,"y":32,"width":320,"height":38,"fill":"#f3f4f6","stroke":"#e5e7eb","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#99a1af","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=open, invalid=false": {"x":1472,"y":32,"width":320,"height":38,"fill":"#ffffff","stroke":"#c800de","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=default, invalid=true": {"x":32,"y":110,"width":320,"height":38,"fill":"#ffffff","stroke":"#e7000b","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=hover, invalid=true": {"x":392,"y":110,"width":320,"height":38,"fill":"#ffffff","stroke":"#e7000b","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=focus, invalid=true": {"x":752,"y":110,"width":320,"height":38,"fill":"#ffffff","stroke":"#e7000b","strokeWeight":1,"radius":6,"rings":[["#c800de",4],["#ffffff",2]],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=disabled, invalid=true": {"x":1112,"y":110,"width":320,"height":38,"fill":"#f3f4f6","stroke":"#e5e7eb","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#99a1af","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectTrigger/state=open, invalid=true": {"x":1472,"y":110,"width":320,"height":38,"fill":"#ffffff","stroke":"#e7000b","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectOption/state=default": {"x":32,"y":32,"width":61,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectOption/state=highlighted": {"x":152,"y":32,"width":61,"height":32,"fill":"#f3f4f6","stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectOption/state=selected": {"x":272,"y":32,"width":61,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#a800b7","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "SelectOption/state=disabled": {"x":392,"y":32,"width":61,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#99a1af","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Listbox": {"x":0,"y":0,"width":320,"height":170,"fill":"#ffffff","stroke":"#e5e7eb","strokeWeight":1,"radius":6,"rings":[],"label":null},
+    "Options": {"x":0,"y":0,"width":318,"height":168,"fill":null,"stroke":null,"strokeWeight":0,"radius":0,"rings":[],"label":null,"layout":{"direction":"column","gap":0,"padding":[4,4,4,4]}},
+    "Options > Head": {"x":4,"y":4,"width":310,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Options > Back": {"x":4,"y":36,"width":310,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#a800b7","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Options > Shoulder": {"x":4,"y":68,"width":310,"height":32,"fill":"#f3f4f6","stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Options > Hand": {"x":4,"y":100,"width":310,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#101828","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Options > Knee": {"x":4,"y":132,"width":310,"height":32,"fill":null,"stroke":null,"strokeWeight":0,"radius":4,"rings":[],"label":{"x":8,"y":6,"height":20,"color":"#99a1af","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Select/invalid=false": {"x":32,"y":32,"width":320,"height":90,"fill":null,"stroke":null,"strokeWeight":0,"radius":0,"rings":[],"label":{"x":0,"y":0,"height":20,"color":"#101828","fontSize":14,"fontWeight":500,"lineHeight":20},"layout":{"direction":"column","gap":6,"padding":[0,0,0,0]}},
+    "Select/invalid=false > Select a body part": {"x":0,"y":26,"width":320,"height":38,"fill":"#ffffff","stroke":"#99a1af","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#6a7282","fontSize":14,"fontWeight":400,"lineHeight":20}},
+    "Select/invalid=true": {"x":392,"y":32,"width":320,"height":90,"fill":null,"stroke":null,"strokeWeight":0,"radius":0,"rings":[],"label":{"x":0,"y":0,"height":20,"color":"#101828","fontSize":14,"fontWeight":500,"lineHeight":20},"layout":{"direction":"column","gap":6,"padding":[0,0,0,0]}},
+    "Select/invalid=true > Select a body part": {"x":0,"y":26,"width":320,"height":38,"fill":"#ffffff","stroke":"#e7000b","strokeWeight":1,"radius":6,"rings":[],"label":{"x":13,"y":9,"height":20,"color":"#6a7282","fontSize":14,"fontWeight":400,"lineHeight":20}}
+  },
+  "hash": "2d563c0e"
+}

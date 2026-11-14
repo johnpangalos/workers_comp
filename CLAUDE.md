@@ -88,6 +88,7 @@ Components so far:
 | Button | `1:91` | `Button` from `@workers-comp/ui` (`packages/ui/src/button/button.tsx`) |
 | Badge | `36:112` | `Badge` from `@workers-comp/ui` (`packages/ui/src/badge/badge.tsx`) |
 | Chip | `39:15` | `Chip` from `@workers-comp/ui` (`packages/ui/src/chip/chip.tsx`) |
+| Select | `100:79` | `Select`, `SelectOption` from `@workers-comp/ui` (`packages/ui/src/select/select.tsx`); Figma's parts are SelectTrigger `100:43`, SelectOption `100:52`, Listbox `100:53` |
 | Tabs | `18:23` | `Tabs`, `TabList`, `Tab`, `TabPanel` from `@workers-comp/ui` (`packages/ui/src/tabs/tabs.tsx`); Figma's parts are TabList `18:14`, Tab `18:13`, TabPanel `18:21` |
 | TextField | `98:232` | `TextField` from `@workers-comp/ui` (`packages/ui/src/text-field/text-field.tsx`); Figma's text properties `label`, `placeholder`, `value`, `description`, `errorMessage` are the props of the same name |
 | TextArea | `98:133` | `TextArea` from `@workers-comp/ui` (`packages/ui/src/text-area/text-area.tsx`) |

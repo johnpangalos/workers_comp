@@ -32,8 +32,9 @@ export const textAreaFieldClassName = cx(`flex flex-col gap-1.5 font-sans text-s
 
 /**
  * The textarea's scoped classes. The reset classes are Button's, minus `border-0`: the border is
- * always on. It is at least four rows tall (`min-h-24`); `rows` makes it taller. Figma draws no resize
- * handle, so it has none (`resize-none`): longer text scrolls.
+ * always on. It is at least Figma's minimum height, `spacing/24` (`min-h-24`, 96px, just under four
+ * lines of text); `rows={4}` or more makes it taller. Figma draws no resize handle, so it has none
+ * (`resize-none`): longer text scrolls.
  *
  * Figma draws the placeholder as the control's text, so while the placeholder shows, the textarea's
  * own colour is the placeholder's (`placeholder-shown`); typed text is gray-900. Invalid wins over

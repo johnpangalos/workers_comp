@@ -24,7 +24,7 @@ jobs:
       contents: write # the changeset-release/main branch
       pull-requests: write # the version packages PR
     outputs:
-      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+      has-changesets: ${{ steps.changesets.outputs.has-changesets }}
       unpublished: ${{ steps.npm.outputs.unpublished }}
       version: ${{ steps.npm.outputs.version }}
     steps:
@@ -55,8 +55,8 @@ jobs:
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         # PRs are squash-merged and pr-title.yml checks the title, so it's a conventional commit.
         with:
-          title: "chore(release): version packages"
-          commit: "chore(release): version packages"
+          pr-title: "chore(release): version packages"
+          commit-message: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

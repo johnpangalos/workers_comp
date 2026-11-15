@@ -11,6 +11,12 @@ export default defineConfig({
     baseURL: "http://localhost:5173",
     deviceScaleFactor: 1,
   },
+  projects: [
+    { name: "with preflight" },
+    // The same Figma specs with Tailwind's preflight taken out of the page (tests/figma.ts,
+    // waitForInter), as an app without Tailwind draws the components.
+    { name: "without preflight", testMatch: "*.figma.spec.ts", testIgnore: "figma-lint.spec.ts" },
+  ],
   webServer: {
     command: "pnpm dev --port 5173 --strictPort",
     url: "http://localhost:5173",

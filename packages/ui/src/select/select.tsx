@@ -126,7 +126,7 @@ export function Select({
       // (`spacing/80`) like the Figma field. The label's type is set here: the label inherits it,
       // and the description and error message set their own.
       className={[
-        cx(`flex w-80 flex-col items-stretch gap-1.5 font-sans text-sm font-medium text-gray-900`),
+        cx(`preflight flex w-80 flex-col items-stretch gap-1.5 font-sans text-sm font-medium text-gray-900`),
         className,
       ]
         .filter(Boolean)
@@ -138,15 +138,15 @@ export function Select({
         aria-labelledby={ariaLabelledBy}
         data-invalid={dataAttr(Boolean(invalid))}
         onKeyDown={preventWhenDisabled}
-        // The reset classes are Button's, keeping the border, which is always on. Figma draws the
+        // The browser's button styles are reset by the Select's `preflight`. Figma draws the
         // chevron outside the auto layout, right-aligned, with `spacing/9` of right padding to keep
         // the value clear of it; so does this. The border colour rules never match at the same
         // time: disabled wins over invalid, invalid over open, open over hover, so no rule depends
         // on the order of the stylesheet. The placeholder is gray-500, from the Select's
         // `data-placeholder`.
         className={cx(`
-          relative m-0 flex w-full appearance-none items-center rounded-md border border-solid border-gray-400
-          bg-white py-2 pr-9 pl-3 font-sans text-sm font-normal text-gray-900 transition-colors outline-none
+          relative flex w-full items-center rounded-md border border-gray-400 bg-white py-2 pr-9 pl-3
+          font-sans text-sm font-normal text-gray-900 transition-colors outline-none
           in-data-placeholder:text-gray-500
           data-disabled:pointer-events-none data-disabled:border-gray-200 data-disabled:bg-gray-100
           data-disabled:text-gray-400
@@ -185,11 +185,9 @@ export function Select({
         offset={4}
         onKeyDown={closeOnTab}
         // Figma's "Listbox": white, a gray-200 border, `radius/md` and `shadow-md`, as wide as the
-        // Select. The UA popover styles (padding, border, colours) are reset.
-        className={cx(`
-          m-0 w-80 rounded-md border border-solid border-gray-200 bg-white p-0 font-sans text-gray-900
-          shadow-md
-        `)}
+        // Select. The UA popover styles (padding, border, colours) are reset by the Select's
+        // `preflight`: the popover stays inside the Select's element.
+        className={cx(`w-80 rounded-md border border-gray-200 bg-white font-sans text-gray-900 shadow-md`)}
       >
         {/* The column the options sit in, Figma's "Options": `spacing/1` of padding. */}
         <div className={cx(`flex flex-col p-1`)}>{options}</div>

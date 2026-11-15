@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 export type Region = { x: number; y: number; width: number; height: number };
 
@@ -61,6 +61,30 @@ export async function waitForInter(page: Page) {
     await document.fonts.load("14px Inter");
     await document.fonts.ready;
   });
+  if (test.info().project.name === "without preflight") await removePreflight(page);
+}
+
+/**
+ * Takes Tailwind's preflight (its `@layer base`) out of the page, so the components are measured
+ * as an app without Tailwind draws them: on the browser's own defaults, reset only by their
+ * `preflight` class. The playground loads Tailwind for its own layout, which would otherwise
+ * hide anything that class misses. The "without preflight" project runs every Figma spec this way.
+ */
+async function removePreflight(page: Page) {
+  const removed = await page.evaluate(() => {
+    let count = 0;
+    for (const sheet of document.styleSheets) {
+      for (let i = sheet.cssRules.length - 1; i >= 0; i--) {
+        const rule = sheet.cssRules[i];
+        if (rule instanceof CSSLayerBlockRule && rule.name === "base") {
+          sheet.deleteRule(i);
+          count++;
+        }
+      }
+    }
+    return count;
+  });
+  expect(removed, "Tailwind's preflight (@layer base) was not found on the page").toBeGreaterThan(0);
 }
 
 /**

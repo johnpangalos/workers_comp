@@ -54,7 +54,7 @@ export function Tabs<TElement extends ElementType = "div">({
       as={as ?? "div"}
       onChange={onValueChange}
       // A column of the list and its panel, hugging their content.
-      className={[cx(`flex flex-col items-start gap-3`), className].filter(Boolean).join(" ")}
+      className={[cx(`preflight flex flex-col items-start gap-3`), className].filter(Boolean).join(" ")}
     />
   );
 }
@@ -83,12 +83,12 @@ export function Tab({ className, disabled, ...props }: TabProps) {
       disabled={disabled}
       data-hovered={dataAttr(isHovered && !disabled)}
       data-focus-visible={dataAttr(isFocusVisible)}
-      // The reset classes are Button's, for the native button. A disabled tab is gray-400 and
+      // The native button is reset by the Tabs' `preflight`. A disabled tab is gray-400 and
       // never reports hover, even when selected.
       className={[
         cx(`
-          m-0 inline-flex appearance-none items-center justify-center rounded-md border-0 border-solid px-3
-          py-1.5 font-sans text-sm font-medium text-gray-600 transition-colors outline-none
+          inline-flex items-center justify-center rounded-md px-3 py-1.5 font-sans text-sm font-medium
+          text-gray-600 transition-colors outline-none
           data-disabled:pointer-events-none data-disabled:text-gray-400
           data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
           data-hovered:text-gray-900

@@ -13,3 +13,43 @@
 @import "tailwindcss/utilities.css" layer(components);
 @source "./";
 @source not "./**/*.test.{ts,tsx}";
+
+/*
+ * `preflight`: the part of Tailwind's preflight the components need, as one scoped class on each
+ * component's outermost element, resetting it and everything inside it. Preflight itself can't
+ * ship: its rules select elements (`button { … }`), which CSS modules don't scope, so they would
+ * restyle the app. Without it, a browser's own defaults show through wherever a component sets
+ * nothing: the ghost Button's grey `buttonface`, a link's underline, an input's font.
+ *
+ * It has no specificity (`:where`) and sits in a sub-layer of `components`, so the components'
+ * own utilities (unlayered within `components`) beat it, and so does any CSS of the app's. What
+ * it does replace is the browser's defaults, also on what an app puts inside a component (a
+ * TabPanel's content), as Tailwind's preflight does on the whole page.
+ */
+@layer components {
+  @layer preflight {
+    :where(.preflight, .preflight *) {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border: 0 solid;
+      border-radius: 0;
+      background-color: transparent;
+      color: inherit;
+      font: inherit;
+      font-feature-settings: inherit;
+      font-variation-settings: inherit;
+      letter-spacing: inherit;
+      text-align: inherit;
+      text-decoration: inherit;
+      text-transform: inherit;
+      list-style: none;
+      appearance: none;
+      opacity: 1;
+    }
+
+    :where(.preflight, .preflight *)::placeholder {
+      opacity: 1;
+    }
+  }
+}

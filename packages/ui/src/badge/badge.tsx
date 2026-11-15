@@ -54,8 +54,8 @@ export function Badge<TElement extends ElementType = "a">({
       data-color={color}
       className={[
         cx(`
-          inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs font-semibold
-          no-underline outline-none
+          preflight inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-xs
+          font-semibold outline-none
           data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
           data-[color=amber]:bg-amber-100 data-[color=amber]:text-amber-800
           data-[color=blue]:bg-blue-100 data-[color=blue]:text-blue-800

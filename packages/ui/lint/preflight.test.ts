@@ -92,4 +92,80 @@ describe("workers-comp/preflight", () => {
     expect(lint("tabs", "tabs.test.tsx", tabs("flex", "preflight"))).toEqual([]);
     expect(lint("tabs", "examples.tsx", tabs("flex", "preflight"))).toEqual([]);
   });
+
+  it.each([
+    [
+      "a function declaration",
+      `export function Tabs() { return <div className={cx(\`preflight flex\`)} />; }`,
+    ],
+    [
+      "an arrow with an expression body",
+      `export const Tabs = () => <div className={cx(\`preflight flex\`)} />;`,
+    ],
+    [
+      "an arrow with a block body",
+      `export const Tabs = () => { return <div className={cx(\`preflight flex\`)} />; };`,
+    ],
+    [
+      "a function expression",
+      `export const Tabs = function () { return <div className={cx(\`preflight flex\`)} />; };`,
+    ],
+  ])("accepts %s as the component", (_, source) => {
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([]);
+  });
+
+  it("reports a missing preflight on an arrow component", () => {
+    const source = `export const Tabs = () => <div className={cx(\`flex\`)} />;`;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([
+      expect.stringContaining("Tabs's outermost element needs `preflight`"),
+    ]);
+  });
+
+  it("reports preflight that isn't first on an arrow component with a block body", () => {
+    const source = `export const Tabs = () => { return <div className={cx(\`flex preflight\`)} />; };`;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([expect.stringContaining("Put `preflight` first")]);
+  });
+
+  it("reports preflight in a child's className string", () => {
+    const source = `
+      export function Tabs() {
+        return <div className={cx(\`preflight flex\`)}><span className="preflight" /></div>;
+      }
+    `;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([
+      expect.stringContaining("only on the outermost element of Tabs"),
+    ]);
+  });
+
+  it("reports preflight in a child's className built with join", () => {
+    const source = `
+      export function Tabs() {
+        return <div className={cx(\`preflight flex\`)}><span className={["preflight", x].join(" ")} /></div>;
+      }
+    `;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([
+      expect.stringContaining("only on the outermost element of Tabs"),
+    ]);
+  });
+
+  it("reports preflight in a cx(…) call outside a className", () => {
+    const source = `
+      export function Tabs() {
+        const classes = cx(\`preflight\`);
+        return <div className={cx(\`preflight flex\`)}>{classes}</div>;
+      }
+    `;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([
+      expect.stringContaining("only on the outermost element of Tabs"),
+    ]);
+  });
+
+  it("doesn't count a class that only contains the word", () => {
+    const source = `
+      export function Tabs() {
+        return <div className={cx(\`preflight flex\`)}><span className="preflight-ish no-preflight" /></div>;
+      }
+    `;
+    expect(lint("tabs", "tabs.tsx", source)).toEqual([]);
+  });
 });

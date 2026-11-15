@@ -25,6 +25,10 @@
  * own utilities (unlayered within `components`) beat it, and so does any CSS of the app's. What
  * it does replace is the browser's defaults, also on what an app puts inside a component (a
  * TabPanel's content), as Tailwind's preflight does on the whole page.
+ *
+ * `appearance: none` is the exception: it only reaches the component's own controls (the element
+ * itself, buttons, textareas and text-like inputs), so a native checkbox, radio, range, file input
+ * or select an app puts inside a component keeps the browser's look and size.
  */
 @layer components {
   @layer preflight {
@@ -44,12 +48,23 @@
       text-decoration: inherit;
       text-transform: inherit;
       list-style: none;
-      appearance: none;
       opacity: 1;
     }
 
     :where(.preflight, .preflight *)::placeholder {
       opacity: 1;
+    }
+
+    :where(
+      .preflight,
+      .preflight
+        :is(
+          button,
+          textarea,
+          input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"])
+        )
+    ) {
+      appearance: none;
     }
   }
 }

@@ -13,9 +13,15 @@ export default defineConfig({
   },
   projects: [
     { name: "with preflight" },
-    // The same Figma specs with Tailwind's preflight taken out of the page (tests/figma.ts,
-    // waitForInter), as an app without Tailwind draws the components.
-    { name: "without preflight", testMatch: "*.figma.spec.ts", testIgnore: "figma-lint.spec.ts" },
+    // The Figma specs, and the native-controls spec, with Tailwind's preflight taken out of the page
+    // (tests/figma.ts, waitForInter), as an app without Tailwind draws the components. Only these
+    // measure components: the overrides and motion specs don't measure against Figma, and motion
+    // checks a transition that preflight doesn't touch.
+    {
+      name: "without preflight",
+      testMatch: ["*.figma.spec.ts", "*.native-controls.spec.ts"],
+      testIgnore: "figma-lint.spec.ts",
+    },
   ],
   webServer: {
     command: "pnpm dev --port 5173 --strictPort",

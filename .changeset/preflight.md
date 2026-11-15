@@ -2,4 +2,4 @@
 "@workers-comp/ui": patch
 ---
 
-Components draw the same in apps without Tailwind: each one's outermost element now resets the browser's defaults for itself and everything inside it. Before, the ghost Button showed the browser's grey button background, and anything a component didn't style picked up the browser's own styles. Anything you put inside a component (a `TabPanel`'s content, a `Button`'s children) also starts from these reset defaults, as it would under Tailwind's preflight; your own CSS still overrides them.
+Components draw the same in apps without Tailwind: each one resets the browser's own defaults on its outermost element and everything inside it, so the ghost `Button` no longer shows the browser's grey background. Content you put inside a component, such as a `TabPanel`'s, starts from the same reset, though native checkboxes, radios and selects keep their browser look, and your own CSS still overrides it.

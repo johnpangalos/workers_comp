@@ -14,16 +14,12 @@ describe("TextArea", () => {
     expect(textarea.tagName).toBe("TEXTAREA");
     expect(textarea).toHaveAttribute("placeholder", "What happened?");
     expect(textarea).toHaveClass(
-      "m-0",
-      "box-border",
       "block",
       "min-h-24",
       "w-full",
       "resize-none",
-      "appearance-none",
       "rounded-md",
       "border",
-      "border-solid",
       "border-gray-400",
       "bg-white",
       "px-3",
@@ -51,7 +47,7 @@ describe("TextArea", () => {
       "not-data-invalid:data-hovered:border-gray-500",
     );
     // Those and nothing else.
-    expect(textarea.classList).toHaveLength(32);
+    expect(textarea.classList).toHaveLength(28);
     // Theme utilities only: no arbitrary value (`w-[137px]`) in what renders.
     expect(textarea.className).not.toMatch(/\[/);
   });
@@ -182,8 +178,9 @@ describe("TextArea", () => {
       "font-medium",
       "text-gray-900",
     );
-    // The field's seven and the consumer's, nothing of the textarea's.
-    expect(field.classList).toHaveLength(8);
+    // The field's eight (its preflight first) and the consumer's, nothing of the textarea's.
+    expect(field.className).toMatch(/^\S*preflight\S* /);
+    expect(field.classList).toHaveLength(9);
     // Last and as given, so it isn't scoped and a consumer's utilities override the field's.
     expect(field.getAttribute("class")).toMatch(/ w-full$/);
     expect(field.className).not.toMatch(/\[/);

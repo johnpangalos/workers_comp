@@ -64,7 +64,7 @@ describe("Select", () => {
     const { container } = render(<Example className="max-w-full" id="body-part" />);
     const root = container.querySelector('[data-slot="select"]')!;
     expect(root).toHaveClass("flex", "w-80", "flex-col", "gap-1.5", "text-sm", "font-medium");
-    expect(root.getAttribute("class")).toMatch(/^flex .* max-w-full$/);
+    expect(root.getAttribute("class")).toMatch(/^\S*preflight\S* flex .* max-w-full$/);
     expect(root).toHaveAttribute("data-placeholder", "");
     expect(trigger()).toHaveClass(
       "relative",

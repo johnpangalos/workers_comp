@@ -294,9 +294,13 @@ describe("Tab", () => {
     expect(onValueChange).not.toHaveBeenCalled();
   });
 
+  it("resets the native button through the Tabs' preflight, not classes of its own", () => {
+    const { container } = render(<Example defaultValue="overview" />);
+    expect(container.firstElementChild!.className).toMatch(/^\S*preflight\S* /);
+    expect(tab("Activity").className).not.toMatch(/preflight|appearance-none|border-0/);
+  });
+
   it.each([
-    ["the reset of native appearance", "appearance-none"],
-    ["no native border", "border-0"],
     ["the medium label", "font-medium"],
     ["the grey label", "text-gray-600"],
     ["the rounded corners", "rounded-md"],

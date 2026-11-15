@@ -42,8 +42,8 @@ export function Button<TElement extends ElementType = "button">({
       data-size={size}
       className={[
         cx(`
-          m-0 inline-flex appearance-none items-center justify-center rounded-md border-0 border-solid
-          font-sans font-semibold transition-colors outline-none
+          preflight inline-flex items-center justify-center rounded-md font-sans font-semibold
+          transition-colors outline-none
           data-disabled:pointer-events-none
           data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
           data-variant:data-disabled:text-gray-400

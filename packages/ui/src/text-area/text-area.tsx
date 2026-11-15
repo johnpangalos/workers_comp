@@ -62,13 +62,16 @@ export function TextArea({
       required={required}
       // The column, in the label's type. The description and error message set their own weight
       // and colour.
-      className={[cx(`flex flex-col gap-1.5 font-sans text-sm font-medium text-gray-900`), className]
+      className={[
+        cx(`preflight flex flex-col gap-1.5 font-sans text-sm font-medium text-gray-900`),
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
       <Comp0Label>{label}</Comp0Label>
       {/*
-        The reset classes are Button's, minus `border-0`: the border is always on. It is at least
+        The browser's textarea styles are reset by the TextArea's `preflight`. It is at least
         Figma's minimum height, `spacing/24` (`min-h-24`, 96px, just under four lines of text);
         `rows={4}` or more makes it taller. Figma draws no resize handle, so it has none
         (`resize-none`): longer text scrolls.
@@ -80,9 +83,8 @@ export function TextArea({
       <Comp0TextArea
         {...props}
         className={cx(`
-          m-0 box-border block min-h-24 w-full resize-none appearance-none rounded-md border border-solid
-          border-gray-400 bg-white px-3 py-2 font-sans text-sm font-normal text-gray-900 transition-colors
-          outline-none
+          block min-h-24 w-full resize-none rounded-md border border-gray-400 bg-white px-3 py-2 font-sans
+          text-sm font-normal text-gray-900 transition-colors outline-none
           placeholder:text-gray-500
           not-data-disabled:placeholder-shown:text-gray-500
           not-data-disabled:data-invalid:border-red-600

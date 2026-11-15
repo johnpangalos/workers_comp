@@ -76,9 +76,8 @@ export function Chip<TElement extends ElementType = "a">({
       // Tailwind's ease-in-out.
       className={[
         cx(`
-          m-0 inline-flex appearance-none items-center justify-center rounded-full border-0 border-solid px-3
-          py-1 font-sans text-sm font-medium whitespace-nowrap no-underline transition-colors duration-150
-          ease-in-out outline-none
+          preflight inline-flex items-center justify-center rounded-full px-3 py-1 font-sans text-sm
+          font-medium whitespace-nowrap transition-colors duration-150 ease-in-out outline-none
           data-focus-visible:ring-2 data-focus-visible:ring-fuchsia-600 data-focus-visible:ring-offset-2
           data-[tone=current]:bg-fuchsia-700 data-[tone=current]:text-white
           data-[tone=current]:not-data-pressed:data-hovered:bg-fuchsia-800

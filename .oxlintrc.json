@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "react", "unicorn", "oxc", "jsx-a11y", "vitest", "import"],
-  "jsPlugins": ["eslint-plugin-better-tailwindcss"],
+  "jsPlugins": ["eslint-plugin-better-tailwindcss", "./packages/ui/lint/preflight.js"],
   "categories": {
     "correctness": "error"
   },
@@ -23,7 +23,7 @@
     ],
     "better-tailwindcss/no-conflicting-classes": "error",
     "better-tailwindcss/no-duplicate-classes": "error",
-    "better-tailwindcss/no-unknown-classes": "error",
+    "better-tailwindcss/no-unknown-classes": ["error", { "ignore": ["^preflight$"] }],
     "better-tailwindcss/no-unnecessary-whitespace": "error",
     "better-tailwindcss/no-deprecated-classes": "error",
     "better-tailwindcss/no-restricted-classes": [
@@ -56,6 +56,12 @@
       "files": ["packages/ui/src/class-names.test.ts"],
       "rules": {
         "better-tailwindcss/no-unknown-classes": "off"
+      }
+    },
+    {
+      "files": ["packages/ui/src/*/*.tsx"],
+      "rules": {
+        "workers-comp/preflight": "error"
       }
     },
     {

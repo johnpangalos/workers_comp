@@ -47,6 +47,11 @@ describe("Chip", () => {
     expect(chip.children).toHaveLength(0);
   });
 
+  it("carries the preflight reset, so the browser's link styles don't show through", () => {
+    render(<Chip href="#mon">Mon</Chip>);
+    expect(screen.getByRole("link", { name: "Mon" }).className).toMatch(/^\S*preflight\S* /);
+  });
+
   it.each([
     ["the inline-flex row", "inline-flex"],
     ["the centred label", "items-center"],
@@ -58,7 +63,6 @@ describe("Chip", () => {
     ["the focus ring", "data-focus-visible:ring-2"],
     ["the focus ring colour", "data-focus-visible:ring-fuchsia-600"],
     ["the focus ring offset", "data-focus-visible:ring-offset-2"],
-    ["the reset of native appearance", "appearance-none"],
     ["no wrapping of the label", "whitespace-nowrap"],
     ["the fill's transition", "transition-colors"],
     ["the transition's 150ms", "duration-150"],

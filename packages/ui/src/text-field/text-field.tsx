@@ -83,19 +83,19 @@ export function TextField({
       disabled={disabled}
       invalid={invalid}
       required={required}
-      className={[cx(`flex w-80 flex-col gap-1.5 font-sans`), className].filter(Boolean).join(" ")}
+      className={[cx(`preflight flex w-80 flex-col gap-1.5 font-sans`), className].filter(Boolean).join(" ")}
     >
       <Label className={cx(`text-sm font-medium text-gray-900`)}>{label}</Label>
       {/*
-        The reset classes are Button's, minus `border-0`: the border is always on. While the
+        The browser's input styles are reset by the TextField's `preflight`. While the
         placeholder shows, the input is drawn in the placeholder's colour, as in Figma. Invalid
         beats hover, and disabled beats both.
       */}
       <Input
         {...inputProps}
         className={cx(`
-          m-0 appearance-none rounded-md border border-solid border-gray-400 bg-white px-3 py-2 font-sans
-          text-sm font-normal text-gray-900 transition-colors outline-none
+          rounded-md border border-gray-400 bg-white px-3 py-2 font-sans text-sm font-normal text-gray-900
+          transition-colors outline-none
           placeholder:text-gray-500
           not-data-disabled:placeholder-shown:text-gray-500
           not-data-disabled:data-invalid:border-red-600

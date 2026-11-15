@@ -1,7 +1,7 @@
 name: Release
 
 # Changesets, in two jobs. `version` runs on every push to main: while there are changeset files,
-# it keeps a "Version Packages" PR open that applies them (version bump and CHANGELOG). It holds no
+# it keeps a "chore(release): version packages" PR open that applies them (version bump and CHANGELOG). It holds no
 # npm credentials. Once that PR is merged, the version on main isn't on npm yet, so `publish` runs:
 # it waits for a person to approve the `npm` environment, checks what the tarball holds, and
 # publishes @workers-comp/ui with npm trusted publishing (no token, provenance attached).
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # the changeset-release/main branch
-      pull-requests: write # the "Version Packages" PR
+      pull-requests: write # the version packages PR
     outputs:
       has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
       unpublished: ${{ steps.npm.outputs.unpublished }}
@@ -53,12 +53,16 @@ jobs:
           echo "unpublished=$unpublished" >> "$GITHUB_OUTPUT"
       - id: changesets
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        # PRs are squash-merged and pr-title.yml checks the title, so it's a conventional commit.
+        with:
+          title: "chore(release): version packages"
+          commit: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     needs: version
-    # Only after the "Version Packages" PR is merged (no changesets left), for a version npm
+    # Only after the version packages PR is merged (no changesets left), for a version npm
     # doesn't have, and never the 0.0.0 placeholder.
     if: >-
       needs.version.outputs.has-changesets == 'false' &&

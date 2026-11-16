@@ -10,10 +10,30 @@ import ourTheme from "./theme.css?raw";
  * to src/theme.css under the same name.
  */
 type Variable = { value: string | number; web: string | null };
-type Shadow = { x: number; y: number; blur: number; spread: number; color: string; alpha: number };
+// One layer of an effect style: a shadow (DROP_SHADOW or INNER_SHADOW) or a blur.
+type Effect = {
+  type: string;
+  x?: number;
+  y?: number;
+  blur: number;
+  spread?: number;
+  color?: string;
+  alpha?: number;
+};
 const { textStyles, effectStyles, ...collections } = JSON.parse(tokens) as {
-  textStyles: Record<string, { family: string; style: string; size: number; lineHeight: number }>;
-  effectStyles: Record<string, Shadow[]>;
+  textStyles: Record<
+    string,
+    {
+      family: string;
+      style: string;
+      size: number;
+      lineHeight: number;
+      // Absent from a snapshot exported before these were recorded; null where the font has no weight word.
+      weight?: number | null;
+      letterSpacing?: number;
+    }
+  >;
+  effectStyles: Record<string, Effect[]>;
 } & Record<string, Record<string, Variable>>;
 const variables = Object.values(collections).flatMap((collection) => Object.entries(collection));
 
@@ -29,6 +49,24 @@ const px = (value: string) => {
   if (value.endsWith("rem")) return parseFloat(value) * 16;
   return parseFloat(value);
 };
+
+// A length as pixels, where an em is a multiple of the text's size.
+const inPixels = (value: string, fontSize: number) => {
+  if (value.endsWith("em")) return parseFloat(value) * fontSize;
+  return px(value);
+};
+
+// A CSS shadow list as the theme writes it, in the export's shape: `inset` layers are INNER_SHADOW.
+const shadowLayers = (css: string): Effect[] =>
+  css.split(/,\s*/).map((layer) => {
+    let type = "DROP_SHADOW";
+    if (layer.startsWith("inset ")) type = "INNER_SHADOW";
+    const [lengths = "", colour = ""] = layer.replace("inset ", "").split(" rgb(");
+    const [x, y, blur = 0, spread = 0] = lengths.split(" ").map(parseFloat);
+    const [r = 0, g = 0, b = 0, alpha] = colour.match(/[\d.]+/g)!.map(Number);
+    const color = "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
+    return { type, x, y, blur, spread, color, alpha };
+  });
 
 // CSS Color 4: oklch → sRGB, as 0–255 channels.
 function rgb(color: string): number[] {
@@ -111,18 +149,31 @@ describe("Figma styles", () => {
     expect(theme.get("--font-sans")).toContain(style.family);
   });
 
-  // "shadow-md" is the utility `shadow-md`: the same layers as --shadow-md.
-  it.each(Object.entries(effectStyles))("%s is the theme's shadow", (name, layers) => {
-    const themed = theme
-      .get(`--${name}`)!
-      .split(/,\s*/)
-      .map((layer) => {
-        const [lengths = "", colour = ""] = layer.split(" rgb(");
-        const [x, y, blur = 0, spread = 0] = lengths.split(" ").map(parseFloat);
-        const [r = 0, g = 0, b = 0, alpha] = colour.match(/[\d.]+/g)!.map(Number);
-        const color = "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("");
-        return { type: "DROP_SHADOW", x, y, blur, spread, color, alpha };
-      });
-    expect(layers).toEqual(themed);
+  // A text style's weight and letter spacing, where the snapshot has them. The weight is the
+  // theme's font weight of the style's name; letter spacing is the theme's tracking for the size
+  // (a theme without one has none), in pixels.
+  it.each(Object.entries(textStyles))("%s has the theme's weight and letter spacing", (name, style) => {
+    const [size = "", weight = ""] = name.split("/");
+    if (typeof style.weight === "number") {
+      expect(Number(theme.get(`--font-weight-${weight}`)), `${name} weight`).toBe(style.weight);
+    }
+    if (style.letterSpacing !== undefined) {
+      const fontSize = px(theme.get(`--${size}`)!);
+      const tracking = theme.get(`--${size}--letter-spacing`) ?? "0px";
+      expect(inPixels(tracking, fontSize), `${name} letter spacing`).toBeCloseTo(style.letterSpacing, 2);
+    }
+  });
+
+  // "shadow-md" is the utility `shadow-md`: the same layers as --shadow-md. "inset-shadow-sm" is
+  // the same for `inset-shadow-sm`, its layers INNER_SHADOW. "blur-md" is `blur-md`: a blur of the
+  // theme's length.
+  it.each(Object.entries(effectStyles))("%s is the theme's effect", (name, layers) => {
+    const themed = theme.get(`--${name}`);
+    expect(themed, `--${name} is not in the theme: add it to src/theme.css`).toBeDefined();
+    if (layers.every((layer) => layer.type === "LAYER_BLUR" || layer.type === "BACKGROUND_BLUR")) {
+      for (const layer of layers) expect(layer.blur).toBe(px(themed!));
+      return;
+    }
+    expect(layers).toEqual(shadowLayers(themed!));
   });
 });

@@ -116,7 +116,14 @@ describe("Tabs", () => {
 describe("TabList", () => {
   it("is role=tablist with its own classes, and appends className", () => {
     const own = ownClasses();
-    expect(own.tabList.split(" ")).toEqual(["inline-flex", "gap-1", "rounded-lg", "bg-gray-100", "p-1"]);
+    expect(own.tabList.split(" ")).toEqual([
+      "inline-flex",
+      "items-start",
+      "gap-1",
+      "rounded-lg",
+      "bg-gray-100",
+      "p-1",
+    ]);
     render(
       <Tabs defaultValue="a">
         <TabList className="w-full" aria-label="Account">

@@ -63,7 +63,7 @@ export function TextArea({
       // The column, in the label's type. The description and error message set their own weight
       // and colour.
       className={[
-        cx(`preflight flex flex-col gap-1.5 font-sans text-sm font-medium text-gray-900`),
+        cx(`preflight flex flex-col items-start gap-1.5 font-sans text-sm font-medium text-gray-900`),
         className,
       ]
         .filter(Boolean)

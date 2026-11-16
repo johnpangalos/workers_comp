@@ -172,15 +172,16 @@ describe("TextArea", () => {
     expect(field).toHaveClass(
       "flex",
       "flex-col",
+      "items-start",
       "gap-1.5",
       "font-sans",
       "text-sm",
       "font-medium",
       "text-gray-900",
     );
-    // The field's eight (its preflight first) and the consumer's, nothing of the textarea's.
+    // The field's nine (its preflight first) and the consumer's, nothing of the textarea's.
     expect(field.className).toMatch(/^\S*preflight\S* /);
-    expect(field.classList).toHaveLength(9);
+    expect(field.classList).toHaveLength(10);
     // Last and as given, so it isn't scoped and a consumer's utilities override the field's.
     expect(field.getAttribute("class")).toMatch(/ w-full$/);
     expect(field.className).not.toMatch(/\[/);

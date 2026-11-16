@@ -87,10 +87,13 @@ plain CSS) with a React Router 8 playground, in a pnpm workspace. Figma-driven.
   CSS transition's duration and curve against it (`chip.motion.spec.ts`). Pick a curve Tailwind
   has (`ease-in-out` is cubic-bezier(0.4, 0, 0.2, 1)), so the code stays on theme utilities.
 - Measure: `pnpm test:figma`, specs in `apps/playground/tests/` calling `expectToMatchFigma`.
+  `figma-tokens.spec.ts` checks every export's `tokens` against `figma-tokens.json`, and
+  `figma-helper.spec.ts` tests the measuring helper itself.
+- Exports are format 2: fields at their default are left out and `loadFigmaNodes` puts them
+  back. Each component is its own `use_figma` call, because a result over 48KB is refused.
 - Page: `apps/playground/app/examples/<component>/figma.tsx`, served at
   `/<component>/figma` by `pnpm playground`.
-- Can't be measured: a focus ring Figma draws as a separate rectangle (the ghost Button's),
-  and positions across text-hugging siblings, whose fractions of a pixel add up, so a
+- Can't be measured: a focus ring Figma draws as a separate rectangle, and positions across text-hugging siblings, whose fractions of a pixel add up, so a
   container's width is compared only when it holds one of them.
   Widths that hug text are allowed under 1px of difference.
 - Measured exactly, though they look like exceptions: a label's x is where its text starts (after

@@ -136,7 +136,7 @@ what the measurement can't read.
    `button.figma.spec.ts`. The page doesn't have to look like the Figma file. Run
    `pnpm test:figma` and fix the code until it passes. Never loosen the comparison.
 5. **Look**, for what the export can't describe: a ring Figma draws as a separate shape,
-   shadows with blur, spacing between text-hugging siblings. Compare a screenshot of the
+   spacing between text-hugging siblings. Compare a screenshot of the
    Figma node (the MCP's `get_screenshot`) with one of the rendered page in the same states.
    "I see no difference" is not a pass: in a trial a model looking at screenshots reported
    differences on a correct Button, so only the measurement can say something matches.

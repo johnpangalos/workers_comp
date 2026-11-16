@@ -64,7 +64,9 @@ export function TabList({ className, ...props }: TabListProps) {
     <Comp0TabList
       {...props}
       // The grey track the tabs sit in.
-      className={[cx(`inline-flex gap-1 rounded-lg bg-gray-100 p-1`), className].filter(Boolean).join(" ")}
+      className={[cx(`inline-flex items-start gap-1 rounded-lg bg-gray-100 p-1`), className]
+        .filter(Boolean)
+        .join(" ")}
     />
   );
 }

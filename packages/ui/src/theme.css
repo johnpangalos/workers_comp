@@ -11,4 +11,48 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   /* What plain `border` draws. Tailwind reads it but doesn't declare it (it falls back to 1px). */
   --default-border-width: 1px;
+
+  /* Figma's radius/pill-<size>: half the Button's height at each size, its corners at rest. */
+  --radius-pill-xs: 1rem;
+  --radius-pill-sm: 1.25rem;
+  --radius-pill-md: 1.75rem;
+  --radius-pill-lg: 3rem;
+  --radius-pill-xl: 4.25rem;
+
+  /*
+   * The Button's press: Figma's prototype springs it from hover to pressed (Smart Animate with a
+   * spring of mass 1, stiffness 700 and damping 30; apps/playground/figma/button-motion.json, the
+   * only source of these numbers). CSS has no spring, so `ease-spring` is the spring's analytic
+   * solution, 1 - e^(-15t) (cos(21.794t) + 0.68825 sin(21.794t)), sampled into `linear()` over the
+   * 400ms Figma gives the transition (`duration-400`), to within 0.002 of the curve. From 320ms on
+   * the spring stays within 0.01 of rest, so ending the curve at 1 there jumps by under 0.001.
+   * tests/button.motion.spec.ts recomputes the spring from the JSON and checks both.
+   */
+  --ease-spring: linear(
+    0,
+    0.008 1.25%,
+    0.032 2.5%,
+    0.067 3.75%,
+    0.123 5.25%,
+    0.215 7.25%,
+    0.344 9.75%,
+    0.599 14.5%,
+    0.732 17.25%,
+    0.828 19.5%,
+    0.91 21.75%,
+    0.977 24%,
+    1.034 26.5%,
+    1.074 29%,
+    1.099 31.5%,
+    1.113 34.25%,
+    1.114 37.5%,
+    1.096 42.25%,
+    1.022 55%,
+    0.997 62%,
+    0.987 70.25%,
+    0.993 84.75%,
+    1
+  );
+  /* What `transition-colors` animates that the Button changes, and its corners, which spring when pressed. */
+  --transition-property-colors-radius: color, background-color, border-color, border-radius;
 }

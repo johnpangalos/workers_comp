@@ -181,7 +181,12 @@
     "radius/2xl": {"value":16,"web":"var(--radius-2xl)"},
     "radius/3xl": {"value":24,"web":"var(--radius-3xl)"},
     "radius/4xl": {"value":32,"web":"var(--radius-4xl)"},
-    "radius/full": {"value":9999,"web":"calc(infinity * 1px)"}
+    "radius/full": {"value":9999,"web":"calc(infinity * 1px)"},
+    "radius/pill-xs": {"value":16,"web":"var(--radius-pill-xs)"},
+    "radius/pill-sm": {"value":20,"web":"var(--radius-pill-sm)"},
+    "radius/pill-md": {"value":28,"web":"var(--radius-pill-md)"},
+    "radius/pill-lg": {"value":48,"web":"var(--radius-pill-lg)"},
+    "radius/pill-xl": {"value":68,"web":"var(--radius-pill-xl)"}
   },
   "Typography": {
     "font/sans": {"value":"Inter","web":"var(--font-sans)"},

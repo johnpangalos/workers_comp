@@ -10,11 +10,21 @@ export type FigmaNode = Region & {
   strokeWeight: number;
   radius: number;
   rings: [color: string, spread: number][];
+  /**
+   * A focus ring Figma draws as a separate frame around the box, which CSS draws as the box's
+   * outline: its width, the gap from the box's edge to its inner edge, and its colour. Null where
+   * there is none; absent from an older export, which isn't compared.
+   */
+  outline?: { width: number; offset: number; color: string } | null;
+  /** Absolutely positioned children the export couldn't read as the outline, by layer name. */
+  unmeasured?: string[];
   label: {
     x: number;
     y: number;
     height: number;
     color: string;
+    /** Absent from an older export, which isn't compared. */
+    fontFamily?: string;
     fontSize: number;
     fontWeight: number;
     lineHeight: number;
@@ -40,9 +50,35 @@ export function loadFigmaExport(url: URL): Record<string, unknown> {
   return parsed;
 }
 
-/** The nodes of a file written by the figma-flow skill's export-node. */
+/**
+ * What a format-2 export leaves out of a node because it is at its default (the figma-flow
+ * skill's export-node says which). A label's typography defaults aren't measured here.
+ */
+const FORMAT_2_DEFAULTS = {
+  fill: null,
+  stroke: null,
+  strokeWeight: 0,
+  radius: 0,
+  rings: [],
+  label: null,
+  outline: null,
+  unmeasured: [],
+};
+
+/**
+ * The nodes of a file written by the figma-flow skill's export-node. A format-2 export has its
+ * omitted defaults put back; an older export is taken as it is.
+ */
 export function loadFigmaNodes(url: URL): Record<string, FigmaNode> {
-  return loadFigmaExport(url).variants as Record<string, FigmaNode>;
+  const { format, variants } = loadFigmaExport(url);
+  if (format !== undefined && format !== 2) {
+    throw new Error(`${url.pathname} is format ${JSON.stringify(format)}, which this helper doesn't read`);
+  }
+  const nodes = variants as Record<string, FigmaNode>;
+  if (format !== 2) return nodes;
+  return Object.fromEntries(
+    Object.entries(nodes).map(([key, node]) => [key, { ...structuredClone(FORMAT_2_DEFAULTS), ...node }]),
+  );
 }
 
 /**
@@ -89,7 +125,8 @@ async function removePreflight(page: Page) {
 
 /**
  * Compares the values an element is drawn with against its Figma node, exactly: size, fill,
- * border, radius, focus rings, and the label's colour, type and position. Screenshots are
+ * border, radius, focus rings (spread shadows, or an outline), and the label's colour, family,
+ * type and position. Screenshots are
  * for a person or a model to look at; this is the part that can't be fuzzy.
  *
  * Two allowances. The box may be under a pixel off: Figma snaps a text box to whole pixels
@@ -173,6 +210,18 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       strokeWeight: border,
       radius: parseFloat(style.borderTopLeftRadius),
       rings,
+      // Its width is 0 when the outline is off.
+      outline: {
+        width: px(style.outlineWidth) * Number(style.outlineStyle !== "none"),
+        offset: px(style.outlineOffset),
+        color: hex(style.outlineColor),
+        style: style.outlineStyle,
+      },
+      // The first family the label is set in, unquoted.
+      fontFamily: style.fontFamily
+        .split(",")[0]!
+        .trim()
+        .replace(/^["']|["']$/g, ""),
       label: {
         x: labelX,
         y: parseFloat(style.paddingTop) + border,
@@ -209,11 +258,23 @@ export async function expectToMatchFigma(element: Locator, figma: FigmaNode, { w
       .toEqual(figma.rings.map(([, spread]) => spread));
     figma.rings.forEach(([color], i) => sameColor(rendered.rings[i]?.[0] ?? null, color, `ring ${i + 1}`));
   }
+  // A focus ring Figma draws as a separate frame is the element's outline in CSS: solid, at the
+  // ring's width, offset and colour. Where a format-2 export says there is none, none is drawn.
+  if (figma.outline) {
+    expect.soft(rendered.outline.style, "outline style").toBe("solid");
+    expect.soft(rendered.outline.width, "outline width").toBe(figma.outline.width);
+    expect.soft(rendered.outline.offset, "outline offset").toBe(figma.outline.offset);
+    sameColor(rendered.outline.color, figma.outline.color, "outline colour");
+  }
+  if (figma.outline === null) expect.soft(rendered.outline.width, "outline width").toBe(0);
+  // A child the export couldn't read isn't compared; say so rather than pass quietly.
+  expect.soft(figma.unmeasured ?? [], "layers the export couldn't read as the outline").toEqual([]);
   if (figma.layout) expect.soft(rendered.layout, "direction, gap and padding").toEqual(figma.layout);
   if (figma.label) {
-    const { color, ...label } = figma.label;
+    const { color, fontFamily, ...label } = figma.label;
     const { color: renderedColor, ...renderedLabel } = rendered.label;
     sameColor(renderedColor, color, "text colour");
+    if (fontFamily !== undefined) expect.soft(rendered.fontFamily, "font family").toBe(fontFamily);
     expect.soft(renderedLabel, "label position and type").toEqual(label);
   }
 }

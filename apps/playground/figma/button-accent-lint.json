@@ -1,0 +1,22 @@
+{
+  "file": "5OcRRw5a7qZGsgC43FjCp9",
+  "node": "192:689 192:692 192:695 192:698 192:701 192:704 192:707 192:710 192:713 192:716 192:719 192:722 192:725 192:728 192:731 192:734 192:737 192:740 192:743 192:746 192:749 192:752 192:755 192:758 192:761",
+  "findings": [
+    {"variant":"variant=accent, size=xs, state=focus","layer":"focus ring","node":"192:700","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=accent, size=xs, state=focus","layer":"focus ring","node":"192:700","rule":"raw-number","field":"width","value":67},
+    {"variant":"variant=accent, size=xs, state=focus","layer":"focus ring","node":"192:700","rule":"raw-number","field":"height","value":36},
+    {"variant":"variant=accent, size=sm, state=focus","layer":"focus ring","node":"192:715","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=accent, size=sm, state=focus","layer":"focus ring","node":"192:715","rule":"raw-number","field":"width","value":82},
+    {"variant":"variant=accent, size=sm, state=focus","layer":"focus ring","node":"192:715","rule":"raw-number","field":"height","value":44},
+    {"variant":"variant=accent, size=md, state=focus","layer":"focus ring","node":"192:730","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=accent, size=md, state=focus","layer":"focus ring","node":"192:730","rule":"raw-number","field":"width","value":104},
+    {"variant":"variant=accent, size=md, state=focus","layer":"focus ring","node":"192:730","rule":"raw-number","field":"height","value":60},
+    {"variant":"variant=accent, size=lg, state=focus","layer":"focus ring","node":"192:745","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=accent, size=lg, state=focus","layer":"focus ring","node":"192:745","rule":"raw-number","field":"width","value":179},
+    {"variant":"variant=accent, size=lg, state=focus","layer":"focus ring","node":"192:745","rule":"raw-number","field":"height","value":100},
+    {"variant":"variant=accent, size=xl, state=focus","layer":"focus ring","node":"192:760","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=accent, size=xl, state=focus","layer":"focus ring","node":"192:760","rule":"raw-number","field":"width","value":251},
+    {"variant":"variant=accent, size=xl, state=focus","layer":"focus ring","node":"192:760","rule":"raw-number","field":"height","value":140}
+  ],
+  "hash": "7bfbec86"
+}

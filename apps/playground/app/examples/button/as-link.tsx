@@ -9,7 +9,7 @@ export default function AsLink() {
       <div className="flex w-full max-w-md items-center justify-between rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-200">
         <p className="text-sm text-gray-700">You have 3 unread messages.</p>
         <div className="flex gap-2">
-          <Button as={Link} to="/" variant="ghost" size="sm">
+          <Button as={Link} to="/" variant="text" size="sm">
             Back
           </Button>
           <Button as={Link} to="/button/variants" size="sm">

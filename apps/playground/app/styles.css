@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* The ui theme's own tokens (pill radii, the press spring), so the playground can use them and the
+   Tailwind lint, which reads this file, knows them in both packages. */
+@import "../../../packages/ui/src/theme.css";
 
 /* Inter 3.19, the version Figma's "Inter" is. Google Fonts serves Inter 4, whose letters are
    about 2% narrower, so text (and anything that hugs it) would not match the designs. */

@@ -1,0 +1,22 @@
+{
+  "file": "5OcRRw5a7qZGsgC43FjCp9",
+  "node": "192:464 192:467 192:470 192:473 192:476 192:479 192:482 192:485 192:488 192:491 192:494 192:497 192:500 192:503 192:506 192:509 192:512 192:515 192:518 192:521 192:524 192:527 192:530 192:533 192:536",
+  "findings": [
+    {"variant":"variant=tonal, size=xs, state=focus","layer":"focus ring","node":"192:475","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=tonal, size=xs, state=focus","layer":"focus ring","node":"192:475","rule":"raw-number","field":"width","value":67},
+    {"variant":"variant=tonal, size=xs, state=focus","layer":"focus ring","node":"192:475","rule":"raw-number","field":"height","value":36},
+    {"variant":"variant=tonal, size=sm, state=focus","layer":"focus ring","node":"192:490","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=tonal, size=sm, state=focus","layer":"focus ring","node":"192:490","rule":"raw-number","field":"width","value":82},
+    {"variant":"variant=tonal, size=sm, state=focus","layer":"focus ring","node":"192:490","rule":"raw-number","field":"height","value":44},
+    {"variant":"variant=tonal, size=md, state=focus","layer":"focus ring","node":"192:505","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=tonal, size=md, state=focus","layer":"focus ring","node":"192:505","rule":"raw-number","field":"width","value":104},
+    {"variant":"variant=tonal, size=md, state=focus","layer":"focus ring","node":"192:505","rule":"raw-number","field":"height","value":60},
+    {"variant":"variant=tonal, size=lg, state=focus","layer":"focus ring","node":"192:520","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=tonal, size=lg, state=focus","layer":"focus ring","node":"192:520","rule":"raw-number","field":"width","value":179},
+    {"variant":"variant=tonal, size=lg, state=focus","layer":"focus ring","node":"192:520","rule":"raw-number","field":"height","value":100},
+    {"variant":"variant=tonal, size=xl, state=focus","layer":"focus ring","node":"192:535","rule":"raw-number","field":"strokeWeight","value":2},
+    {"variant":"variant=tonal, size=xl, state=focus","layer":"focus ring","node":"192:535","rule":"raw-number","field":"width","value":251},
+    {"variant":"variant=tonal, size=xl, state=focus","layer":"focus ring","node":"192:535","rule":"raw-number","field":"height","value":140}
+  ],
+  "hash": "c89c3b69"
+}

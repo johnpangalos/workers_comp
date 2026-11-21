@@ -1,1 +1,107 @@
-[]
+[
+  {
+    "node": "192:419 192:389 192:392 192:395 192:398 192:401 192:404 192:407 192:410 192:413 192:416 192:422 192:425 192:428 192:431 192:434 192:437 192:440 192:443 192:446 192:449 192:452 192:455 192:458 192:461",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "strokeWeight",
+    "reason": "The focus ring is drawn in code with CSS outline (outline-2, a bare 2px width). Tailwind's theme has no variable for outline widths, so there is none in Figma to bind it to; the export still records the 2px, and expectToMatchFigma compares it with the rendered outline-width."
+  },
+  {
+    "node": "192:419 192:389 192:392 192:395 192:398 192:401 192:404 192:407 192:410 192:413 192:416 192:422 192:425 192:428 192:431 192:434 192:437 192:440 192:443 192:446 192:449 192:452 192:455 192:458 192:461",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "width",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size and per label. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:419 192:389 192:392 192:395 192:398 192:401 192:404 192:407 192:410 192:413 192:416 192:422 192:425 192:428 192:431 192:434 192:437 192:440 192:443 192:446 192:449 192:452 192:455 192:458 192:461",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "height",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:464 192:467 192:470 192:473 192:476 192:479 192:482 192:485 192:488 192:491 192:494 192:497 192:500 192:503 192:506 192:509 192:512 192:515 192:518 192:521 192:524 192:527 192:530 192:533 192:536",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "strokeWeight",
+    "reason": "The focus ring is drawn in code with CSS outline (outline-2, a bare 2px width). Tailwind's theme has no variable for outline widths, so there is none in Figma to bind it to; the export still records the 2px, and expectToMatchFigma compares it with the rendered outline-width."
+  },
+  {
+    "node": "192:464 192:467 192:470 192:473 192:476 192:479 192:482 192:485 192:488 192:491 192:494 192:497 192:500 192:503 192:506 192:509 192:512 192:515 192:518 192:521 192:524 192:527 192:530 192:533 192:536",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "width",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size and per label. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:464 192:467 192:470 192:473 192:476 192:479 192:482 192:485 192:488 192:491 192:494 192:497 192:500 192:503 192:506 192:509 192:512 192:515 192:518 192:521 192:524 192:527 192:530 192:533 192:536",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "height",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:539 192:542 192:545 192:548 192:551 192:554 192:557 192:560 192:563 192:566 192:569 192:572 192:575 192:578 192:581 192:584 192:587 192:590 192:593 192:596 192:599 192:602 192:605 192:608 192:611",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "strokeWeight",
+    "reason": "The focus ring is drawn in code with CSS outline (outline-2, a bare 2px width). Tailwind's theme has no variable for outline widths, so there is none in Figma to bind it to; the export still records the 2px, and expectToMatchFigma compares it with the rendered outline-width."
+  },
+  {
+    "node": "192:539 192:542 192:545 192:548 192:551 192:554 192:557 192:560 192:563 192:566 192:569 192:572 192:575 192:578 192:581 192:584 192:587 192:590 192:593 192:596 192:599 192:602 192:605 192:608 192:611",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "width",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size and per label. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:539 192:542 192:545 192:548 192:551 192:554 192:557 192:560 192:563 192:566 192:569 192:572 192:575 192:578 192:581 192:584 192:587 192:590 192:593 192:596 192:599 192:602 192:605 192:608 192:611",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "height",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:614 192:617 192:620 192:623 192:626 192:629 192:632 192:635 192:638 192:641 192:644 192:647 192:650 192:653 192:656 192:659 192:662 192:665 192:668 192:671 192:674 192:677 192:680 192:683 192:686",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "strokeWeight",
+    "reason": "The focus ring is drawn in code with CSS outline (outline-2, a bare 2px width). Tailwind's theme has no variable for outline widths, so there is none in Figma to bind it to; the export still records the 2px, and expectToMatchFigma compares it with the rendered outline-width."
+  },
+  {
+    "node": "192:614 192:617 192:620 192:623 192:626 192:629 192:632 192:635 192:638 192:641 192:644 192:647 192:650 192:653 192:656 192:659 192:662 192:665 192:668 192:671 192:674 192:677 192:680 192:683 192:686",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "width",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size and per label. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:614 192:617 192:620 192:623 192:626 192:629 192:632 192:635 192:638 192:641 192:644 192:647 192:650 192:653 192:656 192:659 192:662 192:665 192:668 192:671 192:674 192:677 192:680 192:683 192:686",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "height",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:689 192:692 192:695 192:698 192:701 192:704 192:707 192:710 192:713 192:716 192:719 192:722 192:725 192:728 192:731 192:734 192:737 192:740 192:743 192:746 192:749 192:752 192:755 192:758 192:761",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "strokeWeight",
+    "reason": "The focus ring is drawn in code with CSS outline (outline-2, a bare 2px width). Tailwind's theme has no variable for outline widths, so there is none in Figma to bind it to; the export still records the 2px, and expectToMatchFigma compares it with the rendered outline-width."
+  },
+  {
+    "node": "192:689 192:692 192:695 192:698 192:701 192:704 192:707 192:710 192:713 192:716 192:719 192:722 192:725 192:728 192:731 192:734 192:737 192:740 192:743 192:746 192:749 192:752 192:755 192:758 192:761",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "width",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size and per label. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  },
+  {
+    "node": "192:689 192:692 192:695 192:698 192:701 192:704 192:707 192:710 192:713 192:716 192:719 192:722 192:725 192:728 192:731 192:734 192:737 192:740 192:743 192:746 192:749 192:752 192:755 192:758 192:761",
+    "rule": "raw-number",
+    "layer": "focus ring",
+    "field": "height",
+    "reason": "The focus ring's size follows the button through its stretch constraints (2px outside each edge), so it can't be a variable: it differs per size. In code it is the outline's offset (outline-offset-2) around the button's own box, which expectToMatchFigma measures."
+  }
+]

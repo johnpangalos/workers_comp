@@ -21,9 +21,17 @@ async function exportMotion(setId) {
         if (action.type !== "NODE" || action.navigation !== "CHANGE_TO" || !action.transition) continue;
         const { transition } = action;
         const curve = transition.easing.easingFunctionCubicBezier;
-        // A cubic-bezier curve as its four numbers; a named Figma easing as its name.
+        const spring = transition.easing.easingFunctionSpring;
+        // A cubic-bezier curve as its four numbers; a spring as its mass, stiffness and damping; a
+        // named Figma easing as its name.
         let easing = transition.easing.type;
         if (curve) easing = [curve.x1, curve.y1, curve.x2, curve.y2].map((n) => round(n, 3));
+        if (spring) {
+          const { mass, stiffness, damping } = spring;
+          easing = {
+            spring: { mass: round(mass, 3), stiffness: round(stiffness, 3), damping: round(damping, 3) },
+          };
+        }
         entries.push([
           `${variant.name} -> ${names[action.destinationId]}`,
           {

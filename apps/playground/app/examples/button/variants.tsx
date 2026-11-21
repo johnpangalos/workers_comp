@@ -1,7 +1,7 @@
 import { Button } from "@workers-comp/ui";
 
-const variants = ["default", "outline", "ghost"] as const;
-const sizes = ["default", "sm"] as const;
+const variants = ["filled", "tonal", "outlined", "text", "accent"] as const;
+const sizes = ["xs", "sm", "md", "lg", "xl"] as const;
 
 // The Figma component set, as a page: every variant and size, enabled and disabled.
 // Hover, press and Tab through them to compare with the Figma prototype.

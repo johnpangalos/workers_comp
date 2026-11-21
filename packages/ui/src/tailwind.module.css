@@ -19,7 +19,7 @@
  * component's outermost element, resetting it and everything inside it. Preflight itself can't
  * ship: its rules select elements (`button { … }`), which CSS modules don't scope, so they would
  * restyle the app. Without it, a browser's own defaults show through wherever a component sets
- * nothing: the ghost Button's grey `buttonface`, a link's underline, an input's font.
+ * nothing: a text Button's grey `buttonface`, a link's underline, an input's font.
  *
  * It has no specificity (`:where`) and sits in a sub-layer of `components`, so the components'
  * own utilities (unlayered within `components`) beat it, and so does any CSS of the app's. What

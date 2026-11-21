@@ -30,7 +30,7 @@ export default function InviteForm({ actionData: result }: Route.ComponentProps)
         />
         {result && <p className="mt-3 text-sm text-gray-500">Invite sent to {result.sent}.</p>}
         <div className="mt-6 flex justify-end gap-2">
-          <Button type="reset" variant="ghost">
+          <Button type="reset" variant="text">
             Clear
           </Button>
           <Button type="submit" pending={sending}>
